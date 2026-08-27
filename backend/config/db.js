@@ -31,12 +31,16 @@ const initializeDatabase = async () => {
     await connection.end();
 
     // 2. Initialize Pool
-    pool = mysql.createPool({
-      ...dbConfig,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0
-    });
+    let poolConfig = typeof dbConfig === 'string' 
+      ? dbConfig 
+      : {
+          ...dbConfig,
+          waitForConnections: true,
+          connectionLimit: 10,
+          queueLimit: 0
+        };
+        
+    pool = mysql.createPool(poolConfig);
 
     console.log('MySQL Database connection pool established.');
 
