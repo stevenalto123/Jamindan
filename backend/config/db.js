@@ -1,26 +1,33 @@
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 
-const dbConfig = {
+const dbConfig = process.env.DB_URL || {
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'jamindan_emergency'
+  database: process.env.DB_NAME || 'jamindan_emergency',
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
 };
 
 let pool;
 
 const initializeDatabase = async () => {
   try {
-    // 1. Connect without database to ensure DB exists
-    const connection = await mysql.createConnection({
-      host: dbConfig.host,
-      user: dbConfig.user,
-      password: dbConfig.password
-    });
+    // 1. Connect without database to ensure DB exists (if local)
+    // If using a cloud DB URL (like Aiven), the DB usually already exists.
+    const connectionConfig = typeof dbConfig === 'string' 
+      ? dbConfig 
+      : { host: dbConfig.host, user: dbConfig.user, password: dbConfig.password, ssl: dbConfig.ssl };
+      
+    const connection = await mysql.createConnection(connectionConfig);
 
-    console.log(`Checking database "${dbConfig.database}"...`);
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+    if (typeof dbConfig !== 'string') {
+      console.log(`Checking database "${dbConfig.database}"...`);
+      await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+    } else {
+      console.log(`Connected to cloud database via URL...`);
+    }
+    
     await connection.end();
 
     // 2. Initialize Pool
