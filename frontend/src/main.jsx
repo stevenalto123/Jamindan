@@ -5,8 +5,8 @@ import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 import axios from 'axios';
 
-// Let Vite Proxy handle API requests securely through the tunnel
-// axios.defaults.baseURL = 'http://159.223.110.159:29052';
+// Connect directly to the new cloud backend on Render
+axios.defaults.baseURL = 'https://jamindan.onrender.com';
 // We can leave this header just in case, it doesn't hurt
 axios.defaults.headers.common['Bypass-Tunnel-Reminder'] = 'true';
 

@@ -187,7 +187,7 @@ const TrackStatus = () => {
             {incident.photo_path && (
               <div style={{ marginTop: '16px' }}>
                 <img 
-                  src={`http://localhost:5000${incident.photo_path}`} 
+                  src={`https://jamindan.onrender.com${incident.photo_path}`} 
                   alt="Evidence" 
                   style={{ width: '100%', maxHeight: '300px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }} 
                 />

@@ -75,7 +75,7 @@ const AdminVerifyUsers = () => {
                   <p style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '5px' }}>Valid ID <span style={{ color: 'var(--primary-color)' }}>({user.id_type || 'Not Specified'})</span></p>
                   {user.id_photo_path ? (
                     <img 
-                      src={user.id_photo_path.startsWith('http') ? user.id_photo_path : `http://localhost:5000${user.id_photo_path}`} 
+                      src={user.id_photo_path.startsWith('http') ? user.id_photo_path : `https://jamindan.onrender.com${user.id_photo_path}`} 
                       alt="ID Document" 
                       style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer' }}
                       onClick={(e) => window.open(e.target.src, '_blank')}
@@ -88,7 +88,7 @@ const AdminVerifyUsers = () => {
                   <p style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '5px' }}>Live Selfie</p>
                   {user.selfie_photo_path ? (
                     <img 
-                      src={user.selfie_photo_path.startsWith('http') ? user.selfie_photo_path : `http://localhost:5000${user.selfie_photo_path}`} 
+                      src={user.selfie_photo_path.startsWith('http') ? user.selfie_photo_path : `https://jamindan.onrender.com${user.selfie_photo_path}`} 
                       alt="Live Selfie" 
                       style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer' }}
                       onClick={(e) => window.open(e.target.src, '_blank')}
