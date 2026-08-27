@@ -4,12 +4,16 @@
   --primary-light: #e8f0eb;
   --accent-color: #4b8e62;
   --accent-hover: #3d7a50;
+  
   --bg-color: #eaeeeb; /* Very soft greyish-green */
   --card-bg: #ffffff;
+  --card-alt: #f8faf9; 
+  
   --text-main: #2c3e50;
   --text-light: #5a6e5f;
   --text-muted: #9ab0a0;
   --border-color: #dbe2dd;
+  
   --danger-color: #e74c3c;
   --danger-hover: #c0392b;
   --warning-color: #f39c12;
@@ -50,6 +54,7 @@ body {
   color: var(--text-main);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  touch-action: manipulation; /* Prevents double-tap to zoom on mobile */
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -198,7 +203,7 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   font-family: var(--font-main);
-  font-size: 14px;
+  font-size: 16px; /* 16px is CRITICAL to prevent iOS Safari auto-zooming on focus */
   color: var(--text-main);
   background-color: #ffffff;
   transition: all var(--transition-fast);
@@ -764,6 +769,26 @@ h1, h2, h3, h4, h5, h6 {
   border-bottom: none;
 }
 
+/* Sticky Action Column for Mobile Tables */
+.custom-table th:last-child,
+.custom-table td:last-child {
+  position: sticky;
+  right: 0;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.04);
+}
+
+.custom-table td:last-child {
+  background-color: var(--card-bg); /* Match table body */
+}
+
+.custom-table th:last-child {
+  background-color: #fafbfc; /* Match table header */
+}
+
+.custom-table tbody tr:hover td:last-child {
+  background-color: #fafbfc; /* Match hover state */
+}
+
 /* Modal Styling */
 .modal-overlay {
   position: fixed;
@@ -927,6 +952,186 @@ h1, h2, h3, h4, h5, h6 {
   text-align: left;
 }
 
+/* Map Marker Customizations */
+.incident-marker {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-pending { background-color: #e74c3c; }
+.marker-review { background-color: #f39c12; }
+.marker-progress { background-color: #3498db; }
+.marker-resolved { background-color: #2ecc71; }
+
+@keyframes sos-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(224, 49, 49, 0.7); transform: scale(1); }
+  50% { transform: scale(1.05); }
+  70% { box-shadow: 0 0 0 20px rgba(224, 49, 49, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(224, 49, 49, 0); transform: scale(1); }
+}
+
+.pulse-button {
+  animation: sos-pulse 2s infinite;
+}
+
+/* Auth Page Card Overrides */
+.auth-card {
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  border: 1px solid var(--border-color);
+  width: 100%;
+  max-width: 400px;
+  padding: 30px;
+  border-radius: var(--radius-lg);
+}
+.form-input, .form-select {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+.form-input:focus, .form-select:focus {
+  border-color: var(--primary-color);
+  background-color: var(--card-bg);
+}
+
+/* Mobile Bottom Navigation */
+.mobile-bottom-nav {
+  display: none; /* Hidden on desktop */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+  z-index: 1000;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.nav-items-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 60px;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+  width: 20%;
+}
+
+.nav-item.active {
+  color: var(--primary-color);
+}
+
+.nav-icon {
+  margin-bottom: 4px;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: block;
+  }
+  
+  .main-content {
+    margin-bottom: 80px; /* Increased space for mobile bottom nav + safe area */
+  }
+
+  /* Responsive Data Tables */
+  .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Make all maps scale beautifully on mobile */
+  .leaflet-container {
+    max-height: 60vh !important;
+  }
+  
+  /* Fix Leaflet Routing Machine Missing Collapse Button */
+  .leaflet-routing-collapse-btn {
+    position: absolute !important;
+    right: 5px !important;
+    top: 5px !important;
+    width: 30px !important;
+    height: 30px !important;
+    background: #e74c3c !important; /* Red background so it's a solid button */
+    border-radius: 4px;
+    z-index: 1000 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none !important;
+    cursor: pointer;
+  }
+
+  .leaflet-routing-collapse-btn:after {
+    content: '✖' !important; /* Explicitly set the X character */
+    color: white !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+  }
+  
+  .leaflet-routing-container-hide .leaflet-routing-collapse-btn,
+  .leaflet-routing-container-hide .leaflet-routing-collapse-btn:hover,
+  .leaflet-routing-container-hide .leaflet-routing-collapse-btn:active,
+  .leaflet-routing-container-hide .leaflet-routing-collapse-btn:focus {
+    background-image: url('/routing-icon.png') !important;
+    background-color: white !important;
+    background-repeat: no-repeat !important;
+    background-position: 2px 2px !important;
+    background-size: initial !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 4px !important;
+    display: block !important;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65) !important;
+    border: 2px solid rgba(0,0,0,0.2) !important;
+    transition: none !important;
+    transform: none !important;
+  }
+  
+  .leaflet-routing-container-hide .leaflet-routing-collapse-btn:after {
+    content: none !important;
+  }
+
+  /* Make sure routing container doesn't cover the whole screen on mobile */
+  @media (max-width: 768px) {
+    .leaflet-routing-container {
+      max-width: 85vw !important;
+      max-height: 40vh !important;
+      overflow-y: auto !important;
+      font-size: 12px !important; /* Smaller text on mobile */
+    }
+  }
+
+  /* Hide the global header on mobile if we use custom dashboard headers */
+  .mobile-hide-header .header {
+    display: none;
+  }
+  
+  .mobile-hide-header .content-body {
+    padding-top: 20px;
+  }
+}
+
+
 .alert-danger {
   background-color: #fdf2f2;
   color: var(--danger-color);
@@ -953,7 +1158,7 @@ h1, h2, h3, h4, h5, h6 {
 
 @media (max-width: 768px) {
   .sidebar-toggle-btn {
-    display: flex;
+    display: none !important; /* Force hide hamburger menu */
   }
 }
 
@@ -1195,4 +1400,10 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0 !important;
     margin-bottom: 0 !important;
   }
+}
+
+/* Fix double eye icon on Edge/Chrome by hiding native password reveal buttons */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
 }

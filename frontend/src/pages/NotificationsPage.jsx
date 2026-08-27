@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Bell, CheckSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 const NotificationsPage = () => {
+  const { t } = useLanguage();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -52,22 +54,22 @@ const NotificationsPage = () => {
     <div className="content-body" style={{ maxWidth: '800px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h2 style={{ fontSize: '26px', fontWeight: '700', color: 'var(--text-main)' }}>Notifications Inbox</h2>
-          <p style={{ color: 'var(--text-light)', fontSize: '14px' }}>View and manage alerts sent to your profile</p>
+          <h2 style={{ fontSize: '26px', fontWeight: '700', color: 'var(--text-main)' }}>{t('notificationsInbox')}</h2>
+          <p style={{ color: 'var(--text-light)', fontSize: '14px' }}>{t('notificationsDesc')}</p>
         </div>
 
         {notifications.filter(n => !n.is_read).length > 0 && (
           <button className="btn btn-secondary" onClick={handleMarkAllRead} style={{ height: '36px' }}>
-            <CheckSquare size={16} /> Mark all read
+            <CheckSquare size={16} /> {t('markAllRead')}
           </button>
         )}
       </div>
 
       <div className="card" style={{ padding: '12px' }}>
         {loading ? (
-          <div className="notif-empty">Loading notifications...</div>
+          <div className="notif-empty">{t('loadingNotifications')}</div>
         ) : notifications.length === 0 ? (
-          <div className="notif-empty" style={{ padding: '40px 0' }}>No notifications yet.</div>
+          <div className="notif-empty" style={{ padding: '40px 0' }}>{t('noNotifications')}</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {notifications.map((notif) => (

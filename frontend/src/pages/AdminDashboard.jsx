@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 import { 
-  Users, 
-  AlertTriangle, 
-  Clock, 
-  Shield, 
-  CheckCircle,
-  AlertCircle
+  Bell, 
+  MapPin, 
+  ShieldAlert, 
+  AlertTriangle 
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 const AdminDashboard = () => {
+  const { t } = useLanguage();
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const fetchDashboardStats = async () => {
     try {
@@ -31,248 +34,156 @@ const AdminDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'Pending': return <span className="badge badge-pending">Pending</span>;
-      case 'Under Review': return <span className="badge badge-review">Under Review</span>;
-      case 'In Progress': return <span className="badge badge-progress">In Progress</span>;
-      case 'Resolved': return <span className="badge badge-resolved">Resolved</span>;
-      default: return <span className="badge">{status}</span>;
+  const getInitials = (name) => {
+    if (!name) return 'AD';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     }
+    return name.substring(0, 2).toUpperCase();
   };
 
   if (loading && !data) {
-    return <div className="content-body"><p>Loading dashboard...</p></div>;
+    return <div className="content-body" style={{ color: 'var(--text-light)', padding: '20px' }}>{t('loadingCommandCenter')}</div>;
   }
 
-  // Generate SVG path coordinates for the Weekly trend line
-  // We want a smooth curve mapping our 7 weeklyTrends data points
-  const points = data?.weeklyTrends || [];
-  const maxVal = Math.max(...points.map(p => p.count), 1);
-  const chartHeight = 120;
-  const chartWidth = 320;
-
-  // Map data values to SVG coordinates
-  const mappedPoints = points.map((p, i) => {
-    const x = 30 + i * 42;
-    const y = chartHeight - 15 - (p.count / maxVal) * (chartHeight - 30);
-    return { x, y };
-  });
-
-  // Create smooth Bezier curve path
-  let pathD = '';
-  let fillD = '';
-  if (mappedPoints.length > 0) {
-    pathD = `M ${mappedPoints[0].x} ${mappedPoints[0].y}`;
-    for (let i = 0; i < mappedPoints.length - 1; i++) {
-      const curr = mappedPoints[i];
-      const next = mappedPoints[i + 1];
-      const cpX1 = curr.x + 15;
-      const cpY1 = curr.y;
-      const cpX2 = next.x - 15;
-      const cpY2 = next.y;
-      pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${next.x} ${next.y}`;
-    }
-    // Fill path closing at bottom
-    fillD = `${pathD} L ${mappedPoints[mappedPoints.length - 1].x} ${chartHeight} L ${mappedPoints[0].x} ${chartHeight} Z`;
-  }
+  // Find the most critical pending incident
+  const urgentIncident = data?.recentIncidents?.find(i => i.status === 'Pending') || data?.recentIncidents?.[0];
 
   return (
-    <div className="content-body">
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '26px', fontWeight: '700', color: 'var(--text-main)' }}>Admin Dashboard</h2>
-        <p style={{ color: 'var(--text-light)', fontSize: '14px' }}>Overview of the system</p>
-      </div>
-
-      {/* 6 Soft Colored KPI Cards */}
-      <div className="dashboard-grid" style={{ marginBottom: '24px' }}>
-        <div className="metric-card" style={{ backgroundColor: '#ebf5fb', border: 'none', borderLeft: 'none' }}>
-          <div className="metric-details">
-            <span className="metric-label" style={{ color: '#2980b9' }}>Total Users</span>
-            <span className="metric-value" style={{ margin: '8px 0' }}>{data?.metrics?.totalUsers || 0}</span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Registered accounts</span>
-          </div>
+    <div className="content-body" style={{ padding: '20px', maxWidth: '600px', margin: '0 auto', paddingBottom: '80px' }}>
+      
+      {/* Custom Mobile Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div>
+          <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0', color: 'var(--text-main)', lineHeight: '1.2' }}>
+            {user?.role === 'Admin' ? t('commandCenter') : t('responderActive')}
+          </h1>
+          <p style={{ margin: '0', color: 'var(--text-light)', fontSize: '14px' }}>
+            {t('welcomePrefix')} {user?.full_name?.split(' ')[0]}
+          </p>
         </div>
-
-        <div className="metric-card" style={{ backgroundColor: '#eaf5ee', border: 'none', borderLeft: 'none' }}>
-          <div className="metric-details">
-            <span className="metric-label" style={{ color: '#3d7a50' }}>Total Reports</span>
-            <span className="metric-value" style={{ margin: '8px 0' }}>{data?.metrics?.totalReports || 0}</span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Lifetime submissions</span>
-          </div>
-        </div>
-
-        <div className="metric-card" style={{ backgroundColor: '#fef5e7', border: 'none', borderLeft: 'none' }}>
-          <div className="metric-details">
-            <span className="metric-label" style={{ color: '#d35400' }}>Pending Reports</span>
-            <span className="metric-value" style={{ margin: '8px 0' }}>{data?.metrics?.pendingReports || 0}</span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Awaiting review</span>
-          </div>
-        </div>
-
-        <div className="metric-card" style={{ backgroundColor: '#e8f8f5', border: 'none', borderLeft: 'none' }}>
-          <div className="metric-details">
-            <span className="metric-label" style={{ color: '#16a085' }}>Resolved Reports</span>
-            <span className="metric-value" style={{ margin: '8px 0' }}>{data?.metrics?.resolvedReports || 0}</span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Marked resolved</span>
-          </div>
-        </div>
-
-        <div className="metric-card" style={{ backgroundColor: '#fef9eb', border: 'none', borderLeft: 'none' }}>
-          <div className="metric-details">
-            <span className="metric-label" style={{ color: '#b7950b' }}>Active Incidents</span>
-            <span className="metric-value" style={{ margin: '8px 0' }}>{data?.metrics?.activeIncidents || 0}</span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Currently ongoing</span>
-          </div>
-        </div>
-
-        <div className="metric-card" style={{ backgroundColor: '#fdf2f2', border: 'none', borderLeft: 'none' }}>
-          <div className="metric-details">
-            <span className="metric-label" style={{ color: '#c0392b' }}>Responders</span>
-            <span className="metric-value" style={{ margin: '8px 0' }}>{data?.metrics?.respondersOnDuty || 0}</span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>On Duty / Active</span>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', marginBottom: '24px' }} className="responsive-grid-col">
-        {/* Left Column: Recent Incidents */}
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 className="card-title" style={{ margin: 0 }}>Recent Incidents</h3>
-            <Link to="/incidents" style={{ fontSize: '13px', color: 'var(--primary-color)', textDecoration: 'none', fontWeight: '600' }}>
-              View All
-            </Link>
-          </div>
-
-          {data?.recentIncidents?.length === 0 ? (
-            <div className="notif-empty" style={{ padding: '30px 0' }}>No incidents recorded.</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {data?.recentIncidents?.slice(0, 3).map((incident) => (
-                <div 
-                  key={incident.id} 
-                  style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    padding: '12px', 
-                    border: '1px solid var(--border-color)', 
-                    borderRadius: '8px' 
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: '700', fontSize: '14px' }}>{incident.type} in {incident.reporter_barangay}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      {incident.code} • {new Date(incident.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                  <div>
-                    {getStatusBadge(incident.status)}
-                  </div>
-                </div>
-              ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <Link to="/incidents" style={{ color: 'var(--text-light)', position: 'relative' }}>
+            <Bell size={24} />
+            {data?.metrics?.pendingReports > 0 && (
+              <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', backgroundColor: 'var(--primary-color)', borderRadius: '50%' }}></span>
+            )}
+          </Link>
+          <Link to="/profile" style={{ textDecoration: 'none' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--warning-color)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}>
+              {getInitials(user?.full_name)}
             </div>
-          )}
-        </div>
-
-        {/* Right Column: Smooth Trend Line Chart */}
-        <div className="card">
-          <h3 className="card-title">Incident Overview</h3>
-          <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '12px' }}>Weekly trend mapping</p>
-
-          <div style={{ width: '100%', height: '140px', overflow: 'hidden' }}>
-            <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} width="100%" height="100%">
-              <defs>
-                <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#4b8e62" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#4b8e62" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-
-              {/* Grid Lines */}
-              <line x1="0" y1="20" x2={chartWidth} y2="20" stroke="#f0f2f0" strokeWidth="1" />
-              <line x1="0" y1="55" x2={chartWidth} y2="55" stroke="#f0f2f0" strokeWidth="1" />
-              <line x1="0" y1="90" x2={chartWidth} y2="90" stroke="#f0f2f0" strokeWidth="1" />
-
-              {/* Filled Area */}
-              {fillD && <path d={fillD} fill="url(#chartGradient)" />}
-
-              {/* Curve Line */}
-              {pathD && <path d={pathD} fill="none" stroke="#4b8e62" strokeWidth="3" strokeLinecap="round" />}
-
-              {/* Data points */}
-              {mappedPoints.map((pt, idx) => (
-                <g key={idx}>
-                  <circle cx={pt.x} cy={pt.y} r="4" fill="#ffffff" stroke="#4b8e62" strokeWidth="2.5" />
-                </g>
-              ))}
-
-              {/* X Axis Labels */}
-              {points.map((p, idx) => (
-                <text 
-                  key={idx} 
-                  x={30 + idx * 42} 
-                  y={chartHeight - 2} 
-                  textAnchor="middle" 
-                  fill="var(--text-light)" 
-                  fontSize="9px" 
-                  fontWeight="600"
-                >
-                  {p.day}
-                </text>
-              ))}
-            </svg>
-          </div>
+          </Link>
         </div>
       </div>
 
-      {/* Bottom Row split */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }} className="responsive-grid-col">
-        {/* System status */}
-        <div 
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '16px', 
-            backgroundColor: '#ffffff', 
-            border: '1px solid var(--border-color)', 
-            borderRadius: '12px', 
-            padding: '16px 20px', 
-            boxShadow: 'var(--shadow-sm)' 
+      {/* Hero Action Card (Replaces SOS for Responders) */}
+      <div style={{ 
+        backgroundColor: 'var(--card-alt)', 
+        borderRadius: '20px', 
+        padding: '25px 20px', 
+        marginBottom: '20px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        border: '1px solid var(--border-color)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px', color: 'var(--text-main)' }}>
+          <ShieldAlert size={20} color="var(--primary-color)" />
+          <h2 style={{ fontSize: '16px', margin: 0 }}>{t('activeDispatch')}</h2>
+        </div>
+        
+        {urgentIncident ? (
+          <div style={{ backgroundColor: 'var(--bg-color)', padding: '15px', borderRadius: '12px', marginBottom: '15px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '5px' }}>
+              <span style={{ fontWeight: 'bold', color: 'var(--primary-color)', fontSize: '16px' }}>{urgentIncident.type}</span>
+              <span style={{ fontSize: '12px', background: 'var(--primary-light)', color: 'var(--primary-color)', padding: '2px 8px', borderRadius: '4px' }}>{urgentIncident.status}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-light)', fontSize: '13px' }}>
+              <MapPin size={14} /> {urgentIncident.location_address || t('gpsLocationOnly') || 'Coordinates Only (Map)'}
+            </div>
+          </div>
+        ) : (
+          <div style={{ backgroundColor: 'var(--bg-color)', padding: '20px', borderRadius: '12px', marginBottom: '15px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            {t('noActiveEmergencies')}
+          </div>
+        )}
+
+        <button 
+          onClick={() => navigate(urgentIncident ? `/incidents/${urgentIncident.id}` : '/incidents')}
+          style={{
+            width: '100%',
+            padding: '14px',
+            borderRadius: '10px',
+            backgroundColor: urgentIncident?.status === 'Pending' ? 'var(--primary-color)' : 'var(--info-color)',
+            color: 'white',
+            border: 'none',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
           }}
         >
-          <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#eaf5ee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3d7a50', flexShrink: 0 }}>
-            <CheckCircle size={20} />
+          {urgentIncident?.status === 'Pending' ? t('respondToAlert') : t('viewAllIncidents')}
+        </button>
+      </div>
+
+      {/* 2x2 Status Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
+        
+        {/* Pending */}
+        <Link to="/incidents" style={{ textDecoration: 'none' }}>
+          <div style={{ backgroundColor: '#fdf2f2', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px', border: '1px solid #fadbd8' }}>
+            <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--danger-color)', lineHeight: '1' }}>{data?.metrics?.pendingReports || 0}</span>
+            <span style={{ fontSize: '14px', color: 'var(--danger-color)', fontWeight: '500' }}>{t('pendingStatus')}</span>
           </div>
-          <div>
-            <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>System Status</h4>
-            <p style={{ fontSize: '12px', color: 'var(--text-light)' }}>All systems operational</p>
+        </Link>
+
+        {/* En Route / Progress */}
+        <Link to="/incidents" style={{ textDecoration: 'none' }}>
+          <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--info-color)', lineHeight: '1' }}>{data?.metrics?.activeIncidents || 0}</span>
+            <span style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: '500' }}>{t('enRoute')}</span>
           </div>
+        </Link>
+
+        {/* Resolved */}
+        <Link to="/incidents" style={{ textDecoration: 'none' }}>
+          <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--success-color)', lineHeight: '1' }}>{data?.metrics?.resolvedReports || 0}</span>
+            <span style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: '500' }}>{t('resolvedToday')}</span>
+          </div>
+        </Link>
+
+        {/* Active Responders */}
+        <Link to="/responders" style={{ textDecoration: 'none' }}>
+          <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-main)', lineHeight: '1' }}>{data?.metrics?.respondersOnDuty || 0}</span>
+            <span style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: '500' }}>{t('respondersCount')}</span>
+          </div>
+        </Link>
+        
+      </div>
+
+      {/* Quick Actions */}
+      <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <div style={{ fontWeight: 'bold', fontSize: '16px', color: 'var(--text-main)' }}>{t('systemOverview')}</div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'var(--bg-color)', borderRadius: '10px' }}>
+          <div style={{ padding: '8px', background: 'var(--primary-light)', borderRadius: '8px', color: 'var(--primary-color)' }}>
+            <AlertTriangle size={18} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-main)' }}>{t('totalLifetimeReports')}</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-light)' }}>{t('sinceLaunch')}</div>
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-main)' }}>{data?.metrics?.totalReports || 0}</div>
         </div>
 
-        {/* Alerts status */}
-        <div 
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '16px', 
-            backgroundColor: '#ffffff', 
-            border: '1px solid var(--border-color)', 
-            borderRadius: '12px', 
-            padding: '16px 20px', 
-            boxShadow: 'var(--shadow-sm)' 
-          }}
-        >
-          <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#fdf2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c0392b', flexShrink: 0 }}>
-            <AlertCircle size={20} />
-          </div>
-          <div>
-            <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>Recent Alerts</h4>
-            <p style={{ fontSize: '12px', color: 'var(--text-light)' }}>2 active alerts</p>
-          </div>
-        </div>
       </div>
+
     </div>
   );
 };

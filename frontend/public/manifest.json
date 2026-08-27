@@ -1,0 +1,22 @@
+{
+  "name": "Jamindan Emergency Response",
+  "short_name": "Jamindan ER",
+  "description": "Community Emergency Response Platform for the Municipality of Jamindan",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2e7d32",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

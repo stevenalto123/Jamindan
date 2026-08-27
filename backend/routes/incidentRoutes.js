@@ -5,6 +5,13 @@ const path = require('path');
 const fs = require('fs');
 const db = require('../config/db');
 const { authRequired, requireRole } = require('../middleware/auth');
+const webpush = require('web-push');
+
+webpush.setVapidDetails(
+  process.env.VAPID_EMAIL || 'mailto:test@example.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 // Make sure uploads directory exists
 const uploadDir = path.join(__dirname, '..', 'uploads');
@@ -56,7 +63,7 @@ const generateIncidentCode = async () => {
 
 // Create Incident Report (Residents only)
 router.post('/', authRequired, requireRole(['Resident']), upload.single('photo'), async (req, res) => {
-  const { type, description, location_lat, location_lng } = req.body;
+  const { type, description, location_lat, location_lng, location_address } = req.body;
 
   if (!type || !description) {
     return res.status(400).json({ message: 'Type and description are required' });
@@ -65,15 +72,16 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
   try {
     const code = await generateIncidentCode();
     const photo_path = req.file ? `/uploads/${req.file.filename}` : null;
-    const lat = location_lat ? parseFloat(location_lat) : null;
-    const lng = location_lng ? parseFloat(location_lng) : null;
+    const lat = (location_lat !== null && location_lat !== undefined && !isNaN(parseFloat(location_lat))) ? parseFloat(location_lat) : null;
+    const lng = (location_lng !== null && location_lng !== undefined && !isNaN(parseFloat(location_lng))) ? parseFloat(location_lng) : null;
+    const address = location_address || (lat ? null : 'GPS Location Unavailable');
 
     const incidentId = await db.transaction(async (conn) => {
       // 1. Create Incident
       const [incidentResult] = await conn.execute(`
-        INSERT INTO incidents (code, reporter_id, type, description, photo_path, location_lat, location_lng, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')
-      `, [code, req.user.id, type, description, photo_path, lat, lng]);
+        INSERT INTO incidents (code, reporter_id, type, description, photo_path, location_lat, location_lng, location_address, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
+      `, [code, req.user.id, type, description, photo_path, lat, lng, address]);
 
       const insId = incidentResult.insertId;
 
@@ -83,20 +91,37 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
         VALUES (?, 'Pending', 'Incident report submitted.', ?)
       `, [insId, req.user.id]);
 
-      // 3. Notify Admins
-      const [admins] = await conn.query("SELECT id FROM users WHERE role = 'Admin' AND is_active = 1");
+      // 3. Notify Admins and Responders
+      const [recipients] = await conn.query("SELECT id, push_subscription FROM users WHERE role IN ('Admin', 'Responder') AND is_active = 1");
       const [residentRows] = await conn.query("SELECT full_name FROM users WHERE id = ?", [req.user.id]);
       const resident = residentRows[0];
 
-      for (const admin of admins) {
+      for (const recipient of recipients) {
+        // App Notification
         await conn.execute(`
           INSERT INTO notifications (user_id, title, message, reference_type, reference_id)
           VALUES (?, 'New Emergency Report', ?, 'incident', ?)
         `, [
-          admin.id,
+          recipient.id,
           `A new ${type} report (${code}) has been reported by ${resident ? resident.full_name : 'a Resident'}.`,
           insId
         ]);
+
+        // Web Push Notification
+        if (recipient.push_subscription) {
+          try {
+            const subscription = JSON.parse(recipient.push_subscription);
+            const payload = JSON.stringify({
+              title: `🚨 URGENT: ${type}`,
+              body: `Incident ${code} reported by ${resident ? resident.full_name : 'Resident'} at ${address || 'GPS Location'}!`,
+              icon: '/jamindan-seal.png',
+              url: '/incidents'
+            });
+            await webpush.sendNotification(subscription, payload);
+          } catch (pushErr) {
+            console.error('Failed to send push notification to user', recipient.id, pushErr.message);
+          }
+        }
       }
 
       return insId;
@@ -157,10 +182,29 @@ router.get('/', authRequired, async (req, res) => {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ' ORDER BY i.created_at DESC';
+    // If Admin/Responder, force Critical-keyword incidents to float to the very top
+    if (req.user.role !== 'Resident') {
+      const keywordRegex = '(unconscious|bleeding|fire|trapped|armed|heart attack|stroke|not breathing|critical|severe|gun|knife|suicide|explosion)';
+      query += ` ORDER BY CASE WHEN i.description REGEXP '${keywordRegex}' THEN 1 ELSE 2 END ASC, i.created_at DESC`;
+    } else {
+      query += ' ORDER BY i.created_at DESC';
+    }
 
     const [incidents] = await db.query(query, params);
-    return res.json(incidents);
+    
+    // Epic Feature 4: Smart Incident Prioritization Algorithm
+    const criticalKeywords = /(unconscious|bleeding|fire|trapped|armed|heart attack|stroke|not breathing|critical|severe|gun|knife|suicide|explosion)/i;
+    
+    const processedIncidents = incidents.map(inc => {
+      let priority = 'Normal';
+      // If the description contains any severe keyword, instantly flag as CRITICAL
+      if (inc.description && criticalKeywords.test(inc.description)) {
+        priority = 'CRITICAL';
+      }
+      return { ...inc, priority };
+    });
+
+    return res.json(processedIncidents);
 
   } catch (error) {
     console.error('List incidents error:', error);
@@ -174,9 +218,23 @@ router.get('/:id', authRequired, async (req, res) => {
 
   try {
     const [incidentRows] = await db.query(`
-      SELECT i.*, u.full_name as reporter_name, u.phone as reporter_phone, u.barangay as reporter_barangay
+      SELECT i.*, 
+             u.full_name as reporter_name, 
+             u.phone as reporter_phone, 
+             u.barangay as reporter_barangay,
+             u.purok_sitio as reporter_purok_sitio,
+             u.blood_type as reporter_blood_type,
+             u.allergies as reporter_allergies,
+             u.medical_conditions as reporter_medical_conditions,
+             u.emergency_contact_name as reporter_emergency_contact_name,
+             u.emergency_contact_phone as reporter_emergency_contact_phone,
+             resp.full_name as responder_name,
+             resp.phone as responder_phone,
+             resp.current_lat as responder_lat,
+             resp.current_lng as responder_lng
       FROM incidents i
       JOIN users u ON i.reporter_id = u.id
+      LEFT JOIN users resp ON i.responder_id = resp.id
       WHERE i.id = ?
     `, [id]);
 
@@ -199,11 +257,58 @@ router.get('/:id', authRequired, async (req, res) => {
       ORDER BY h.created_at ASC
     `, [id]);
 
-    return res.json({ incident, history });
+    // Fetch reporter's household members list
+    const [household] = await db.query(`
+      SELECT id, full_name, age, gender, medical_notes
+      FROM household_members
+      WHERE user_id = ?
+      ORDER BY id ASC
+    `, [incident.reporter_id]);
+
+    return res.json({ 
+      incident, 
+      history, 
+      reporterHousehold: household 
+    });
 
   } catch (error) {
     console.error('Fetch incident detail error:', error);
     return res.status(500).json({ message: 'Server error while fetching incident detail' });
+  }
+});
+
+// Epic Feature 1: Live Responder Tracking - Get Responder Location
+router.get('/:id/responder-location', authRequired, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [rows] = await db.query(`
+      SELECT i.reporter_id, u.current_lat, u.current_lng, u.full_name as responder_name
+      FROM incidents i
+      JOIN users u ON i.responder_id = u.id
+      WHERE i.id = ?
+    `, [id]);
+
+    const data = rows[0];
+
+    if (!data) {
+      return res.status(404).json({ message: 'Responder or Incident not found.' });
+    }
+
+    // Security check: Only the reporter or an Admin/Responder can track
+    if (req.user.role === 'Resident' && data.reporter_id !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    return res.json({
+      responder_name: data.responder_name,
+      lat: data.current_lat,
+      lng: data.current_lng
+    });
+
+  } catch (error) {
+    console.error('Fetch responder location error:', error);
+    return res.status(500).json({ message: 'Server error while fetching responder location' });
   }
 });
 
@@ -212,13 +317,13 @@ router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), asy
   const { id } = req.params;
   const { status, comment } = req.body;
 
-  const validStatuses = ['Pending', 'Under Review', 'In Progress', 'Resolved'];
+  const validStatuses = ['Pending', 'Under Review', 'In Progress', 'En Route', 'On Scene', 'Resolved', 'False Alarm'];
   if (!status || !validStatuses.includes(status)) {
     return res.status(400).json({ message: 'Invalid status value' });
   }
 
   try {
-    const [incidentRows] = await db.query('SELECT code, reporter_id, status FROM incidents WHERE id = ?', [id]);
+    const [incidentRows] = await db.query('SELECT code, reporter_id, status, responder_id FROM incidents WHERE id = ?', [id]);
     const incident = incidentRows[0];
     if (!incident) {
       return res.status(404).json({ message: 'Incident not found' });
@@ -229,8 +334,19 @@ router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), asy
     }
 
     await db.transaction(async (conn) => {
-      // 1. Update status
-      await conn.execute('UPDATE incidents SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [status, id]);
+      // 1. Update status (and auto-assign Responder if they are the first to change it from Pending)
+      let updateQuery = 'UPDATE incidents SET status = ?, updated_at = CURRENT_TIMESTAMP';
+      const updateParams = [status];
+      
+      if (req.user.role === 'Responder' && incident.responder_id === null) {
+        updateQuery += ', responder_id = ?';
+        updateParams.push(req.user.id);
+      }
+      
+      updateQuery += ' WHERE id = ?';
+      updateParams.push(id);
+
+      await conn.execute(updateQuery, updateParams);
 
       // 2. Insert into history
       await conn.execute(`

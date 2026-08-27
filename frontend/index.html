@@ -1,9 +1,15 @@
 <!doctype html>
 <html lang="en">
-  <head>
+  <head><script>window.addEventListener('error', function(e) { fetch('http://localhost:5000/api/log-error', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message: e.message, stack: e.error ? e.error.stack : ''}) }); });</script>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#2e7d32" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Jamindan Emergency" />
+    <link rel="apple-touch-icon" href="/logo.png" />
     <title>Emergency Response Community Platform - Jamindan</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,5 +22,30 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Prevent pinch-to-zoom
+      document.addEventListener('touchstart', function(event) {
+        if (event.touches.length > 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+
+      // Prevent double-tap-to-zoom
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', function(event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+          event.preventDefault();
+        }
+        lastTouchEnd = now;
+      }, { passive: false });
+
+      // Prevent zoom on desktop using ctrl + scroll
+      document.addEventListener('wheel', function(event) {
+        if (event.ctrlKey) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+    </script>
   </body>
 </html>

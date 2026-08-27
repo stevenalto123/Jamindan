@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, Smartphone } from 'lucide-react';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -10,8 +10,18 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (user) {
+      if (user.role === 'Admin' || user.role === 'Responder') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,13 +36,17 @@ const Login = () => {
     try {
       const user = await login(username, password);
       if (user.role === 'Admin' || user.role === 'Responder') {
-        navigate('/admin');
+        navigate('/admin', { replace: true });
       } else {
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || 'Invalid username or password. Please try again.');
+      if (!err.response) {
+        setError('Network Error: Cannot connect to server. Please check your internet connection or try again.');
+      } else {
+        setError(err.response?.data?.message || 'Invalid username or password. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -104,9 +118,10 @@ const Login = () => {
             </button>
           </form>
 
-          <div style={{ marginTop: '20px', fontSize: '13px', color: 'var(--text-light)' }}>
+          <div style={{ marginTop: '20px', fontSize: '13px', color: 'var(--text-light)', textAlign: 'center' }}>
             Don't have an account? <Link to="/register" style={{ color: 'var(--primary-color)', fontWeight: '600', textDecoration: 'none' }}>Register here</Link>
           </div>
+
         </div>
 
         {/* Vector SVG illustration at the bottom matching the template */}

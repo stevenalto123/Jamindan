@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, BACKEND_URL } from '../context/AuthContext';
 import { Radio, PlusCircle, Trash2, Edit2, X, Upload } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const CATEGORIES = ['News', 'Announcements', 'Advisories'];
-
 const NewsUpdates = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -120,16 +121,12 @@ const NewsUpdates = () => {
 
   return (
     <div className="content-body">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '15px' }}>
-        <div>
-          <h2 style={{ fontSize: '26px', fontWeight: '700', color: 'var(--text-main)' }}>News & Updates</h2>
-          <p style={{ color: 'var(--text-light)', fontSize: '14px' }}>Stay informed with the latest updates</p>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '15px' }}>
 
         {isAdmin && (
           <button className="btn btn-primary" onClick={handleOpenCreateModal} style={{ height: '40px' }}>
             <PlusCircle size={18} />
-            Add Announcement
+            {t('addAnnouncement')}
           </button>
         )}
       </div>
@@ -148,16 +145,16 @@ const NewsUpdates = () => {
       </div>
 
       {loading ? (
-        <div className="notif-empty">Loading bulletins...</div>
+        <div className="notif-empty">{t('loadingBulletins')}</div>
       ) : feed.length === 0 ? (
-        <div className="notif-empty">No announcements posted in this category.</div>
+        <div className="notif-empty">{t('noAnnouncements')}</div>
       ) : (
         <div className="news-feed-list">
           {feed.map((article) => (
             <div key={article.id} className="news-list-card">
               {article.image_path ? (
                 <img 
-                  src={`http://localhost:5000${article.image_path}`} 
+                  src={`${BACKEND_URL}${article.image_path}`} 
                   alt={article.title} 
                   className="news-list-thumb" 
                 />
@@ -178,10 +175,10 @@ const NewsUpdates = () => {
                 </div>
 
                 <h3 className="news-list-title">{article.title}</h3>
-                <p className="news-list-excerpt">{article.content}</p>
+                <p className="news-list-excerpt" style={{ whiteSpace: 'pre-wrap' }}>{article.content}</p>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #f4f5f4', fontSize: '11px', color: 'var(--text-muted)' }}>
-                  <span>By {article.author_name}</span>
+                  <span>{t('by')} {article.author_name}</span>
                   {isAdmin && (
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button 

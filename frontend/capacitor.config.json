@@ -1,0 +1,13 @@
+{
+  "appId": "com.jamindan.emergency",
+  "appName": "Jamindan Emergency",
+  "webDir": "dist",
+  "server": {
+    "cleartext": true
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

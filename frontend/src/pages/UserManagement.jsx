@@ -249,6 +249,7 @@ const UserManagement = () => {
         ) : (
           <>
             <div className="table-container" style={{ border: 'none', borderRadius: '0' }}>
+            <div className="table-responsive">
               <table className="custom-table">
                 <thead>
                   <tr>
@@ -315,6 +316,7 @@ const UserManagement = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
             </div>
 
             {/* Pagination Controls */}

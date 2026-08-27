@@ -95,7 +95,7 @@ router.get('/resident', requireRole(['Resident']), async (req, res) => {
       SELECT n.*, u.full_name as author_name
       FROM news n
       JOIN users u ON n.author_id = u.id
-      WHERE n.category = 'Advisories'
+      WHERE n.category IN ('Announcements', 'Advisories')
       ORDER BY n.created_at DESC
       LIMIT 3
     `);

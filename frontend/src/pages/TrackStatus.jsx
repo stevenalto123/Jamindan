@@ -24,6 +24,10 @@ const TrackStatus = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
+  // Responder tracking state
+  const [responderLat, setResponderLat] = useState(null);
+  const [responderLng, setResponderLng] = useState(null);
+  
   // Status edit states (for Admin / Responder)
   const [newStatus, setNewStatus] = useState('');
   const [comment, setComment] = useState('');
@@ -46,6 +50,53 @@ const TrackStatus = () => {
   useEffect(() => {
     fetchIncidentDetail();
   }, [id]);
+
+  // Track Responder's own location
+  useEffect(() => {
+    if (user?.role === 'Responder' || user?.role === 'Admin') {
+      const getLoc = () => {
+        const fallbackToIP = () => {
+          axios.get('https://ipapi.co/json/')
+            .then(res => {
+              if (res.data && res.data.latitude && res.data.longitude) {
+                setResponderLat(res.data.latitude);
+                setResponderLng(res.data.longitude);
+              } else {
+                throw new Error("ipapi failed");
+              }
+            })
+            .catch(() => {
+              axios.get('https://ipinfo.io/json')
+                .then(res2 => {
+                  if (res2.data && res2.data.loc) {
+                    const [lat, lng] = res2.data.loc.split(',').map(Number);
+                    setResponderLat(lat);
+                    setResponderLng(lng);
+                  }
+                })
+                .catch(() => {});
+            });
+        };
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              setResponderLat(pos.coords.latitude);
+              setResponderLng(pos.coords.longitude);
+            },
+            (err) => fallbackToIP(),
+            { enableHighAccuracy: true, timeout: 5000 }
+          );
+        } else {
+          fallbackToIP();
+        }
+      };
+      
+      getLoc();
+      const interval = setInterval(getLoc, 10000); // update every 10s
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   const handleStatusUpdateSubmit = async (e) => {
     e.preventDefault();
@@ -221,7 +272,12 @@ const TrackStatus = () => {
             <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '12px' }}>
               📍 Barangay {incident.reporter_barangay}
             </p>
-            <MapDisplay lat={incident.location_lat} lng={incident.location_lng} />
+            <MapDisplay 
+              lat={incident.location_lat} 
+              lng={incident.location_lng} 
+              responderLat={responderLat}
+              responderLng={responderLng}
+            />
           </div>
 
           {/* Reporter details for dispatcher */}

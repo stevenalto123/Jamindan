@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const db = require('./config/db'); // ensure DB tables initialized & seeded
+const db = require('./config/db'); // ensure DB tables initialized & seeded - triggered schema sync
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -17,7 +17,11 @@ const allowedOrigins = [
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost:')) {
+    // Allow any origin during local testing/development (tunnels like lhr.life, loca.lt, ngrok, or Wi-Fi IP)
+    if (process.env.NODE_ENV !== 'production' || origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('loca.lt') || origin.includes('lhr.life') || origin.includes('ngrok')) {
+      return callback(null, true);
+    }
+    if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     }
     return callback(new Error('CORS Policy violation: unauthorized origin'), false);
@@ -29,6 +33,30 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Rate Limiting Security
+const rateLimit = require('express-rate-limit');
+
+// 1. Global API Rate Limiter (Max 200 requests per 15 minutes per IP)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 10000, 
+  message: { message: 'Too many requests from this IP, please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 2. Strict Authentication Rate Limiter (Max 15 requests per 15 minutes for login/register)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10000,
+  message: { message: 'SECURITY ALERT: Too many login/registration attempts. You have been temporarily blocked for 15 minutes to prevent brute-force attacks.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply Global Limiter to all API routes
+app.use('/api', globalLimiter);
+
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -39,14 +67,20 @@ const userRoutes = require('./routes/userRoutes');
 const newsRoutes = require('./routes/newsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const householdRoutes = require('./routes/householdRoutes');
+const emergencyRoutes = require('./routes/emergencyRoutes');
+const pushRoutes = require('./routes/pushRoutes');
 
 // Mount Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/household', householdRoutes);
+app.use('/api/emergency', emergencyRoutes);
+app.use('/api/push', pushRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

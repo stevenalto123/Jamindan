@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `phone` VARCHAR(20) NOT NULL,
   `barangay` VARCHAR(100) NOT NULL,
   `avatar` VARCHAR(255) NULL,
+  `id_type` VARCHAR(50) NULL,
   `is_active` TINYINT DEFAULT 1, -- 1 = active, 0 = deactivated
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
