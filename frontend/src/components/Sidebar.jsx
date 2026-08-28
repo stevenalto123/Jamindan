@@ -142,6 +142,12 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                  <span>Hotlines Directory</span>
                </NavLink>
              </li>
+             <li className="sidebar-item">
+               <NavLink to="/responders" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
+                 <Shield size={18} />
+                 <span>Responders</span>
+               </NavLink>
+             </li>
           </>
         )}
 
@@ -157,12 +163,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               <NavLink to="/users" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <Users size={18} />
                 <span>Users</span>
-              </NavLink>
-            </li>
-            <li className="sidebar-item">
-              <NavLink to="/responders" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
-                <Shield size={18} />
-                <span>Responders</span>
               </NavLink>
             </li>
           </>

@@ -495,7 +495,7 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/responders" element={
-            <ProtectedRoute allowedRoles={['Admin']}>
+            <ProtectedRoute allowedRoles={['Admin', 'Responder']}>
               <AppLayout>
                 <AdminResponders />
               </AppLayout>
