@@ -49,6 +49,21 @@ router.get('/stats', requireRole(['Admin', 'Responder']), async (req, res) => {
       LIMIT 5
     `);
 
+    // Recent call logs (limit 10)
+    let recentCallLogs = [];
+    try {
+      const [logsRows] = await db.query(`
+        SELECT c.*, u.full_name as caller_name 
+        FROM call_logs c
+        JOIN users u ON c.caller_id = u.id
+        ORDER BY c.called_at DESC
+        LIMIT 10
+      `);
+      recentCallLogs = logsRows;
+    } catch (e) {
+      console.warn("Call logs table might not be ready yet.");
+    }
+
     return res.json({
       metrics: {
         totalUsers,
@@ -59,9 +74,9 @@ router.get('/stats', requireRole(['Admin', 'Responder']), async (req, res) => {
         resolvedReports
       },
       weeklyTrends,
-      recentIncidents
+      recentIncidents,
+      recentCallLogs
     });
-
   } catch (error) {
     console.error('Fetch dashboard stats error:', error);
     return res.status(500).json({ message: 'Server error while fetching dashboard stats' });

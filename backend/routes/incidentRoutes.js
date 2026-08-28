@@ -63,7 +63,7 @@ const generateIncidentCode = async () => {
 
 // Create Incident Report (Residents only)
 router.post('/', authRequired, requireRole(['Resident']), upload.single('photo'), async (req, res) => {
-  const { type, description, location_lat, location_lng, location_address } = req.body;
+  const { type, description, location_lat, location_lng, location_address, details } = req.body;
 
   if (!type || !description) {
     return res.status(400).json({ message: 'Type and description are required' });
@@ -75,13 +75,19 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
     const lat = (location_lat !== null && location_lat !== undefined && !isNaN(parseFloat(location_lat))) ? parseFloat(location_lat) : null;
     const lng = (location_lng !== null && location_lng !== undefined && !isNaN(parseFloat(location_lng))) ? parseFloat(location_lng) : null;
     const address = location_address || (lat ? null : 'GPS Location Unavailable');
+    let detailsJson = null;
+    try {
+      if (details) detailsJson = typeof details === 'string' ? details : JSON.stringify(details);
+    } catch (e) {
+      console.warn("Failed to stringify details");
+    }
 
     const incidentId = await db.transaction(async (conn) => {
       // 1. Create Incident
       const [incidentResult] = await conn.execute(`
-        INSERT INTO incidents (code, reporter_id, type, description, photo_path, location_lat, location_lng, location_address, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
-      `, [code, req.user.id, type, description, photo_path, lat, lng, address]);
+        INSERT INTO incidents (code, reporter_id, type, description, details, photo_path, location_lat, location_lng, location_address, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
+      `, [code, req.user.id, type, description, detailsJson, photo_path, lat, lng, address]);
 
       const insId = incidentResult.insertId;
 
@@ -317,7 +323,7 @@ router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), asy
   const { id } = req.params;
   const { status, comment } = req.body;
 
-  const validStatuses = ['Pending', 'Under Review', 'In Progress', 'En Route', 'On Scene', 'Resolved', 'False Alarm'];
+  const validStatuses = ['Pending', 'Acknowledged', 'Responding', 'On Scene', 'Resolved', 'False Alarm'];
   if (!status || !validStatuses.includes(status)) {
     return res.status(400).json({ message: 'Invalid status value' });
   }

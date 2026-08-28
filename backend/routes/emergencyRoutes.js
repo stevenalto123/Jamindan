@@ -27,6 +27,41 @@ router.get('/hotlines', async (req, res) => {
   }
 });
 
+// LOG a hotline call intent (Accessible by Residents and Responders)
+router.post('/hotlines/log', async (req, res) => {
+  const { hotline_name, hotline_number } = req.body;
+  if (!hotline_name || !hotline_number) {
+    return res.status(400).json({ message: 'Missing hotline information' });
+  }
+  try {
+    await db.execute(
+      'INSERT INTO call_logs (caller_id, hotline_name, hotline_number) VALUES (?, ?, ?)',
+      [req.user.id, hotline_name, hotline_number]
+    );
+    return res.status(201).json({ message: 'Call intent logged' });
+  } catch (error) {
+    console.error('Log hotline call error:', error);
+    return res.status(500).json({ message: 'Server error while logging call' });
+  }
+});
+
+// ADMIN ONLY - GET all call logs
+router.get('/hotlines/logs', requireRole(['Admin']), async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT c.*, u.full_name as caller_name 
+      FROM call_logs c
+      JOIN users u ON c.caller_id = u.id
+      ORDER BY c.called_at DESC
+      LIMIT 100
+    `);
+    return res.json(rows);
+  } catch (error) {
+    console.error('Fetch call logs error:', error);
+    return res.status(500).json({ message: 'Server error while fetching call logs' });
+  }
+});
+
 // ADMIN ONLY - Add evacuation center
 router.post('/evacuation-centers', requireRole(['Admin']), async (req, res) => {
   const { name, location, capacity, status, latitude, longitude } = req.body;

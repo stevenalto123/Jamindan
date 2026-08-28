@@ -6,7 +6,7 @@ import { FileText, Search, PlusCircle, Eye, Trash2, Download, Printer } from 'lu
 import { useLanguage } from '../context/LanguageContext';
 
 export const INCIDENT_TYPES = ['Fire', 'Medical', 'Flood', 'Crime', 'Accident', 'Other', 'Landslide'];
-export const STATUSES = ['Pending', 'Under Review', 'In Progress', 'Resolved'];
+export const STATUSES = ['Pending', 'Acknowledged', 'Responding', 'On Scene', 'Resolved'];
 
 const IncidentList = () => {
   const { t } = useLanguage();

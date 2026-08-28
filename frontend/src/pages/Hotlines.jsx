@@ -116,6 +116,19 @@ const Hotlines = () => {
     return <PhoneCall size={20} />;
   };
 
+  const handleCall = async (e, hotline, number) => {
+    e.preventDefault();
+    try {
+      await axios.post('/api/emergency/hotlines/log', {
+        hotline_name: hotline.agency_name,
+        hotline_number: number
+      });
+    } catch (err) {
+      console.warn("Failed to log call intent", err);
+    }
+    window.location.href = `tel:${number.replace(/\s+/g, '')}`;
+  };
+
   return (
     <div className="content-body" style={{ maxWidth: '1100px' }}>
 
@@ -173,21 +186,23 @@ const Hotlines = () => {
                     return (
                       <a 
                         key={i}
-                        href={`tel:${cleanNum.replace(/\s+/g, '')}`} 
+                        href={`tel:${cleanNum.replace(/\s+/g, '')}`}
+                        onClick={(e) => handleCall(e, hotline, cleanNum)} 
                         style={{ 
                           fontSize: '13px', 
                           fontWeight: '700', 
-                          color: 'var(--primary-color)', 
+                          color: '#fff', 
                           textDecoration: 'none',
-                          backgroundColor: '#eaf5ee',
-                          padding: '4px 10px',
-                          borderRadius: '6px',
+                          backgroundColor: 'var(--primary-color)',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '4px'
+                          gap: '6px',
+                          boxShadow: '0 2px 4px rgba(46,204,113,0.2)'
                         }}
                       >
-                        📞 {cleanNum}
+                        📞 Call {cleanNum}
                       </a>
                     );
                   })}
@@ -246,21 +261,22 @@ const Hotlines = () => {
                 <div>
                   <a 
                     href={`tel:${hotline.contact_number.replace(/\s+/g, '')}`} 
+                    onClick={(e) => handleCall(e, hotline, hotline.contact_number)}
                     style={{ 
                       fontSize: '13px', 
                       fontWeight: '700', 
-                      color: 'var(--primary-color)', 
+                      color: '#fff', 
                       textDecoration: 'none',
-                      backgroundColor: '#f0f7f4',
+                      backgroundColor: 'var(--primary-color)',
                       padding: '6px 12px',
-                      borderRadius: '6px',
+                      borderRadius: '8px',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '6px',
                       width: '100%',
                       boxSizing: 'border-box',
                       justifyContent: 'center',
-                      border: '1px solid #d4ebd9'
+                      boxShadow: '0 2px 4px rgba(46,204,113,0.2)'
                     }}
                   >
                     📞 {t('call') || 'Call'}: {hotline.contact_number}

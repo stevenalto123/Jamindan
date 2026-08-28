@@ -38,7 +38,9 @@ const TrackStatus = () => {
       const res = await axios.get(`/api/incidents/${id}`);
       setIncident(res.data.incident);
       setHistory(res.data.history);
-      setNewStatus(res.data.incident.status);
+      // Wait to ensure the status isn't incorrectly mapped if it's an old one
+      const oldStatus = res.data.incident.status;
+      setNewStatus(STATUSES.includes(oldStatus) ? oldStatus : 'Acknowledged');
     } catch (err) {
       console.error(err);
       setError('Could not fetch incident report details.');
@@ -145,6 +147,62 @@ const TrackStatus = () => {
 
   const isStaff = user?.role === 'Admin' || user?.role === 'Responder';
 
+  // Parse structured details
+  let parsedDetails = null;
+  if (incident?.details) {
+    try {
+      parsedDetails = typeof incident.details === 'string' ? JSON.parse(incident.details) : incident.details;
+    } catch (e) {
+      console.warn("Failed to parse incident details");
+    }
+  }
+
+  const getRecommendedResources = () => {
+    if (!incident) return [];
+    const resources = [];
+    
+    if (incident.type === 'Medical' || incident.type === 'Accident') {
+      resources.push('Ambulance / Emergency Medical Vehicle');
+      if (parsedDetails?.victims > 1) {
+        resources.push(`${parsedDetails.victims}x Stretchers/Backboards`);
+        resources.push('Mass Casualty Protocol (Additional Personnel)');
+      } else {
+        resources.push('1x Stretcher');
+        resources.push('Standard Trauma/First-Aid Kit');
+      }
+      
+      if (incident.type === 'Accident') {
+        resources.push('Traffic Cones & High-Visibility Vests');
+        if (parsedDetails?.road_obstruction === 'Yes') {
+          resources.push('Traffic Enforcers for routing');
+        }
+      }
+    }
+    
+    if (incident.type === 'Fire') {
+      resources.push('Fire Truck(s)');
+      resources.push('SCBA (Self-Contained Breathing Apparatus)');
+      if (parsedDetails?.trapped_persons === 'Yes') {
+        resources.push('Search and Rescue Equipment (Breaching tools)');
+        resources.push('Ambulance on standby for casualties');
+      }
+    }
+    
+    if (incident.type === 'Flood') {
+      resources.push('Rescue Boat / Rubber Boat');
+      resources.push('Life Vests & Throw Bags');
+      if (parsedDetails?.people_needing_rescue > 0) {
+        resources.push('Evacuation Transport Vehicle (6x6 Truck)');
+      }
+    }
+    
+    if (resources.length === 0) {
+      resources.push('Standard Patrol/Response Vehicle');
+      resources.push('Radio / Communication Equipment');
+    }
+    return resources;
+  };
+
   return (
     <div className="content-body">
       <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="no-print">
@@ -179,9 +237,26 @@ const TrackStatus = () => {
             </div>
 
             <div style={{ marginBottom: '20px' }}>
-              <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)' }}>
-                {incident.description}
-              </p>
+              <div style={{ marginBottom: '15px' }}>
+                <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: '4px' }}>Additional Description</h4>
+                <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)', margin: 0 }}>
+                  {incident.description}
+                </p>
+              </div>
+
+              {parsedDetails && Object.keys(parsedDetails).length > 0 && (
+                <div style={{ backgroundColor: 'var(--bg-color)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: '10px' }}>Structured Incident Data</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    {Object.entries(parsedDetails).map(([key, value]) => (
+                      <div key={key}>
+                        <div style={{ fontSize: '11px', color: 'var(--text-light)', textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</div>
+                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-main)' }}>{value || 'N/A'}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {incident.photo_path && (
@@ -226,6 +301,24 @@ const TrackStatus = () => {
 
         {/* Right Side: Map & Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Resource Recommendations (For Staff) */}
+          {isStaff && (
+            <div className="card" style={{ backgroundColor: 'var(--card-alt)', borderColor: 'rgba(231, 76, 60, 0.2)' }}>
+              <h3 className="card-title" style={{ color: 'var(--danger-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🎒 Recommended Resources
+              </h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '12px' }}>
+                System suggestions based on reported incident data. Verify with team lead before deployment.
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '14px', color: 'var(--text-main)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {getRecommendedResources().map((item, idx) => (
+                  <li key={idx}><strong>{item}</strong></li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Dispatcher Actions */}
           {isStaff && (
             <div className="card" style={{ borderColor: 'rgba(75, 142, 98, 0.3)' }}>

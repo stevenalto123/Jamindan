@@ -89,6 +89,12 @@ const initializeDatabase = async () => {
         // Column already exists or table doesn't exist yet, which is fine
       }
       try {
+        await pool.query('ALTER TABLE incidents ADD COLUMN details JSON NULL AFTER description');
+        console.log('Successfully injected details column into existing incidents table.');
+      } catch (e) {
+        // Column already exists or table doesn't exist yet, which is fine
+      }
+      try {
         await pool.query('ALTER TABLE users ADD COLUMN push_subscription TEXT NULL AFTER current_lng');
         console.log('Successfully injected push_subscription column into existing users table.');
       } catch (e) {
@@ -173,6 +179,7 @@ const initializeDatabase = async () => {
         responder_id INT NULL,
         type VARCHAR(50) NOT NULL, -- 'Fire', 'Medical', 'Flood', 'Crime', 'Accident', 'Other', 'Landslide'
         description TEXT NOT NULL,
+        details JSON NULL,
         photo_path VARCHAR(255) NULL,
         location_lat DOUBLE NULL,
         location_lng DOUBLE NULL,
@@ -225,6 +232,17 @@ const initializeDatabase = async () => {
         reference_id INT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS call_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        caller_id INT NOT NULL,
+        hotline_name VARCHAR(100) NOT NULL,
+        hotline_number VARCHAR(50) NOT NULL,
+        called_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (caller_id) REFERENCES users (id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 

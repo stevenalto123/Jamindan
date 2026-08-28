@@ -9,6 +9,7 @@ const INCIDENT_TYPES = ['Fire', 'Medical', 'Flood', 'Crime', 'Accident', 'Other'
 
 const ReportIncident = () => {
   const [type, setType] = useState('');
+  const [details, setDetails] = useState({});
   const [locationText, setLocationText] = useState('');
   const [description, setDescription] = useState('');
   const [photo, setPhoto] = useState(null);
@@ -44,6 +45,9 @@ const ReportIncident = () => {
             formData.append('location_lat', draft.lat);
             formData.append('location_lng', draft.lng);
             formData.append('location_address', address);
+            if (draft.details) {
+              formData.append('details', JSON.stringify(draft.details));
+            }
           
           const res = await axios.post('/api/incidents', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
@@ -66,6 +70,14 @@ const ReportIncident = () => {
     
     return () => window.removeEventListener('online', handleOnline);
   }, [navigate]);
+
+  useEffect(() => {
+    setDetails({});
+  }, [type]);
+
+  const handleDetailChange = (field, value) => {
+    setDetails(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -94,6 +106,7 @@ const ReportIncident = () => {
     if (!navigator.onLine) {
       const draft = {
         type,
+        details,
         locationText,
         description,
         lat,
@@ -123,6 +136,9 @@ const ReportIncident = () => {
     formData.append('location_lat', lat);
     formData.append('location_lng', lng);
     formData.append('location_address', address);
+    if (Object.keys(details).length > 0) {
+      formData.append('details', JSON.stringify(details));
+    }
     if (photo) {
       formData.append('photo', photo);
     }
@@ -139,6 +155,95 @@ const ReportIncident = () => {
       console.error(err);
       setError(err.response?.data?.message || 'Failed to submit report. Please try again.');
       setLoading(false);
+    }
+  };
+
+  const renderDynamicFields = () => {
+    switch (type) {
+      case 'Fire':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', backgroundColor: 'var(--card-alt)', padding: '15px', borderRadius: '10px' }}>
+            <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--danger-color)' }}>🔥 Fire Details</h4>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Structures Affected</label>
+              <input type="number" className="form-input" placeholder="e.g. 2" onChange={(e) => handleDetailChange('structures_affected', e.target.value)} />
+            </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Visible Fire/Smoke?</label>
+              <select className="form-select" onChange={(e) => handleDetailChange('visible_fire', e.target.value)}>
+                <option value="">Select...</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Possible Trapped Persons?</label>
+              <select className="form-select" onChange={(e) => handleDetailChange('trapped_persons', e.target.value)}>
+                <option value="">Select...</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+          </div>
+        );
+      case 'Accident':
+      case 'Medical':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', backgroundColor: 'var(--card-alt)', padding: '15px', borderRadius: '10px' }}>
+            <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--danger-color)' }}>🚑 Medical/Accident Details</h4>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Number of Victims/Patients</label>
+              <input type="number" className="form-input" placeholder="e.g. 2" onChange={(e) => handleDetailChange('victims', e.target.value)} />
+            </div>
+            {type === 'Accident' && (
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Vehicles Involved</label>
+                <input type="number" className="form-input" placeholder="e.g. 2" onChange={(e) => handleDetailChange('vehicles_involved', e.target.value)} />
+              </div>
+            )}
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Condition / Injuries</label>
+              <input type="text" className="form-input" placeholder="e.g. Unconscious, bleeding" onChange={(e) => handleDetailChange('injuries', e.target.value)} />
+            </div>
+            {type === 'Accident' && (
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Road Obstruction?</label>
+                <select className="form-select" onChange={(e) => handleDetailChange('road_obstruction', e.target.value)}>
+                  <option value="">Select...</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+            )}
+          </div>
+        );
+      case 'Flood':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', backgroundColor: 'var(--card-alt)', padding: '15px', borderRadius: '10px' }}>
+            <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--info-color)' }}>🌊 Flood Details</h4>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Approximate Water Level</label>
+              <select className="form-select" onChange={(e) => handleDetailChange('water_level', e.target.value)}>
+                <option value="">Select...</option>
+                <option value="Ankle Deep">Ankle Deep</option>
+                <option value="Knee Deep">Knee Deep</option>
+                <option value="Waist Deep">Waist Deep</option>
+                <option value="Above Head">Above Head</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Affected Households</label>
+              <input type="number" className="form-input" placeholder="e.g. 5" onChange={(e) => handleDetailChange('households_affected', e.target.value)} />
+            </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">People Needing Rescue</label>
+              <input type="number" className="form-input" placeholder="e.g. 3" onChange={(e) => handleDetailChange('people_needing_rescue', e.target.value)} />
+            </div>
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
@@ -186,6 +291,8 @@ const ReportIncident = () => {
               <MapPicker lat={lat} lng={lng} onChange={(newLat, newLng) => { setLat(newLat); setLng(newLng); }} />
             </div>
           </div>
+
+          {renderDynamicFields()}
 
           <div className="form-group" style={{ margin: 0 }}>
             <label className="form-label" htmlFor="description">{t('descriptionLabel')}</label>

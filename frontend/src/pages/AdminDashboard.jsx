@@ -5,7 +5,9 @@ import {
   Bell, 
   MapPin, 
   ShieldAlert, 
-  AlertTriangle 
+  AlertTriangle,
+  PhoneCall,
+  Clock
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -176,13 +178,37 @@ const AdminDashboard = () => {
             <AlertTriangle size={18} />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-main)' }}>{t('totalLifetimeReports')}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-light)' }}>{t('sinceLaunch')}</div>
+            <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-main)' }}>{t('totalLifetimeReports') || 'Lifetime Reports'}</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-light)' }}>{t('sinceLaunch') || 'Since launch'}</div>
           </div>
           <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-main)' }}>{data?.metrics?.totalReports || 0}</div>
         </div>
-
       </div>
+
+      {/* Call Logs */}
+      {user?.role === 'Admin' && data?.recentCallLogs && data.recentCallLogs.length > 0 && (
+        <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '16px', color: 'var(--text-main)' }}>
+            <PhoneCall size={18} color="var(--primary-color)" /> {t('recentHotlineCalls') || 'Recent Hotline Calls'}
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {data.recentCallLogs.slice(0, 5).map((log) => (
+              <div key={log.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '12px', background: 'var(--bg-color)', borderRadius: '10px', borderLeft: '3px solid var(--primary-color)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-main)' }}>{log.hotline_name}</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Clock size={12} /> {new Date(log.called_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </span>
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-light)' }}>
+                  Dialed <strong>{log.hotline_number}</strong> by <strong>{log.caller_name}</strong>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
     </div>
   );
