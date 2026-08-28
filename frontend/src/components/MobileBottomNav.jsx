@@ -30,24 +30,31 @@ const MobileBottomNav = () => {
           <span className="nav-label">Home</span>
         </NavLink>
 
-        {/* Report Incident (NEW) */}
+        {/* Report Incident / Dispatch (Middle Button) */}
         {isResident ? (
           <NavLink to="/report" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <ShieldAlert size={22} className="nav-icon" style={{ color: 'var(--danger-color)' }} />
             <span className="nav-label" style={{ color: 'var(--danger-color)', fontWeight: 'bold' }}>Report</span>
           </NavLink>
         ) : (
-          <NavLink to="/admin" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <ShieldAlert size={22} className="nav-icon" />
-            <span className="nav-label">Dispatch</span>
+          <NavLink to="/incidents" className={`nav-item ${isStatusActive ? 'active' : ''}`}>
+            <ShieldAlert size={22} className="nav-icon" style={{ color: 'var(--danger-color)' }} />
+            <span className="nav-label" style={{ color: 'var(--danger-color)', fontWeight: 'bold' }}>Dispatch</span>
           </NavLink>
         )}
 
-        {/* Status / Reports Tab */}
-        <NavLink to="/incidents" className={`nav-item ${isStatusActive ? 'active' : ''}`}>
-          {isResident ? <FileText size={22} className="nav-icon" /> : <AlertTriangle size={22} className="nav-icon" />}
-          <span className="nav-label">Status</span>
-        </NavLink>
+        {/* Status / Verify Tab */}
+        {isResident ? (
+          <NavLink to="/incidents" className={`nav-item ${isStatusActive ? 'active' : ''}`}>
+            <FileText size={22} className="nav-icon" />
+            <span className="nav-label">Status</span>
+          </NavLink>
+        ) : (
+          <NavLink to="/verifications" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <FileText size={22} className="nav-icon" />
+            <span className="nav-label">Verify</span>
+          </NavLink>
+        )}
 
         {/* Map / Evacuation Tab */}
         <NavLink to="/evacuation" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
