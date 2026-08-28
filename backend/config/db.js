@@ -76,6 +76,12 @@ const initializeDatabase = async () => {
       } catch (e) {
         // Column already exists or table doesn't exist yet, which is fine
       }
+      try {
+        await pool.query('ALTER TABLE users ADD COLUMN email VARCHAR(255) UNIQUE NULL AFTER username');
+        console.log('Successfully injected email column into existing users table.');
+      } catch (e) {
+        // Column already exists or table doesn't exist yet, which is fine
+      }
     }
 
     // 3. Create Tables
@@ -83,6 +89,7 @@ const initializeDatabase = async () => {
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(50) UNIQUE NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         role VARCHAR(20) NOT NULL, -- 'Admin', 'Responder', 'Resident'
         full_name VARCHAR(100) NOT NULL,
