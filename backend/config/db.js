@@ -88,6 +88,12 @@ const initializeDatabase = async () => {
       } catch (e) {
         // Column already exists or table doesn't exist yet, which is fine
       }
+      try {
+        await pool.query('ALTER TABLE users ADD COLUMN push_subscription TEXT NULL AFTER current_lng');
+        console.log('Successfully injected push_subscription column into existing users table.');
+      } catch (e) {
+        // Column already exists or table doesn't exist yet, which is fine
+      }
     }
 
     // 3. Create Tables
@@ -113,6 +119,7 @@ const initializeDatabase = async () => {
         selfie_photo_path VARCHAR(255) NULL,
         current_lat DOUBLE NULL,
         current_lng DOUBLE NULL,
+        push_subscription TEXT NULL,
         age INT NOT NULL DEFAULT 18,
         is_verified TINYINT DEFAULT 0,
         is_active TINYINT DEFAULT 1, -- 1 = active, 0 = deactivated
