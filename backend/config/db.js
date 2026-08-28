@@ -82,6 +82,12 @@ const initializeDatabase = async () => {
       } catch (e) {
         // Column already exists or table doesn't exist yet, which is fine
       }
+      try {
+        await pool.query('ALTER TABLE incidents ADD COLUMN location_address VARCHAR(255) NULL AFTER location_lng');
+        console.log('Successfully injected location_address column into existing incidents table.');
+      } catch (e) {
+        // Column already exists or table doesn't exist yet, which is fine
+      }
     }
 
     // 3. Create Tables
@@ -163,6 +169,7 @@ const initializeDatabase = async () => {
         photo_path VARCHAR(255) NULL,
         location_lat DOUBLE NULL,
         location_lng DOUBLE NULL,
+        location_address VARCHAR(255) NULL,
         status VARCHAR(20) DEFAULT 'Pending', -- 'Pending', 'Under Review', 'In Progress', 'Resolved'
         response_notes TEXT NULL,
         resources_used TEXT NULL,
