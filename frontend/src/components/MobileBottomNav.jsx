@@ -7,7 +7,9 @@ import {
   ShieldAlert, 
   MoreHorizontal,
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  UserCheck,
+  Shield
 } from 'lucide-react';
 
 const MobileBottomNav = () => {
@@ -49,10 +51,15 @@ const MobileBottomNav = () => {
             <FileText size={22} className="nav-icon" />
             <span className="nav-label">Status</span>
           </NavLink>
-        ) : (
+        ) : user.role === 'Admin' ? (
           <NavLink to="/verifications" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <FileText size={22} className="nav-icon" />
+            <UserCheck size={22} className="nav-icon" />
             <span className="nav-label">Verify</span>
+          </NavLink>
+        ) : (
+          <NavLink to="/responders" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <Shield size={22} className="nav-icon" />
+            <span className="nav-label">Teammates</span>
           </NavLink>
         )}
 
