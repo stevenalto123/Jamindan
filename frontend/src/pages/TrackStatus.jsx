@@ -10,7 +10,8 @@ import {
   Phone, 
   Calendar,
   Send,
-  Printer
+  Printer,
+  Navigation
 } from 'lucide-react';
 import { STATUSES } from './IncidentList';
 
@@ -365,6 +366,17 @@ const TrackStatus = () => {
             <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '12px' }}>
               📍 Barangay {incident.reporter_barangay}
             </p>
+            {isStaff && (
+              <a 
+                href={`https://www.google.com/maps/dir/?api=1&destination=${incident.location_lat},${incident.location_lng}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '15px', padding: '12px' }}
+              >
+                <Navigation size={18} /> Navigate to Scene
+              </a>
+            )}
             <MapDisplay 
               lat={incident.location_lat} 
               lng={incident.location_lng} 

@@ -7,7 +7,8 @@ import {
   ShieldAlert, 
   AlertTriangle,
   PhoneCall,
-  Clock
+  Clock,
+  Radio
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -17,6 +18,10 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [broadcastTitle, setBroadcastTitle] = useState('');
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [broadcasting, setBroadcasting] = useState(false);
   const navigate = useNavigate();
 
   const fetchDashboardStats = async () => {
@@ -43,6 +48,27 @@ const AdminDashboard = () => {
       return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  };
+
+  const handleBroadcast = async (e) => {
+    e.preventDefault();
+    if (!broadcastTitle || !broadcastMessage) return;
+    setBroadcasting(true);
+    try {
+      await axios.post('/api/notifications/broadcast', {
+        title: broadcastTitle,
+        message: broadcastMessage
+      });
+      alert('Broadcast sent successfully!');
+      setShowBroadcastModal(false);
+      setBroadcastTitle('');
+      setBroadcastMessage('');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send broadcast.');
+    } finally {
+      setBroadcasting(false);
+    }
   };
 
   if (loading && !data) {
@@ -183,6 +209,16 @@ const AdminDashboard = () => {
           </div>
           <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-main)' }}>{data?.metrics?.totalReports || 0}</div>
         </div>
+        
+        {user?.role === 'Admin' && (
+          <button 
+            onClick={() => setShowBroadcastModal(true)}
+            className="btn btn-primary" 
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', marginTop: '10px' }}
+          >
+            <Radio size={18} /> Send Mass Broadcast
+          </button>
+        )}
       </div>
 
       {/* Call Logs */}
@@ -206,6 +242,39 @@ const AdminDashboard = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Broadcast Modal */}
+      {showBroadcastModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ width: '90%', maxWidth: '400px', padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--danger-color)' }}>
+                <Radio size={20} /> Mass Broadcast
+              </h3>
+              <button onClick={() => setShowBroadcastModal(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--text-light)' }}>&times;</button>
+            </div>
+            <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '16px' }}>
+              Warning: This will send an instant push notification to ALL registered users.
+            </p>
+            <form onSubmit={handleBroadcast}>
+              <div className="form-group">
+                <label className="form-label">Alert Title</label>
+                <input type="text" className="form-input" required value={broadcastTitle} onChange={e => setBroadcastTitle(e.target.value)} placeholder="e.g. TYPHOON WARNING" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Message</label>
+                <textarea className="form-input" required rows="3" value={broadcastMessage} onChange={e => setBroadcastMessage(e.target.value)} placeholder="Type emergency message here..."></textarea>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowBroadcastModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, backgroundColor: 'var(--danger-color)' }} disabled={broadcasting}>
+                  {broadcasting ? 'Sending...' : 'SEND ALERT'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

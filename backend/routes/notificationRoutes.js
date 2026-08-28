@@ -1,7 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
-const { authRequired } = require('../middleware/auth');
+const { authRequired, requireRole } = require('../middleware/auth');
+const webpush = require('web-push');
+
+webpush.setVapidDetails(
+  process.env.VAPID_EMAIL || 'mailto:test@example.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 router.use(authRequired);
 
@@ -46,6 +53,49 @@ router.put('/read-all', async (req, res) => {
   } catch (error) {
     console.error('Mark all read error:', error);
     return res.status(500).json({ message: 'Server error while marking all as read' });
+  }
+});
+
+// ADMIN ONLY: Mass Broadcast Notification
+router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
+  const { title, message } = req.body;
+  if (!title || !message) {
+    return res.status(400).json({ message: 'Title and message are required' });
+  }
+
+  try {
+    const [users] = await db.query('SELECT id, push_subscription FROM users WHERE is_active = 1');
+    
+    let sentCount = 0;
+    const payload = JSON.stringify({
+      title: title,
+      body: message,
+      icon: '/jamindan-seal.png',
+      url: '/'
+    });
+
+    for (const u of users) {
+      if (u.push_subscription) {
+        try {
+          const subscription = JSON.parse(u.push_subscription);
+          await webpush.sendNotification(subscription, payload);
+          sentCount++;
+        } catch (err) {
+          console.warn(`Failed to push to user ${u.id}`);
+        }
+      }
+      
+      // Also save to database notifications table for them to see in-app
+      await db.execute(
+        'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES (?, ?, ?, ?, ?)',
+        [u.id, title, message, 'broadcast', null]
+      );
+    }
+
+    return res.json({ message: `Broadcast sent to ${sentCount} devices successfully.` });
+  } catch (error) {
+    console.error('Broadcast error:', error);
+    return res.status(500).json({ message: 'Server error while broadcasting' });
   }
 });
 
