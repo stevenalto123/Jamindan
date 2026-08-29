@@ -4,11 +4,19 @@ const db = require('../config/db');
 const { authRequired, requireRole } = require('../middleware/auth');
 const webpush = require('web-push');
 
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL || 'mailto:test@example.com',
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
+try {
+  if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+      process.env.VAPID_EMAIL || 'mailto:test@example.com',
+      process.env.VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    );
+  } else {
+    console.warn('VAPID keys not set. Push notifications will be disabled.');
+  }
+} catch (err) {
+  console.error('Failed to initialize webpush:', err.message);
+}
 
 router.use(authRequired);
 
