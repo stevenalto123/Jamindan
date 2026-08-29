@@ -368,7 +368,7 @@ const TrackStatus = () => {
             </p>
             {isStaff && (
               <a 
-                href={`https://www.google.com/maps/dir/?api=1&destination=${incident.location_lat},${incident.location_lng}`}
+                href={`https://www.google.com/maps/dir/?api=1&destination=${incident.location_lat},${incident.location_lng}&dir_action=navigate`}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="btn btn-primary"
