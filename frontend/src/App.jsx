@@ -43,6 +43,7 @@ import Household from './pages/Household';
 import EvacuationCenters from './pages/EvacuationCenters';
 import Hotlines from './pages/Hotlines';
 import DownloadApp from './pages/DownloadApp';
+import Settings from './pages/Settings';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -459,12 +460,14 @@ function App() {
             </AppLayout>
           } />
 
+          <Route path="/hotlines" element={
+            <ProtectedRoute><AppLayout><Hotlines /></AppLayout></ProtectedRoute>
+          } />
           <Route path="/evacuation" element={
-            <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
-              <AppLayout>
-                <EvacuationCenters />
-              </AppLayout>
-            </ProtectedRoute>
+            <ProtectedRoute><AppLayout><EvacuationCenters /></AppLayout></ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>
           } />
           <Route path="/notifications" element={
             <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
