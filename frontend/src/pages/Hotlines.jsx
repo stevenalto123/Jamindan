@@ -170,7 +170,7 @@ const Hotlines = () => {
         </div>
         <input 
           type="text" 
-          placeholder="Search hotlines by name, barangay, or number..." 
+          placeholder={t('searchHotlines')} 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{ width: '100%', padding: '14px 14px 14px 44px', borderRadius: '12px', border: '1px solid var(--border-color)', fontSize: '15px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)', boxSizing: 'border-box', boxShadow: 'var(--shadow-sm)' }}
@@ -181,7 +181,7 @@ const Hotlines = () => {
       {recentHotlines.length > 0 && !searchQuery && (
         <div style={{ marginBottom: '32px' }}>
           <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Clock size={20} color="var(--primary-color)" /> Recently Called
+            <Clock size={20} color="var(--primary-color)" /> {t('recentlyCalled')}
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
             {recentHotlines.map((hotline, idx) => (
@@ -196,7 +196,7 @@ const Hotlines = () => {
                   className="btn btn-primary"
                   style={{ padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
-                  <PhoneCall size={14} /> Call
+                  <PhoneCall size={14} /> {t('call')}
                 </a>
               </div>
             ))}
@@ -264,7 +264,7 @@ const Hotlines = () => {
                           boxShadow: '0 2px 4px rgba(46,204,113,0.2)'
                         }}
                       >
-                        📞 Call {cleanNum}
+                        📞 {t('call')} {cleanNum}
                       </a>
                     );
                   })}

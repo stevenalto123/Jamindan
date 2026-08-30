@@ -5,7 +5,7 @@ import { Bell, Globe, Moon, Shield, LogOut, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
-  const { language, toggleLanguage, translate } = useLanguage();
+  const { language, toggleLanguage, t } = useLanguage();
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -51,7 +51,7 @@ const Settings = () => {
               <Globe size={20} color="#1976d2" />
             </div>
             <div>
-              <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>Language</div>
+              <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>{t('language')}</div>
               <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{language === 'en' ? 'English' : 'Hiligaynon'}</div>
             </div>
           </div>
@@ -68,8 +68,8 @@ const Settings = () => {
               <Bell size={20} color="#388e3c" />
             </div>
             <div>
-              <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>Push Notifications</div>
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{pushEnabled ? 'Enabled' : 'Disabled'}</div>
+              <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>{t('pushNotifications')}</div>
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{pushEnabled ? t('enabled') : t('disabled')}</div>
             </div>
           </div>
           <div style={{ width: '40px', height: '22px', backgroundColor: pushEnabled ? 'var(--primary-color)' : '#ccc', borderRadius: '11px', position: 'relative', transition: '0.3s' }}>
@@ -87,8 +87,8 @@ const Settings = () => {
               <Moon size={20} color="#f57c00" />
             </div>
             <div>
-              <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>Dark Mode</div>
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Currently {darkMode ? 'On' : 'Off'}</div>
+              <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>{t('darkMode')}</div>
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{darkMode ? t('currentlyOn') : t('currentlyOff')}</div>
             </div>
           </div>
           <div style={{ width: '40px', height: '22px', backgroundColor: darkMode ? 'var(--primary-color)' : '#ccc', borderRadius: '11px', position: 'relative', transition: '0.3s' }}>
@@ -106,8 +106,8 @@ const Settings = () => {
               <Shield size={20} color="#c2185b" />
             </div>
             <div>
-              <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>Account & Security</div>
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Update profile or password</div>
+              <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>{t('accountSecurity')}</div>
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{t('accountSecurityDesc')}</div>
             </div>
           </div>
           <ChevronRight size={20} color="#ccc" />
@@ -121,7 +121,7 @@ const Settings = () => {
         style={{ width: '100%', backgroundColor: '#ffebee', color: '#c62828', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', padding: '14px', fontSize: '15px', fontWeight: 'bold' }}
       >
         <LogOut size={20} />
-        Log Out
+        {t('logout')}
       </button>
 
     </div>

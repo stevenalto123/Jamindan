@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { 
   User, 
   Users, 
@@ -14,6 +15,7 @@ import {
 
 const MoreMenu = () => {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -22,12 +24,12 @@ const MoreMenu = () => {
   };
 
   const menuItems = [
-    { title: 'My Profile', icon: <User size={20} />, link: '/profile', color: '#3498db' },
-    { title: 'Household List', icon: <Users size={20} />, link: '/household', color: '#9b59b6' },
-    { title: 'Emergency Hotlines', icon: <PhoneCall size={20} />, link: '/hotlines', color: '#e74c3c' },
-    { title: 'News & Updates', icon: <Radio size={20} />, link: '/news', color: '#f39c12' },
-    { title: 'Emergency Tips', icon: <BookOpen size={20} />, link: '/tips', color: '#2ecc71' },
-    { title: 'Settings', icon: <SettingsIcon size={20} />, link: '/settings', color: '#7f8c8d' }
+    { title: t('myProfile'), icon: <User size={20} />, link: '/profile', color: '#3498db' },
+    { title: t('householdList'), icon: <Users size={20} />, link: '/household', color: '#9b59b6' },
+    { title: t('emergencyHotlines'), icon: <PhoneCall size={20} />, link: '/hotlines', color: '#e74c3c' },
+    { title: t('newsUpdates'), icon: <Radio size={20} />, link: '/news', color: '#f39c12' },
+    { title: t('emergencyTips'), icon: <BookOpen size={20} />, link: '/tips', color: '#2ecc71' },
+    { title: t('settingsTitle'), icon: <SettingsIcon size={20} />, link: '/settings', color: '#7f8c8d' }
   ];
 
   return (
@@ -92,7 +94,7 @@ const MoreMenu = () => {
           }}
         >
           <LogOut size={18} />
-          Log Out
+          {t('logout')}
         </button>
       </div>
     </div>
