@@ -1407,3 +1407,24 @@ input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
   display: none;
 }
+
+[data-theme="dark"] {
+  --primary-color: #4b8e62; 
+  --primary-hover: #5ba374;
+  --primary-light: #2c3e32;
+  --accent-color: #5ba374;
+  --accent-hover: #4b8e62;
+  
+  --bg-color: #121212; 
+  --card-bg: #1e1e1e;
+  --card-alt: #242424; 
+  
+  --text-main: #e0e0e0;
+  --text-light: #b0b0b0;
+  --text-muted: #888888;
+  --border-color: #333333;
+  
+  --sidebar-bg: #1e1e1e;
+  --sidebar-active: #2c3e32;
+  --sidebar-hover: #2a2a2a;
+}

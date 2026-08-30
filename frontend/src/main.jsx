@@ -13,6 +13,12 @@ axios.defaults.headers.common['Bypass-Tunnel-Reminder'] = 'true';
 // Register PWA Service Worker for offline support
 registerSW({ immediate: true });
 
+// Restore theme from localStorage
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) {
+  document.documentElement.setAttribute('data-theme', savedTheme);
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />
