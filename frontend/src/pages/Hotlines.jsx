@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { PhoneCall, ShieldAlert, Heart, Building2, MapPin, Plus, Edit, Trash2, X } from 'lucide-react';
+import { PhoneCall, ShieldAlert, Heart, Building2, MapPin, Plus, Edit, Trash2, X, Search, Clock } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,6 +12,11 @@ const Hotlines = () => {
   const [hotlines, setHotlines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [recentHotlines, setRecentHotlines] = useState(() => {
+    const saved = localStorage.getItem('recentHotlines');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -105,8 +110,14 @@ const Hotlines = () => {
   }
 
   // Group hotlines
-  const municipalHotlines = hotlines.filter(h => !h.barangay);
-  const barangayHotlines = hotlines.filter(h => h.barangay);
+  const filteredHotlines = hotlines.filter(h => 
+    h.agency_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (h.barangay && h.barangay.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    h.contact_number.includes(searchQuery)
+  );
+
+  const municipalHotlines = filteredHotlines.filter(h => !h.barangay);
+  const barangayHotlines = filteredHotlines.filter(h => h.barangay);
 
   const getHotlineIcon = (name) => {
     const lower = name.toLowerCase();
@@ -118,6 +129,16 @@ const Hotlines = () => {
 
   const handleCall = async (e, hotline, number) => {
     e.preventDefault();
+    
+    // Save to recents
+    const newRecent = { ...hotline, contact_number: number };
+    setRecentHotlines(prev => {
+      const filtered = prev.filter(h => h.id !== hotline.id);
+      const updated = [newRecent, ...filtered].slice(0, 3); // keep last 3
+      localStorage.setItem('recentHotlines', JSON.stringify(updated));
+      return updated;
+    });
+
     try {
       await axios.post('/api/emergency/hotlines/log', {
         hotline_name: hotline.agency_name,
@@ -139,6 +160,47 @@ const Hotlines = () => {
           <button onClick={() => handleOpenModal()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Plus size={18} /> Add New Hotline
           </button>
+        </div>
+      )}
+
+      {/* Search Bar */}
+      <div style={{ marginBottom: '24px', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '12px', left: '16px', color: 'var(--text-muted)' }}>
+          <Search size={20} />
+        </div>
+        <input 
+          type="text" 
+          placeholder="Search hotlines by name, barangay, or number..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ width: '100%', padding: '14px 14px 14px 44px', borderRadius: '12px', border: '1px solid var(--border-color)', fontSize: '15px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)', boxSizing: 'border-box', boxShadow: 'var(--shadow-sm)' }}
+        />
+      </div>
+
+      {/* Recently Called Section */}
+      {recentHotlines.length > 0 && !searchQuery && (
+        <div style={{ marginBottom: '32px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Clock size={20} color="var(--primary-color)" /> Recently Called
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
+            {recentHotlines.map((hotline, idx) => (
+              <div key={`recent-${idx}`} className="card" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-main)' }}>{hotline.agency_name}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-light)' }}>{hotline.contact_number}</div>
+                </div>
+                <a 
+                  href={`tel:${hotline.contact_number.replace(/\s+/g, '')}`} 
+                  onClick={(e) => handleCall(e, hotline, hotline.contact_number)}
+                  className="btn btn-primary"
+                  style={{ padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <PhoneCall size={14} /> Call
+                </a>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
