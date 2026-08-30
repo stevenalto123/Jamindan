@@ -283,28 +283,48 @@ const initializeDatabase = async () => {
 
       console.log('Default users seeded.');
 
-      // Seed Evacuation Centers
-      console.log('Seeding evacuation centers to MySQL...');
-      await pool.query(`
-        INSERT INTO evacuation_centers (name, location, capacity, current_headcount, status, latitude, longitude)
-        VALUES 
-        ('Jamindan Cultural Center', 'Brgy. Poblacion (Centro), Jamindan', 400, 24, 'Open', 11.4294, 122.4828),
-        ('Lucero Barangay Gym', 'Brgy. Lucero, Jamindan', 250, 0, 'Open', 11.4172, 122.4950),
-        ('Agtambi Elementary School', 'Brgy. Agtambi, Jamindan', 150, 0, 'Closed', 11.4450, 122.4680)
-      `);
+        // Clean up any existing duplicates first
+        await pool.query(`
+          DELETE t1 FROM evacuation_centers t1
+          INNER JOIN evacuation_centers t2 
+          WHERE t1.id > t2.id AND t1.name = t2.name
+        `);
 
-      // Seed Hotlines
-      console.log('Seeding local hotlines to MySQL...');
-      await pool.query(`
-        INSERT INTO hotlines (agency_name, contact_number, barangay)
-        VALUES
-        ('Jamindan MDRRMO Rescue Hotline', '0912-345-6789 / 0917-987-6543', NULL),
-        ('Jamindan Bureau of Fire Protection (BFP)', '0998-765-4321', NULL),
-        ('Jamindan Municipal Police (PNP)', '0987-654-3210', NULL),
-        ('Jamindan Rural Health Unit (RHU)', '(036) 658-1234', NULL),
-        ('Barangay Poblacion Tanod Desk', '0919-111-2222', 'Poblacion'),
-        ('Barangay Lucero Tanod Desk', '0919-333-4444', 'Lucero')
-      `);
+        // Seed Evacuation Centers only if empty
+        const [evacRows] = await pool.query('SELECT COUNT(*) as count FROM evacuation_centers');
+        if (evacRows[0].count === 0) {
+          console.log('Seeding evacuation centers to MySQL...');
+          await pool.query(`
+            INSERT INTO evacuation_centers (name, location, capacity, current_headcount, status, latitude, longitude)
+            VALUES 
+            ('Jamindan Cultural Center', 'Brgy. Poblacion (Centro), Jamindan', 400, 24, 'Open', 11.4294, 122.4828),
+            ('Lucero Barangay Gym', 'Brgy. Lucero, Jamindan', 250, 0, 'Open', 11.4172, 122.4950),
+            ('Agtambi Elementary School', 'Brgy. Agtambi, Jamindan', 150, 0, 'Closed', 11.4450, 122.4680)
+          `);
+        }
+  
+        // Clean up any existing duplicates for hotlines
+        await pool.query(`
+          DELETE t1 FROM hotlines t1
+          INNER JOIN hotlines t2 
+          WHERE t1.id > t2.id AND t1.agency_name = t2.agency_name
+        `);
+
+        // Seed Hotlines only if empty
+        const [hotlineRows] = await pool.query('SELECT COUNT(*) as count FROM hotlines');
+        if (hotlineRows[0].count === 0) {
+          console.log('Seeding local hotlines to MySQL...');
+          await pool.query(`
+            INSERT INTO hotlines (agency_name, contact_number, barangay)
+            VALUES
+            ('Jamindan MDRRMO Rescue Hotline', '0912-345-6789 / 0917-987-6543', NULL),
+            ('Jamindan Bureau of Fire Protection (BFP)', '0998-765-4321', NULL),
+            ('Jamindan Municipal Police (PNP)', '0987-654-3210', NULL),
+            ('Jamindan Rural Health Unit (RHU)', '(036) 658-1234', NULL),
+            ('Barangay Poblacion Tanod Desk', '0919-111-2222', 'Poblacion'),
+            ('Barangay Lucero Tanod Desk', '0919-333-4444', 'Lucero')
+          `);
+        }
 
       // Seed News
       const [newsRows] = await pool.query('SELECT COUNT(*) as count FROM news');
