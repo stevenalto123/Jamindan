@@ -7,6 +7,7 @@ import {
   PhoneCall, 
   Radio, 
   BookOpen, 
+  Settings as SettingsIcon,
   LogOut,
   ChevronRight
 } from 'lucide-react';
@@ -25,7 +26,8 @@ const MoreMenu = () => {
     { title: 'Household List', icon: <Users size={20} />, link: '/household', color: '#9b59b6' },
     { title: 'Emergency Hotlines', icon: <PhoneCall size={20} />, link: '/hotlines', color: '#e74c3c' },
     { title: 'News & Updates', icon: <Radio size={20} />, link: '/news', color: '#f39c12' },
-    { title: 'Emergency Tips', icon: <BookOpen size={20} />, link: '/tips', color: '#2ecc71' }
+    { title: 'Emergency Tips', icon: <BookOpen size={20} />, link: '/tips', color: '#2ecc71' },
+    { title: 'Settings', icon: <SettingsIcon size={20} />, link: '/settings', color: '#7f8c8d' }
   ];
 
   return (
