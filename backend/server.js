@@ -17,8 +17,8 @@ const allowedOrigins = [
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    // Allow any origin during local testing/development (tunnels like lhr.life, loca.lt, ngrok, or Wi-Fi IP)
-    if (process.env.NODE_ENV !== 'production' || origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('loca.lt') || origin.includes('lhr.life') || origin.includes('ngrok')) {
+    // Allow any origin during local testing/development and allow vercel.app domains
+    if (process.env.NODE_ENV !== 'production' || origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('loca.lt') || origin.includes('lhr.life') || origin.includes('ngrok') || origin.includes('vercel.app')) {
       return callback(null, true);
     }
     if (allowedOrigins.indexOf(origin) !== -1) {
