@@ -343,8 +343,7 @@ const dictionary = {
     navMap: "Map",
     navMore: "More",
     searchHotlines: "Search hotlines by name, barangay, or number...",
-    recentlyCalled: "Recently Called",
-    call: "Call"
+    recentlyCalled: "Recently Called"
   },
   hil: {
     dashboard: "Dasbord",
@@ -660,7 +659,6 @@ const dictionary = {
     colStatus: "Status",
     colAction: "Aksyon",
     badgeCritical: "KRITIKAL",
-    badgeCritical: "KRITIKAL",
     badgeNormal: "Normal",
     language: "Lengguwahe",
     pushNotifications: "Mga Push Notipikasyon",
@@ -685,8 +683,7 @@ const dictionary = {
     navMap: "Mapa",
     navMore: "Dugang pa",
     searchHotlines: "Pangitaa ang mga hotline paagi sa ngalan, barangay, o numero...",
-    recentlyCalled: "Bag-o Lang Gintawgan",
-    call: "Tawag"
+    recentlyCalled: "Bag-o Lang Gintawgan"
   }
 };
 
