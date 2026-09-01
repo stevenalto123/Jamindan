@@ -132,7 +132,7 @@ const SosPanicButton = () => {
     try {
       const payload = {
         type: 'SOS Panic',
-        description: '[SOS PANIC ALARM] Instantly triggered by resident via 1-second press. Immediate rescue and responder dispatch is required.',
+        description: '[SOS PANIC ALARM] Instantly triggered by resident via 3-second press. Immediate rescue and responder dispatch is required.',
         location_lat: lat,
         location_lng: lng
       };
