@@ -44,7 +44,7 @@ const SosPanicButton = () => {
     setHoldProgress(0);
     await triggerVibrate(80); // Initial click vibration
 
-    const holdDuration = 1000; // 1 second fast activation
+    const holdDuration = 3000; // 3 seconds hold required
     const stepMs = 50; 
     let elapsed = 0;
 
