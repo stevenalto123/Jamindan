@@ -47,15 +47,24 @@ const AdminResponders = () => {
         </h3>
 
         {/* Search Bar */}
-        <div style={{ marginTop: '16px', marginBottom: '20px', position: 'relative' }}>
-          <Search size={18} style={{ position: 'absolute', left: '12px', top: '10px', color: '#7f8c8d' }} />
+        <div style={{ marginTop: '16px', marginBottom: '24px', position: 'relative' }}>
+          <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
           <input 
             type="text" 
             placeholder={t('searchResponders')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="input-field"
-            style={{ paddingLeft: '38px', borderRadius: '20px', backgroundColor: '#f8f9fa' }}
+            style={{ 
+              paddingLeft: '42px', 
+              borderRadius: '24px', 
+              backgroundColor: 'transparent',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-main)',
+              fontSize: '14px',
+              width: '100%',
+              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)'
+            }}
           />
         </div>
 
