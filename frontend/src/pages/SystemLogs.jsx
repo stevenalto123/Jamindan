@@ -22,11 +22,6 @@ const SystemLogs = () => {
 
   return (
     <div className="content-body" style={{ maxWidth: '800px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '26px', fontWeight: '700', color: 'var(--text-main)' }}>System Logs</h2>
-        <p style={{ color: 'var(--text-light)', fontSize: '14px' }}>Audit registers for system actions and security audits</p>
-      </div>
-
       <div className="card">
         <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <History size={18} />

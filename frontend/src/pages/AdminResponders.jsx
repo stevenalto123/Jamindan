@@ -35,11 +35,6 @@ const AdminResponders = () => {
 
   return (
     <div className="content-body" style={{ maxWidth: '800px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '26px', fontWeight: '700', color: 'var(--text-main)' }}>{t('responderDirectory')}</h2>
-        <p style={{ color: 'var(--text-light)', fontSize: '14px' }}>{t('activeOfficers')}</p>
-      </div>
-
       <div className="card">
         <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Shield size={18} />

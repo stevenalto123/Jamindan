@@ -44,11 +44,6 @@ const AdminVerifyUsers = () => {
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <h2 style={{ marginBottom: '5px', fontSize: '24px', fontWeight: '700' }}>Account Verifications</h2>
-      <p style={{ color: 'var(--text-light)', marginBottom: '20px' }}>
-        Review the uploaded ID and live selfie to ensure they match and the user is 18 years or older.
-      </p>
-
       {error && <div className="alert alert-danger">{error}</div>}
 
       {pendingUsers.length === 0 ? (
