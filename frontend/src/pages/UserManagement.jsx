@@ -195,13 +195,8 @@ const UserManagement = () => {
 
   return (
     <div className="content-body">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '15px' }}>
-        <div>
-          <h2 style={{ fontSize: '26px', fontWeight: '700', color: 'var(--text-main)' }}>User Management</h2>
-          <p style={{ color: 'var(--text-light)', fontSize: '14px' }}>Manage all platform users</p>
-        </div>
-
-        <button className="btn btn-primary" onClick={handleOpenAddModal} style={{ height: '40px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
+        <button className="btn btn-primary" onClick={handleOpenAddModal} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <PlusCircle size={18} />
           Add User
         </button>
