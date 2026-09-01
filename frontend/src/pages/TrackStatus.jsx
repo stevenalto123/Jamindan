@@ -227,7 +227,9 @@ const TrackStatus = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '16px' }}>
               <div>
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold' }}>Report ID: {incident.code}</span>
-                <h2 style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: '700' }}>{incident.type} in Barangay {incident.reporter_barangay}</h2>
+                <h2 style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: '700' }}>
+                  {incident.type} {incident.location_address ? `- ${incident.location_address}` : (incident.location_lat ? '- GPS Location Only' : `in Barangay ${incident.reporter_barangay}`)}
+                </h2>
                 <span style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', display: 'block' }}>
                   {new Date(incident.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </span>
@@ -364,7 +366,7 @@ const TrackStatus = () => {
           <div className="card">
             <h3 className="card-title">Location</h3>
             <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '12px' }}>
-              📍 Barangay {incident.reporter_barangay}
+              📍 {incident.location_address ? incident.location_address : (incident.location_lat ? 'Current GPS Location' : `Barangay ${incident.reporter_barangay}`)}
             </p>
             {isStaff && (
               <a 
