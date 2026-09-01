@@ -343,7 +343,14 @@ const dictionary = {
     navMap: "Map",
     navMore: "More",
     searchHotlines: "Search hotlines by name, barangay, or number...",
-    recentlyCalled: "Recently Called"
+    recentlyCalled: "Recently Called",
+    responderDirectory: "Responder Directory",
+    activeOfficers: "Active emergency responders and duty officers",
+    searchResponders: "Search responders by name or barangay...",
+    onDuty: "On Duty",
+    inactive: "Inactive",
+    noResponders: "No responders registered in the system.",
+    fetchingResponders: "Fetching responders data..."
   },
   hil: {
     dashboard: "Dasbord",
@@ -683,7 +690,14 @@ const dictionary = {
     navMap: "Mapa",
     navMore: "Dugang pa",
     searchHotlines: "Pangitaa ang mga hotline paagi sa ngalan, barangay, o numero...",
-    recentlyCalled: "Bag-o Lang Gintawgan"
+    recentlyCalled: "Bag-o Lang Gintawgan",
+    responderDirectory: "Listahan sang mga Responder",
+    activeOfficers: "Mga aktibo nga responder kag duty officers",
+    searchResponders: "Pangitaa ang responder paagi sa ngalan o barangay...",
+    onDuty: "Naka-Duty",
+    inactive: "Wala Naka-Duty",
+    noResponders: "Wala sang narehistro nga responder sa sistema.",
+    fetchingResponders: "Ginakarga ang mga datos sang responder..."
   }
 };
 
