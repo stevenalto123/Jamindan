@@ -100,6 +100,12 @@ const initializeDatabase = async () => {
       } catch (e) {
         // Column already exists or table doesn't exist yet, which is fine
       }
+      try {
+        await pool.query('ALTER TABLE incidents ADD COLUMN triage_tag VARCHAR(20) NULL AFTER status');
+        console.log('Successfully injected triage_tag column into existing incidents table.');
+      } catch (e) {
+        // Column already exists or table doesn't exist yet, which is fine
+      }
     }
 
     // 3. Create Tables
@@ -185,6 +191,7 @@ const initializeDatabase = async () => {
         location_lng DOUBLE NULL,
         location_address VARCHAR(255) NULL,
         status VARCHAR(20) DEFAULT 'Pending', -- 'Pending', 'Under Review', 'In Progress', 'Resolved'
+        triage_tag VARCHAR(20) NULL, -- 'Red', 'Yellow', 'Green', 'Black'
         response_notes TEXT NULL,
         resources_used TEXT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -253,6 +260,13 @@ const initializeDatabase = async () => {
         username VARCHAR(50) NOT NULL,
         ip VARCHAR(45) NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS system_settings (
+        setting_key VARCHAR(50) PRIMARY KEY,
+        setting_value VARCHAR(255) NOT NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
@@ -359,8 +373,18 @@ const initializeDatabase = async () => {
         ]);
 
         console.log('News seeded successfully.');
+        console.log('Initial test incidents seeded.');
       }
     }
+
+    // Seed system settings
+    const [mciRows] = await pool.query("SELECT * FROM system_settings WHERE setting_key = 'mci_mode'");
+    if (mciRows.length === 0) {
+      await pool.query("INSERT INTO system_settings (setting_key, setting_value) VALUES ('mci_mode', 'false')");
+      console.log('Seeded initial MCI Mode setting as false.');
+    }
+
+    console.log('MySQL Database Initialization Complete.');
   } catch (error) {
     console.error('MySQL database initialization failed:', error);
     throw error;

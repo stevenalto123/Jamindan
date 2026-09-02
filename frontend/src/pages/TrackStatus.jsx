@@ -13,9 +13,11 @@ import {
   Printer,
   Navigation,
   Activity,
-  AlertTriangle
+  AlertTriangle,
+  Tag
 } from 'lucide-react';
 import { STATUSES } from './IncidentList';
+import { useSystem } from '../context/SystemContext';
 
 const TrackStatus = () => {
   const { id } = useParams();
@@ -35,6 +37,9 @@ const TrackStatus = () => {
   const [newStatus, setNewStatus] = useState('');
   const [comment, setComment] = useState('');
   const [submittingStatus, setSubmittingStatus] = useState(false);
+  
+  const { settings } = useSystem();
+  const isMciActive = settings?.mci_mode;
 
   const fetchIncidentDetail = async () => {
     try {
@@ -120,6 +125,15 @@ const TrackStatus = () => {
       alert(err.response?.data?.message || 'Failed to update status.');
     } finally {
       setSubmittingStatus(false);
+    }
+  };
+
+  const handleTriageUpdate = async (color) => {
+    try {
+      await axios.put(`/api/incidents/${id}/triage`, { triage_tag: color });
+      await fetchIncidentDetail();
+    } catch (err) {
+      alert("Failed to update triage tag");
     }
   };
 
@@ -307,6 +321,39 @@ const TrackStatus = () => {
         {/* Right Side: Map & Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
+          {/* Triage Tag Panel (Staff + MCI Mode Only) */}
+          {isStaff && isMciActive && (
+            <div className="card" style={{ border: '2px solid #c0392b' }}>
+              <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#c0392b' }}>
+                <Tag size={18} /> MCI Triage Tagging
+              </h3>
+              <p style={{ fontSize: '13px', color: '#7f8c8d', marginBottom: '16px' }}>MCI Protocol is active. Assign a triage priority to this incident:</p>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <button 
+                  onClick={() => handleTriageUpdate('Red')}
+                  style={{ padding: '10px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: incident.triage_tag === 'Red' ? '#c0392b' : '#f9ebea', color: incident.triage_tag === 'Red' ? 'white' : '#c0392b', border: '2px solid #c0392b' }}>
+                  RED (Immediate)
+                </button>
+                <button 
+                  onClick={() => handleTriageUpdate('Yellow')}
+                  style={{ padding: '10px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: incident.triage_tag === 'Yellow' ? '#f1c40f' : '#fef9e7', color: incident.triage_tag === 'Yellow' ? 'white' : '#f39c12', border: '2px solid #f1c40f' }}>
+                  YELLOW (Delayed)
+                </button>
+                <button 
+                  onClick={() => handleTriageUpdate('Green')}
+                  style={{ padding: '10px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: incident.triage_tag === 'Green' ? '#2ecc71' : '#eafaf1', color: incident.triage_tag === 'Green' ? 'white' : '#27ae60', border: '2px solid #2ecc71' }}>
+                  GREEN (Minor)
+                </button>
+                <button 
+                  onClick={() => handleTriageUpdate('Black')}
+                  style={{ padding: '10px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: incident.triage_tag === 'Black' ? '#2c3e50' : '#eaeded', color: incident.triage_tag === 'Black' ? 'white' : '#34495e', border: '2px solid #2c3e50' }}>
+                  BLACK (Deceased)
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Resource Recommendations (For Staff) */}
           {isStaff && (
             <div className="card" style={{ backgroundColor: 'var(--card-alt)', borderColor: 'rgba(231, 76, 60, 0.2)' }}>

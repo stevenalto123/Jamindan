@@ -9,6 +9,7 @@ import {
 import axios from 'axios';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { SystemProvider } from './context/SystemContext';
 import { Geolocation } from '@capacitor/geolocation';
 
 // Components & Layout
@@ -383,155 +384,157 @@ function App() {
   return (
     <AuthProvider>
       <LanguageProvider>
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/download" element={<DownloadApp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <SystemProvider>
+          <Router>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/download" element={<DownloadApp />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-          {/* Resident Routes */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute allowedRoles={['Resident']}>
-              <AppLayout>
-                <ResidentDashboard />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/report" element={
-              <AppLayout>
-                <ReportIncident />
-              </AppLayout>
-          } />
+              {/* Resident Routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute allowedRoles={['Resident']}>
+                  <AppLayout>
+                    <ResidentDashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/report" element={
+                  <AppLayout>
+                    <ReportIncident />
+                  </AppLayout>
+              } />
 
-          {/* Shared / Multi-role Status Tracking Routes */}
-          <Route path="/incidents" element={
-            <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
-              <AppLayout>
-                <IncidentList />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/incidents/:id" element={
-            <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
-              <AppLayout>
-                <TrackStatus />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
+              {/* Shared / Multi-role Status Tracking Routes */}
+              <Route path="/incidents" element={
+                <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
+                  <AppLayout>
+                    <IncidentList />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/incidents/:id" element={
+                <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
+                  <AppLayout>
+                    <TrackStatus />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
 
-          {/* News & Bulletins */}
-          <Route path="/news" element={
-            <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
-              <AppLayout>
-                <NewsUpdates />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
+              {/* News & Bulletins */}
+              <Route path="/news" element={
+                <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
+                  <AppLayout>
+                    <NewsUpdates />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
 
-          {/* Subpages for Resident */}
-          <Route path="/tips" element={
-              <AppLayout>
-                <EmergencyTips />
-              </AppLayout>
-          } />
-          
-          <Route path="/more" element={
-            <ProtectedRoute allowedRoles={['Resident', 'Responder', 'Admin']}>
-              <AppLayout>
-                <MoreMenu />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/household" element={
-            <ProtectedRoute allowedRoles={['Resident']}>
-              <AppLayout>
-                <Household />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
-          {/* Offline Accessible Hotlines */}
-          <Route path="/hotlines" element={
-            <AppLayout>
-              <Hotlines />
-            </AppLayout>
-          } />
+              {/* Subpages for Resident */}
+              <Route path="/tips" element={
+                  <AppLayout>
+                    <EmergencyTips />
+                  </AppLayout>
+              } />
+              
+              <Route path="/more" element={
+                <ProtectedRoute allowedRoles={['Resident', 'Responder', 'Admin']}>
+                  <AppLayout>
+                    <MoreMenu />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/household" element={
+                <ProtectedRoute allowedRoles={['Resident']}>
+                  <AppLayout>
+                    <Household />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              {/* Offline Accessible Hotlines */}
+              <Route path="/hotlines" element={
+                <AppLayout>
+                  <Hotlines />
+                </AppLayout>
+              } />
 
-          <Route path="/hotlines" element={
-            <ProtectedRoute><AppLayout><Hotlines /></AppLayout></ProtectedRoute>
-          } />
-          <Route path="/evacuation" element={
-            <ProtectedRoute><AppLayout><EvacuationCenters /></AppLayout></ProtectedRoute>
-          } />
-          <Route path="/settings" element={
-            <ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>
-          } />
-          <Route path="/notifications" element={
-            <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
-              <AppLayout>
-                <NotificationsPage />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
-              <AppLayout>
-                <UserProfile />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/tips" element={
-            <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
-              <AppLayout>
-                <EmergencyTips />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
+              <Route path="/hotlines" element={
+                <ProtectedRoute><AppLayout><Hotlines /></AppLayout></ProtectedRoute>
+              } />
+              <Route path="/evacuation" element={
+                <ProtectedRoute><AppLayout><EvacuationCenters /></AppLayout></ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>
+              } />
+              <Route path="/notifications" element={
+                <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
+                  <AppLayout>
+                    <NotificationsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
+                  <AppLayout>
+                    <UserProfile />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/tips" element={
+                <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
+                  <AppLayout>
+                    <EmergencyTips />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
 
-          {/* Administrative / Responder Routes */}
-          <Route path="/admin" element={
-            <ProtectedRoute allowedRoles={['Admin', 'Responder']}>
-              <AppLayout>
-                <AdminDashboard />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/verifications" element={
-            <ProtectedRoute allowedRoles={['Admin']}>
-              <AppLayout>
-                <AdminVerifyUsers />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/users" element={
-            <ProtectedRoute allowedRoles={['Admin']}>
-              <AppLayout>
-                <UserManagement />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/responders" element={
-            <ProtectedRoute allowedRoles={['Admin', 'Responder']}>
-              <AppLayout>
-                <AdminResponders />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/logs" element={
-            <ProtectedRoute allowedRoles={['Admin', 'Responder']}>
-              <AppLayout>
-                <SystemLogs />
-              </AppLayout>
-            </ProtectedRoute>
-          } />
+              {/* Administrative / Responder Routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute allowedRoles={['Admin', 'Responder']}>
+                  <AppLayout>
+                    <AdminDashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/verifications" element={
+                <ProtectedRoute allowedRoles={['Admin']}>
+                  <AppLayout>
+                    <AdminVerifyUsers />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/users" element={
+                <ProtectedRoute allowedRoles={['Admin']}>
+                  <AppLayout>
+                    <UserManagement />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/responders" element={
+                <ProtectedRoute allowedRoles={['Admin', 'Responder']}>
+                  <AppLayout>
+                    <AdminResponders />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/logs" element={
+                <ProtectedRoute allowedRoles={['Admin', 'Responder']}>
+                  <AppLayout>
+                    <SystemLogs />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
 
-          {/* Redirects */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
+              {/* Redirects */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </Router>
+        </SystemProvider>
       </LanguageProvider>
     </AuthProvider>
   );
