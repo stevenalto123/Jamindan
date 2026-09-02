@@ -11,7 +11,9 @@ import {
   Calendar,
   Send,
   Printer,
-  Navigation
+  Navigation,
+  Activity,
+  AlertTriangle
 } from 'lucide-react';
 import { STATUSES } from './IncidentList';
 
@@ -389,19 +391,60 @@ const TrackStatus = () => {
 
           {/* Reporter details for dispatcher */}
           {isStaff && (
-            <div className="card">
-              <h3 className="card-title">Reporter Details</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px', marginTop: '10px' }}>
-                <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <User size={16} style={{ color: 'var(--text-light)' }} />
-                  <strong>Name:</strong> {incident.reporter_name}
-                </p>
-                <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Phone size={16} style={{ color: 'var(--text-light)' }} />
-                  <strong>Contact:</strong> {incident.reporter_phone}
-                </p>
+            <>
+              <div className="card">
+                <h3 className="card-title">Reporter Details</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px', marginTop: '10px' }}>
+                  <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <User size={16} style={{ color: 'var(--text-light)' }} />
+                    <strong>Name:</strong> {incident.reporter_name}
+                  </p>
+                  <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Phone size={16} style={{ color: 'var(--text-light)' }} />
+                    <strong>Contact:</strong> {incident.reporter_phone}
+                  </p>
+                </div>
               </div>
-            </div>
+
+              {/* PARAMEDIC MEDICAL HANDOFF */}
+              <div className="card" style={{ borderLeft: '4px solid #e74c3c', backgroundColor: '#fff5f5' }}>
+                <h3 className="card-title" style={{ color: '#c0392b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Activity size={18} /> Paramedic Medical Handoff
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px', marginTop: '10px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ffcccc' }}>
+                      <div style={{ fontSize: '11px', color: '#7f8c8d', textTransform: 'uppercase' }}>Blood Type</div>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#c0392b' }}>{incident.reporter_blood_type || 'Unknown'}</div>
+                    </div>
+                    <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ffcccc' }}>
+                      <div style={{ fontSize: '11px', color: '#7f8c8d', textTransform: 'uppercase' }}>Allergies</div>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: incident.reporter_allergies ? '#d35400' : '#7f8c8d' }}>
+                        {incident.reporter_allergies || 'None listed'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ffcccc' }}>
+                    <div style={{ fontSize: '11px', color: '#7f8c8d', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertTriangle size={12} color="#e67e22" /> Medical Conditions
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: incident.reporter_medical_conditions ? '#d35400' : '#7f8c8d', marginTop: '4px' }}>
+                      {incident.reporter_medical_conditions || 'None listed'}
+                    </div>
+                  </div>
+
+                  {(incident.reporter_emergency_contact_name || incident.reporter_emergency_contact_phone) && (
+                    <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ffcccc' }}>
+                      <div style={{ fontSize: '11px', color: '#7f8c8d', textTransform: 'uppercase' }}>Emergency Contact</div>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2c3e50', marginTop: '4px' }}>
+                        {incident.reporter_emergency_contact_name} {incident.reporter_emergency_contact_phone ? `(${incident.reporter_emergency_contact_phone})` : ''}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
