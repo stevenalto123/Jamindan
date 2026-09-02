@@ -228,28 +228,6 @@ const MapDisplay = ({ lat, lng, responderLat, responderLng, onMapClick, drawRout
     <div style={mapStyle}>
       <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
 
-      {/* Advanced Emergency Vehicle Routing Banner */}
-      {drawRoute && hazardDetected && (
-        <div style={{
-          position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', width: '90%', maxWidth: '340px',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: '10px', borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)', zIndex: 1000,
-          borderLeft: '4px solid #3498db', display: 'flex', flexDirection: 'column', gap: '4px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', color: '#2c3e50', fontSize: '13px' }}>
-              <Navigation size={16} color="#3498db" /> AI Routing
-            </div>
-            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#c0392b', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Clock size={12} /> {eta} ({distance})
-            </div>
-          </div>
-          <div style={{ fontSize: '11px', color: '#e67e22', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', backgroundColor: '#fdf2e9', padding: '4px 6px', borderRadius: '4px' }}>
-            <AlertTriangle size={12} /> Hazard Reroute Active
-          </div>
-        </div>
-      )}
-
       {/* Top-Right Buttons */}
       <div style={{ position: 'absolute', top: '50px', right: '12px', display: 'flex', flexDirection: 'column', gap: '8px', zIndex: 1000 }}>
         <button 
