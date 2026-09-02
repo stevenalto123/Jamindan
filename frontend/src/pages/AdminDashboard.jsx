@@ -13,6 +13,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useSystem } from '../context/SystemContext';
+import GeofenceModal from '../components/GeofenceModal';
 
 const AdminDashboard = () => {
   const { t } = useLanguage();
@@ -22,6 +23,7 @@ const AdminDashboard = () => {
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [showEvacModal, setShowEvacModal] = useState(false);
   const [broadcasting, setBroadcasting] = useState(false);
   const navigate = useNavigate();
   const { settings, updateSetting } = useSystem();
@@ -81,6 +83,17 @@ const AdminDashboard = () => {
       alert('Failed to send broadcast.');
     } finally {
       setBroadcasting(false);
+    }
+  };
+
+  const handleEvacBroadcast = async (evacData) => {
+    try {
+      const res = await axios.post('/api/notifications/broadcast-evacuation', evacData);
+      alert(`Evacuation alert sent to ${res.data.target_users} users in the area!`);
+      setShowEvacModal(false);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send evacuation broadcast.');
     }
   };
 
@@ -196,6 +209,14 @@ const AdminDashboard = () => {
         >
           {urgentIncident?.status === 'Pending' ? t('respondToAlert') : t('viewAllIncidents')}
         </button>
+
+        {/* Geofence Evacuation Modal */}
+        {showEvacModal && (
+          <GeofenceModal 
+            onClose={() => setShowEvacModal(false)} 
+            onSend={handleEvacBroadcast} 
+          />
+        )}
       </div>
 
       {/* 2x2 Status Grid */}
@@ -251,13 +272,22 @@ const AdminDashboard = () => {
         </div>
         
         {user?.role === 'Admin' && (
-          <button 
-            onClick={() => setShowBroadcastModal(true)}
-            className="btn btn-primary" 
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', marginTop: '10px' }}
-          >
-            <Radio size={18} /> Send Mass Broadcast
-          </button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
+            <button 
+              onClick={() => setShowBroadcastModal(true)}
+              className="btn btn-primary" 
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px' }}
+            >
+              <Radio size={18} /> Mass Broadcast
+            </button>
+            <button 
+              onClick={() => setShowEvacModal(true)}
+              className="btn btn-primary" 
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', backgroundColor: '#e67e22', border: 'none' }}
+            >
+              <MapPin size={18} /> Geofence Evacuation
+            </button>
+          </div>
         )}
       </div>
 

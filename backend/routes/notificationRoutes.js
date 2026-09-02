@@ -107,4 +107,60 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
   }
 });
 
+// ADMIN ONLY: Geofenced Mass Evacuation Alert
+router.post('/broadcast-evacuation', requireRole(['Admin']), async (req, res) => {
+  const { title, message, lat, lng, radius_meters } = req.body;
+  if (!title || !message || lat === undefined || lng === undefined || !radius_meters) {
+    return res.status(400).json({ message: 'Title, message, lat, lng, and radius_meters are required' });
+  }
+
+  try {
+    // Haversine formula to find users within radius
+    const [users] = await db.query(`
+      SELECT id, push_subscription 
+      FROM users 
+      WHERE is_active = 1 
+      AND current_lat IS NOT NULL 
+      AND current_lng IS NOT NULL
+      AND (
+        6371000 * acos(
+          cos(radians(?)) * cos(radians(current_lat)) * cos(radians(current_lng) - radians(?)) + 
+          sin(radians(?)) * sin(radians(current_lat))
+        )
+      ) <= ?
+    `, [lat, lng, lat, radius_meters]);
+
+    let sentCount = 0;
+    const payload = JSON.stringify({
+      title: title,
+      body: message,
+      icon: '/jamindan-seal.png',
+      url: '/'
+    });
+
+    for (const u of users) {
+      // Create in-app notification
+      await db.execute('INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)', [u.id, title, message]);
+      
+      // Send WebPush notification
+      if (u.push_subscription) {
+        try {
+          const subscription = JSON.parse(u.push_subscription);
+          await webpush.sendNotification(subscription, payload);
+          sentCount++;
+        } catch (err) {
+          console.warn(`Failed to push to user ${u.id}`);
+        }
+      }
+    }
+
+    await db.logAudit(`Broadcasted evacuation alert to ${users.length} users in geofence`, req.user.username, req.ip);
+    res.json({ message: 'Evacuation broadcast sent successfully', target_users: users.length, pushes_sent: sentCount });
+
+  } catch (error) {
+    console.error('Evacuation broadcast error:', error);
+    res.status(500).json({ message: 'Failed to send evacuation broadcast' });
+  }
+});
+
 module.exports = router;
