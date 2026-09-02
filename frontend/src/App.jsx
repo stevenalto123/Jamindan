@@ -126,9 +126,9 @@ const AppLayout = ({ children }) => {
 
   const path = location.pathname;
 
-  // Sync Live Location (Responders & Admins)
+  // Sync Live Location (All Users for Geofence Evacuation)
   useEffect(() => {
-    if (!user || (user.role !== 'Responder' && user.role !== 'Admin')) return;
+    if (!user) return;
 
     let watchId;
     const sendLocation = async (latitude, longitude) => {
