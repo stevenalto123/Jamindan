@@ -412,24 +412,4 @@ router.delete('/:id', authRequired, requireRole(['Admin']), async (req, res) => 
   }
 });
 
-// Update Triage Tag (Admin / Responder only)
-router.put('/:id/triage', authRequired, requireRole(['Admin', 'Responder']), async (req, res) => {
-  const { id } = req.params;
-  const { triage_tag } = req.body;
-
-  const validTags = ['Red', 'Yellow', 'Green', 'Black'];
-  if (!validTags.includes(triage_tag)) {
-    return res.status(400).json({ message: 'Invalid triage tag' });
-  }
-
-  try {
-    await db.query('UPDATE incidents SET triage_tag = ? WHERE id = ?', [triage_tag, id]);
-    await db.logAudit(`Updated triage tag for incident ${id} to ${triage_tag}`, req.user.username, req.ip);
-    res.json({ message: 'Triage tag updated' });
-  } catch (error) {
-    console.error('Update triage error:', error);
-    res.status(500).json({ message: 'Failed to update triage tag' });
-  }
-});
-
 module.exports = router;

@@ -3,29 +3,19 @@ import { Menu } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { useSystem } from '../context/SystemContext';
-import { AlertTriangle } from 'lucide-react';
 
 const Header = ({ title, toggleSidebar }) => {
   const { user } = useAuth();
   const { lang, toggleLanguage } = useLanguage();
-  const { settings } = useSystem();
-  
-  const isMciActive = settings?.mci_mode;
 
   return (
-    <header className="header" style={isMciActive ? { backgroundColor: '#c0392b', color: 'white' } : {}}>
+    <header className="header">
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button className="sidebar-toggle-btn" onClick={toggleSidebar} title="Toggle Sidebar" style={isMciActive ? { color: 'white' } : {}}>
+        <button className="sidebar-toggle-btn" onClick={toggleSidebar} title="Toggle Sidebar">
           <Menu size={24} />
         </button>
         <div className="header-title-container" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <h1 className="header-title" style={isMciActive ? { color: 'white' } : {}}>{title}</h1>
-          {isMciActive && (
-            <span style={{ backgroundColor: '#fff', color: '#c0392b', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <AlertTriangle size={12} /> MCI ACTIVE
-            </span>
-          )}
+          <h1 className="header-title">{title}</h1>
         </div>
       </div>
 

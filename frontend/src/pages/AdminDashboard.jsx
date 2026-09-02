@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { useSystem } from '../context/SystemContext';
 import GeofenceModal from '../components/GeofenceModal';
 
 const AdminDashboard = () => {
@@ -26,18 +25,6 @@ const AdminDashboard = () => {
   const [showEvacModal, setShowEvacModal] = useState(false);
   const [broadcasting, setBroadcasting] = useState(false);
   const navigate = useNavigate();
-  const { settings, updateSetting } = useSystem();
-  const isMciActive = settings?.mci_mode;
-
-  const toggleMciMode = async () => {
-    if (window.confirm(isMciActive ? "Deactivate Mass Casualty Incident (MCI) Mode?" : "WARNING: Activate Mass Casualty Incident (MCI) Mode? This is only for extreme emergencies!")) {
-      try {
-        await updateSetting('mci_mode', !isMciActive);
-      } catch (e) {
-        alert("Failed to toggle MCI Mode");
-      }
-    }
-  };
 
   const fetchDashboardStats = async () => {
     try {
@@ -132,34 +119,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-        {user?.role === 'Admin' && (
-          <div style={{ marginBottom: '24px' }}>
-            <button 
-              onClick={toggleMciMode}
-              style={{
-                width: '100%',
-                padding: '16px',
-                borderRadius: '12px',
-                border: 'none',
-                backgroundColor: isMciActive ? '#c0392b' : '#34495e',
-                color: 'white',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                animation: isMciActive ? 'pulse 2s infinite' : 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <ShieldAlert size={20} />
-              {isMciActive ? 'DEACTIVATE MCI MODE' : 'ACTIVATE MCI MODE'}
-            </button>
-          </div>
-        )}
-
-      {/* Hero Action Card (Replaces SOS for Responders) */}
+      {/* Main Action Card (Dynamic based on latest incident) */}
       <div style={{ 
         backgroundColor: 'var(--card-alt)', 
         borderRadius: '20px', 
