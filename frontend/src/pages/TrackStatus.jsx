@@ -332,22 +332,22 @@ const TrackStatus = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <button 
                   onClick={() => handleTriageUpdate('Red')}
-                  style={{ padding: '10px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: incident.triage_tag === 'Red' ? '#c0392b' : '#f9ebea', color: incident.triage_tag === 'Red' ? 'white' : '#c0392b', border: '2px solid #c0392b' }}>
+                  style={{ padding: '10px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: incident.triage_tag === 'Red' ? '#c0392b' : '#f9ebea', color: incident.triage_tag === 'Red' ? 'white' : '#c0392b', border: '2px solid #c0392b' }}>
                   RED (Immediate)
                 </button>
                 <button 
                   onClick={() => handleTriageUpdate('Yellow')}
-                  style={{ padding: '10px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: incident.triage_tag === 'Yellow' ? '#f1c40f' : '#fef9e7', color: incident.triage_tag === 'Yellow' ? 'white' : '#f39c12', border: '2px solid #f1c40f' }}>
+                  style={{ padding: '10px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: incident.triage_tag === 'Yellow' ? '#f1c40f' : '#fef9e7', color: incident.triage_tag === 'Yellow' ? 'white' : '#f39c12', border: '2px solid #f1c40f' }}>
                   YELLOW (Delayed)
                 </button>
                 <button 
                   onClick={() => handleTriageUpdate('Green')}
-                  style={{ padding: '10px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: incident.triage_tag === 'Green' ? '#2ecc71' : '#eafaf1', color: incident.triage_tag === 'Green' ? 'white' : '#27ae60', border: '2px solid #2ecc71' }}>
+                  style={{ padding: '10px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: incident.triage_tag === 'Green' ? '#2ecc71' : '#eafaf1', color: incident.triage_tag === 'Green' ? 'white' : '#27ae60', border: '2px solid #2ecc71' }}>
                   GREEN (Minor)
                 </button>
                 <button 
                   onClick={() => handleTriageUpdate('Black')}
-                  style={{ padding: '10px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: incident.triage_tag === 'Black' ? '#2c3e50' : '#eaeded', color: incident.triage_tag === 'Black' ? 'white' : '#34495e', border: '2px solid #2c3e50' }}>
+                  style={{ padding: '10px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', backgroundColor: incident.triage_tag === 'Black' ? '#2c3e50' : '#eaeded', color: incident.triage_tag === 'Black' ? 'white' : '#34495e', border: '2px solid #2c3e50' }}>
                   BLACK (Deceased)
                 </button>
               </div>
