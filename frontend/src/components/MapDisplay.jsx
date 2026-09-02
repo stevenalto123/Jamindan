@@ -203,10 +203,19 @@ const MapDisplay = ({ lat, lng, responderLat, responderLng, onMapClick, drawRout
 
   const handleRecenter = () => {
     if (!mapRef.current) return;
-    if (routeLayerRef.current) {
-      mapRef.current.fitBounds(routeLayerRef.current.getBounds(), { padding: [40, 40] });
-    } else if (lat && lng) {
-      mapRef.current.setView([lat, lng], 15);
+    try {
+      if (responderLat && responderLng && drawRoute) {
+        const bounds = L.latLngBounds([
+          [responderLat, responderLng],
+          [lat, lng]
+        ]);
+        mapRef.current.fitBounds(bounds, { padding: [40, 40] });
+      } else if (lat && lng) {
+        mapRef.current.setView([lat, lng], 15);
+      }
+    } catch (err) {
+      console.error("Recenter failed:", err);
+      if (lat && lng) mapRef.current.setView([lat, lng], 15);
     }
   };
 
