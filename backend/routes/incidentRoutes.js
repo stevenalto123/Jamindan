@@ -113,24 +113,30 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
       if (type === 'Accident') targetAgencies.push('Medical', 'Police');
 
       // 4. Fetch Potential Recipients
-      const [recipients] = await conn.query("SELECT id, role, agency_type, push_subscription FROM users WHERE role IN ('Admin', 'Responder') AND is_active = 1");
+      const [recipients] = await conn.query("SELECT id, role, agency_type, is_on_duty, push_subscription FROM users WHERE role IN ('Admin', 'Responder') AND is_active = 1");
       const [residentRows] = await conn.query("SELECT full_name FROM users WHERE id = ?", [req.user.id]);
       const resident = residentRows[0];
 
       for (const recipient of recipients) {
         // Auto-Routing Logic:
         let shouldNotify = false;
+        
         if (recipient.role === 'Admin') {
           shouldNotify = true; // Admins see everything
         } else {
-          if (['Flood', 'Other', 'SOS Panic'].includes(type) || targetAgencies.length === 0) {
-            shouldNotify = true; // General incident, broadcast to everyone
+          // It is a Responder. Check Duty Status unless it's a massive panic
+          if (recipient.is_on_duty !== 1 && type !== 'SOS Panic') {
+            shouldNotify = false;
           } else {
-            // Specific incident type, check agency
-            if (recipient.agency_type && targetAgencies.includes(recipient.agency_type)) {
-              shouldNotify = true;
-            } else if (!recipient.agency_type || recipient.agency_type === 'MDRRMO' || recipient.agency_type === 'General') {
-              shouldNotify = true; // General command sees everything
+            if (['Flood', 'Other', 'SOS Panic'].includes(type) || targetAgencies.length === 0) {
+              shouldNotify = true; // General incident, broadcast to everyone
+            } else {
+              // Specific incident type, check agency
+              if (recipient.agency_type && targetAgencies.includes(recipient.agency_type)) {
+                shouldNotify = true;
+              } else if (!recipient.agency_type || recipient.agency_type === 'MDRRMO' || recipient.agency_type === 'General') {
+                shouldNotify = true; // General command sees everything
+              }
             }
           }
         }

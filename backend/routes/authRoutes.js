@@ -183,7 +183,7 @@ router.post('/logout', authRequired, async (req, res) => {
 // Get profile
 router.get('/me', authRequired, async (req, res) => {
   try {
-    const [rows] = await db.execute('SELECT id, username, role, full_name, phone, barangay, purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone, avatar, created_at FROM users WHERE id = ?', [req.user.id]);
+    const [rows] = await db.execute('SELECT id, username, role, agency_type, full_name, phone, barangay, purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone, avatar, is_on_duty, created_at FROM users WHERE id = ?', [req.user.id]);
     const user = rows[0];
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -192,6 +192,25 @@ router.get('/me', authRequired, async (req, res) => {
   } catch (error) {
     console.error('Fetch me error:', error);
     return res.status(500).json({ message: 'Server error while fetching profile' });
+  }
+});
+
+// Toggle Duty Status (Responders & Admins)
+router.put('/duty', authRequired, async (req, res) => {
+  const { is_on_duty } = req.body;
+  
+  if (req.user.role !== 'Responder' && req.user.role !== 'Admin') {
+    return res.status(403).json({ message: 'Only Responders or Admins can toggle duty status.' });
+  }
+
+  try {
+    const dutyVal = is_on_duty ? 1 : 0;
+    await db.execute('UPDATE users SET is_on_duty = ? WHERE id = ?', [dutyVal, req.user.id]);
+    await db.logAudit(`Duty status changed to: ${dutyVal === 1 ? 'ON DUTY' : 'OFF DUTY'}`, req.user.username, req.ip);
+    return res.json({ message: 'Duty status updated', is_on_duty: dutyVal });
+  } catch (error) {
+    console.error('Duty toggle error:', error);
+    return res.status(500).json({ message: 'Server error while updating duty status' });
   }
 });
 

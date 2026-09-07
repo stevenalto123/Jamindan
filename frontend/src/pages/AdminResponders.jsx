@@ -7,6 +7,7 @@ const AdminResponders = () => {
   const [responders, setResponders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -24,14 +25,20 @@ const AdminResponders = () => {
   }, []);
 
   const filteredResponders = useMemo(() => {
-    if (!searchQuery) return responders;
-    const lowerQuery = searchQuery.toLowerCase();
-    return responders.filter(r => 
-      r.full_name?.toLowerCase().includes(lowerQuery) || 
-      r.barangay?.toLowerCase().includes(lowerQuery) ||
-      r.phone?.includes(lowerQuery)
-    );
-  }, [responders, searchQuery]);
+    let result = responders;
+    if (showAvailableOnly) {
+      result = result.filter(r => r.is_on_duty === 1);
+    }
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      result = result.filter(r => 
+        r.full_name?.toLowerCase().includes(lowerQuery) || 
+        r.barangay?.toLowerCase().includes(lowerQuery) ||
+        r.phone?.includes(lowerQuery)
+      );
+    }
+    return result;
+  }, [responders, searchQuery, showAvailableOnly]);
 
   return (
     <div className="content-body" style={{ maxWidth: '800px' }}>
@@ -61,6 +68,19 @@ const AdminResponders = () => {
               boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)'
             }}
           />
+        </div>
+        
+        {/* Duty Toggle Filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', color: 'var(--text-main)', fontWeight: '500' }}>
+            <input 
+              type="checkbox" 
+              checked={showAvailableOnly} 
+              onChange={(e) => setShowAvailableOnly(e.target.checked)}
+              style={{ marginRight: '8px', width: '18px', height: '18px' }}
+            />
+            Show On-Duty Only
+          </label>
         </div>
 
         {loading ? (
@@ -105,20 +125,20 @@ const AdminResponders = () => {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <h4 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>{resp.full_name}</h4>
-                      {/* Pulsing Dot Status */}
-                      {resp.is_active === 1 ? (
+                      {/* Duty Status Badge */}
+                      {resp.is_on_duty === 1 ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#eafaf1', padding: '2px 8px', borderRadius: '12px', border: '1px solid #d5f5e3' }}>
                           <span style={{
                             width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#2ecc71',
                             boxShadow: '0 0 0 rgba(46, 204, 113, 0.4)',
                             animation: 'pulse 2s infinite'
                           }}></span>
-                          <span style={{ fontSize: '11px', color: '#27ae60', fontWeight: 'bold' }}>{t('onDuty')}</span>
+                          <span style={{ fontSize: '11px', color: '#27ae60', fontWeight: 'bold' }}>ON DUTY</span>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#fdf2f2', padding: '2px 8px', borderRadius: '12px', border: '1px solid #fadbd8' }}>
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#e74c3c' }}></span>
-                          <span style={{ fontSize: '11px', color: '#c0392b', fontWeight: 'bold' }}>{t('inactive')}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#f5f5f5', padding: '2px 8px', borderRadius: '12px', border: '1px solid #e0e0e0' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#95a5a6' }}></span>
+                          <span style={{ fontSize: '11px', color: '#7f8c8d', fontWeight: 'bold' }}>OFF DUTY</span>
                         </div>
                       )}
                     </div>

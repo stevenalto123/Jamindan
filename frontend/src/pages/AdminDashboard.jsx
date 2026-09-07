@@ -8,7 +8,8 @@ import {
   AlertTriangle,
   PhoneCall,
   Clock,
-  Radio
+  Radio,
+  Power
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -16,9 +17,10 @@ import GeofenceModal from '../components/GeofenceModal';
 
 const AdminDashboard = () => {
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [togglingDuty, setTogglingDuty] = useState(false);
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
@@ -81,6 +83,21 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error(err);
       alert('Failed to send evacuation broadcast.');
+    }
+  };
+
+  const handleDutyToggle = async () => {
+    if (togglingDuty) return;
+    setTogglingDuty(true);
+    try {
+      const newStatus = user.is_on_duty === 1 ? 0 : 1;
+      await axios.put('/api/auth/duty', { is_on_duty: newStatus });
+      setUser(prev => ({ ...prev, is_on_duty: newStatus }));
+    } catch (err) {
+      console.error('Duty toggle error', err);
+      alert('Failed to update duty status.');
+    } finally {
+      setTogglingDuty(false);
     }
   };
 
@@ -178,6 +195,35 @@ const AdminDashboard = () => {
           />
         )}
       </div>
+
+      {user?.role === 'Responder' && (
+        <div style={{ marginBottom: '24px' }}>
+          <button
+            onClick={handleDutyToggle}
+            disabled={togglingDuty}
+            style={{
+              width: '100%',
+              padding: '16px',
+              borderRadius: '12px',
+              border: 'none',
+              backgroundColor: user.is_on_duty === 1 ? 'var(--success-color)' : '#e0e0e0',
+              color: user.is_on_duty === 1 ? 'white' : 'var(--text-light)',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: user.is_on_duty === 1 ? '0 4px 15px rgba(46, 204, 113, 0.3)' : 'none'
+            }}
+          >
+            <Power size={24} />
+            {togglingDuty ? 'UPDATING...' : (user.is_on_duty === 1 ? '🟢 ON DUTY - Receiving Alerts' : '⚪ OFF DUTY - Notifications Paused')}
+          </button>
+        </div>
+      )}
 
       {/* 2x2 Status Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>

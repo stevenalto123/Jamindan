@@ -112,6 +112,12 @@ const initializeDatabase = async () => {
       } catch (e) {
         // Column already exists or table doesn't exist yet, which is fine
       }
+      try {
+        await pool.query('ALTER TABLE users ADD COLUMN is_on_duty TINYINT DEFAULT 0 AFTER is_active');
+        console.log('Successfully injected is_on_duty column into existing users table.');
+      } catch (e) {
+        // Column already exists or table doesn't exist yet, which is fine
+      }
     }
 
     // 3. Create Tables
@@ -142,6 +148,7 @@ const initializeDatabase = async () => {
         age INT NOT NULL DEFAULT 18,
         is_verified TINYINT DEFAULT 0,
         is_active TINYINT DEFAULT 1, -- 1 = active, 0 = deactivated
+        is_on_duty TINYINT DEFAULT 0, -- 1 = on shift, 0 = off shift
         migration_v4 TINYINT DEFAULT 1, -- migration sync flag
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
