@@ -31,6 +31,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import UserManagement from './pages/UserManagement';
 import CommandMap from './pages/CommandMap';
 import AdminVehicles from './pages/AdminVehicles';
+import AdminAnalytics from './pages/AdminAnalytics';
 
 // Subpages
 import EmergencyTips from './pages/EmergencyTips';
@@ -512,6 +513,13 @@ function App() {
                 <ProtectedRoute allowedRoles={['Admin']}>
                   <AppLayout>
                     <AdminVehicles />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin-analytics" element={
+                <ProtectedRoute allowedRoles={['Admin']}>
+                  <AppLayout>
+                    <AdminAnalytics />
                   </AppLayout>
                 </ProtectedRoute>
               } />

@@ -10,7 +10,8 @@ import {
   Clock,
   Radio,
   Power,
-  Truck
+  Truck,
+  BarChart3
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -243,11 +244,35 @@ const AdminDashboard = () => {
               gap: '12px',
               cursor: 'pointer',
               boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-              border: '1px solid var(--border-color)'
+              border: '1px solid var(--border-color)',
+              marginBottom: '15px'
             }}
           >
             <Truck size={24} color="var(--primary-color)" />
             🚑 FLEET MANAGEMENT
+          </button>
+          <button
+            onClick={() => navigate('/admin-analytics')}
+            style={{
+              width: '100%',
+              padding: '16px',
+              borderRadius: '12px',
+              border: 'none',
+              backgroundColor: 'var(--card-alt)',
+              color: 'var(--text-main)',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+              border: '1px solid var(--border-color)'
+            }}
+          >
+            <BarChart3 size={24} color="#e74c3c" />
+            📊 INCIDENT ANALYTICS
           </button>
         </div>
       )}

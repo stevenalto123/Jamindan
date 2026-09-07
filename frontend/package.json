@@ -16,12 +16,14 @@
     "leaflet": "^1.9.4",
     "leaflet-routing-machine": "^3.2.12",
     "leaflet.fullscreen": "^5.3.3",
+    "leaflet.heat": "^0.2.0",
     "lucide-react": "^0.368.0",
     "maplibre-gl": "^6.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3",
     "react-webcam": "^7.2.0",
+    "recharts": "^3.10.1",
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
