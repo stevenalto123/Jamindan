@@ -32,6 +32,7 @@ import UserManagement from './pages/UserManagement';
 import CommandMap from './pages/CommandMap';
 import AdminVehicles from './pages/AdminVehicles';
 import AdminAnalytics from './pages/AdminAnalytics';
+import WalkieTalkie from './components/WalkieTalkie';
 
 // Subpages
 import EmergencyTips from './pages/EmergencyTips';
@@ -371,6 +372,7 @@ const AppLayout = ({ children }) => {
           <button onClick={handleInstallClick} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>Install</button>
         </div>
       )}
+      <WalkieTalkie />
       <MobileBottomNav />
       {sidebarOpen && (
         <div 

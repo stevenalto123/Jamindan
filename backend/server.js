@@ -139,6 +139,18 @@ io.on('connection', (socket) => {
     socket.to(`incident-${data.incidentId}`).emit('ice-candidate', data);
   });
 
+  // --- Walkie-Talkie Radio Comms ---
+  socket.on('join-global-radio', () => {
+    socket.join('global-radio');
+    console.log(`Socket ${socket.id} joined global-radio`);
+  });
+
+  socket.on('radio-transmission', (data) => {
+    // data contains { audioBlob, senderName, senderRole, timestamp }
+    // Broadcast to everyone else in the radio room
+    socket.to('global-radio').emit('radio-transmission', data);
+  });
+
   socket.on('disconnect', () => {
     console.log('Socket Disconnected:', socket.id);
   });
