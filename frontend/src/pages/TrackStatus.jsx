@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { useReactToPrint } from 'react-to-print';
 import { useAuth } from '../context/AuthContext';
 import MapDisplay from '../components/MapDisplay';
 import LiveStreamBroadcaster from '../components/LiveStreamBroadcaster';
@@ -42,6 +43,13 @@ const TrackStatus = () => {
 
   // Live Stream State
   const [showLiveStream, setShowLiveStream] = useState(false);
+
+  // Printing State
+  const printRef = useRef();
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    documentTitle: `Incident_Report_${id}`,
+  });
 
   const fetchIncidentDetail = async () => {
     try {
@@ -214,18 +222,16 @@ const TrackStatus = () => {
   };
 
   return (
-    <div className="content-body">
+    <div className="content-body" ref={printRef} style={{ padding: '20px', backgroundColor: '#fff', color: '#000' }}>
       <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="no-print">
         <Link to="/incidents" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '13px', height: '36px' }}>
           <ArrowLeft size={16} /> Back to list
         </Link>
-        <button 
-          className="btn btn-secondary" 
-          onClick={() => window.print()} 
-          style={{ padding: '8px 16px', fontSize: '13px', height: '36px', display: 'flex', alignItems: 'center', gap: '6px' }}
-        >
-          <Printer size={16} /> Print Report
-        </button>
+        {isStaff && (
+          <button onClick={handlePrint} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '13px', height: '36px' }}>
+            <Printer size={16} /> Download Official PDF
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }} className="responsive-grid-col">
@@ -316,7 +322,7 @@ const TrackStatus = () => {
           
           {/* Live Video Streaming Section */}
           {user?.role === 'Resident' && incident.status !== 'Resolved' && (
-            <div className="card" style={{ borderColor: 'var(--primary-color)' }}>
+            <div className="card no-print" style={{ borderColor: 'var(--primary-color)' }}>
               <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary-color)' }}>
                 <Video size={18} /> Live Incident Broadcast Active
               </h3>
@@ -328,7 +334,7 @@ const TrackStatus = () => {
           )}
 
           {isStaff && incident.status !== 'Resolved' && (
-            <div className="card" style={{ backgroundColor: showLiveStream ? '#000' : 'var(--card-bg)' }}>
+            <div className="card no-print" style={{ backgroundColor: showLiveStream ? '#000' : 'var(--card-bg)' }}>
               {!showLiveStream ? (
                 <button 
                   onClick={() => setShowLiveStream(true)}
@@ -369,7 +375,7 @@ const TrackStatus = () => {
 
           {/* Dispatcher Actions */}
           {isStaff && (
-            <div className="card" style={{ borderColor: 'rgba(75, 142, 98, 0.3)' }}>
+            <div className="card no-print" style={{ borderColor: 'rgba(75, 142, 98, 0.3)' }}>
               <h3 className="card-title">Update Status</h3>
               <form onSubmit={handleStatusUpdateSubmit}>
                 <div className="form-group">
