@@ -81,6 +81,7 @@ const householdRoutes = require('./routes/householdRoutes');
 const emergencyRoutes = require('./routes/emergencyRoutes');
 const pushRoutes = require('./routes/pushRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const vehicleRoutes = require('./routes/vehicleRoutes');
 
 // Mount Routes
 app.use('/api/auth', authLimiter, authRoutes);
@@ -93,6 +94,7 @@ app.use('/api/household', householdRoutes);
 app.use('/api/emergency', emergencyRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/vehicles', vehicleRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -30,6 +30,7 @@ import NewsUpdates from './pages/NewsUpdates';
 import AdminDashboard from './pages/AdminDashboard';
 import UserManagement from './pages/UserManagement';
 import CommandMap from './pages/CommandMap';
+import AdminVehicles from './pages/AdminVehicles';
 
 // Subpages
 import EmergencyTips from './pages/EmergencyTips';
@@ -505,6 +506,13 @@ function App() {
               <Route path="/command-map" element={
                 <ProtectedRoute allowedRoles={['Admin', 'Responder']}>
                   <CommandMap />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin-vehicles" element={
+                <ProtectedRoute allowedRoles={['Admin']}>
+                  <AppLayout>
+                    <AdminVehicles />
+                  </AppLayout>
                 </ProtectedRoute>
               } />
               <Route path="/verifications" element={
