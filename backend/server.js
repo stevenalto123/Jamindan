@@ -3,8 +3,18 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const db = require('./config/db'); // ensure DB tables initialized & seeded - triggered schema sync
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*', // Allow all origins for WebRTC signaling
+    methods: ['GET', 'POST', 'PUT']
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 
 // CORS configuration
@@ -97,11 +107,42 @@ app.use((err, req, res, next) => {
   });
 });
 
+// WebRTC Signaling Events
+io.on('connection', (socket) => {
+  console.log('New Socket.IO Connection:', socket.id);
+
+  // Broadcaster (Resident) joins the room for their incident
+  socket.on('join-incident-room', (incidentId) => {
+    socket.join(`incident-${incidentId}`);
+    console.log(`Socket ${socket.id} joined incident room: ${incidentId}`);
+  });
+
+  // Relay WebRTC Offer from Viewer (Admin) to Broadcaster (Resident)
+  socket.on('webrtc-offer', (data) => {
+    socket.to(`incident-${data.incidentId}`).emit('webrtc-offer', data);
+  });
+
+  // Relay WebRTC Answer from Broadcaster (Resident) to Viewer (Admin)
+  socket.on('webrtc-answer', (data) => {
+    socket.to(`incident-${data.incidentId}`).emit('webrtc-answer', data);
+  });
+
+  // Relay ICE Candidates
+  socket.on('ice-candidate', (data) => {
+    socket.to(`incident-${data.incidentId}`).emit('ice-candidate', data);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket Disconnected:', socket.id);
+  });
+});
+
 // Start Server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`====================================================`);
   console.log(`Jamindan Emergency Response API server running on port ${PORT}`);
   console.log(`MySQL database connected successfully`);
+  console.log(`Socket.IO Signaling Server running`);
   console.log(`Allowed CORS Origins: ${allowedOrigins.join(', ')}`);
   console.log(`====================================================`);
 });

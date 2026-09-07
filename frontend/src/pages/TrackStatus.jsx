@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import MapDisplay from '../components/MapDisplay';
+import LiveStreamBroadcaster from '../components/LiveStreamBroadcaster';
+import LiveStreamViewer from '../components/LiveStreamViewer';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -13,7 +15,8 @@ import {
   Printer,
   Navigation,
   Activity,
-  AlertTriangle
+  AlertTriangle,
+  Video
 } from 'lucide-react';
 import { STATUSES } from './IncidentList';
 
@@ -35,6 +38,9 @@ const TrackStatus = () => {
   const [newStatus, setNewStatus] = useState('');
   const [comment, setComment] = useState('');
   const [submittingStatus, setSubmittingStatus] = useState(false);
+
+  // Live Stream State
+  const [showLiveStream, setShowLiveStream] = useState(false);
 
   const fetchIncidentDetail = async () => {
     try {
@@ -307,6 +313,42 @@ const TrackStatus = () => {
         {/* Right Side: Map & Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
+          {/* Live Video Streaming Section */}
+          {user?.role === 'Resident' && incident.status !== 'Resolved' && (
+            <div className="card" style={{ borderColor: 'var(--primary-color)' }}>
+              <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary-color)' }}>
+                <Video size={18} /> Live Incident Broadcast Active
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-light)', marginBottom: '16px' }}>
+                Your camera is securely streaming live video to the Command Center to assist responders.
+              </p>
+              <LiveStreamBroadcaster incidentId={id} />
+            </div>
+          )}
+
+          {isStaff && incident.status !== 'Resolved' && (
+            <div className="card" style={{ backgroundColor: showLiveStream ? '#000' : 'var(--card-bg)' }}>
+              {!showLiveStream ? (
+                <button 
+                  onClick={() => setShowLiveStream(true)}
+                  style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: 'var(--primary-color)', color: 'white', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', animation: 'pulse 2s infinite' }}
+                >
+                  <Video size={20} /> VIEW LIVE SCENE FEED
+                </button>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <h3 className="card-title" style={{ color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Video size={18} /> Resident Live Feed
+                    </h3>
+                    <button onClick={() => setShowLiveStream(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '12px', opacity: 0.7 }}>Close</button>
+                  </div>
+                  <LiveStreamViewer incidentId={id} />
+                </>
+              )}
+            </div>
+          )}
+
           {/* Resource Recommendations (For Staff) */}
           {isStaff && (
             <div className="card" style={{ backgroundColor: 'var(--card-alt)', borderColor: 'rgba(231, 76, 60, 0.2)' }}>
