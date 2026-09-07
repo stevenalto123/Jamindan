@@ -105,12 +105,38 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
         VALUES (?, 'Pending', 'Incident report submitted.', ?)
       `, [insId, req.user.id]);
 
-      // 3. Notify Admins and Responders
-      const [recipients] = await conn.query("SELECT id, push_subscription FROM users WHERE role IN ('Admin', 'Responder') AND is_active = 1");
+      // 3. Determine Target Agencies based on Incident Type
+      const targetAgencies = [];
+      if (type === 'Crime') targetAgencies.push('Police');
+      if (type === 'Fire') targetAgencies.push('Fire');
+      if (type === 'Medical') targetAgencies.push('Medical');
+      if (type === 'Accident') targetAgencies.push('Medical', 'Police');
+
+      // 4. Fetch Potential Recipients
+      const [recipients] = await conn.query("SELECT id, role, agency_type, push_subscription FROM users WHERE role IN ('Admin', 'Responder') AND is_active = 1");
       const [residentRows] = await conn.query("SELECT full_name FROM users WHERE id = ?", [req.user.id]);
       const resident = residentRows[0];
 
       for (const recipient of recipients) {
+        // Auto-Routing Logic:
+        let shouldNotify = false;
+        if (recipient.role === 'Admin') {
+          shouldNotify = true; // Admins see everything
+        } else {
+          if (['Flood', 'Other', 'SOS Panic'].includes(type) || targetAgencies.length === 0) {
+            shouldNotify = true; // General incident, broadcast to everyone
+          } else {
+            // Specific incident type, check agency
+            if (recipient.agency_type && targetAgencies.includes(recipient.agency_type)) {
+              shouldNotify = true;
+            } else if (!recipient.agency_type || recipient.agency_type === 'MDRRMO' || recipient.agency_type === 'General') {
+              shouldNotify = true; // General command sees everything
+            }
+          }
+        }
+
+        if (!shouldNotify) continue;
+
         // App Notification
         await conn.execute(`
           INSERT INTO notifications (user_id, title, message, reference_type, reference_id)

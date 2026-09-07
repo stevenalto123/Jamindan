@@ -9,7 +9,7 @@ router.use(requireRole(['Admin']));
 
 // Create new user (Admin only)
 router.post('/', async (req, res) => {
-  const { username, password, full_name, phone, barangay, role } = req.body;
+  const { username, password, full_name, phone, barangay, role, agency_type } = req.body;
 
   if (!username || !password || !full_name || !phone || !barangay || !role) {
     return res.status(400).json({ message: 'All fields are required' });
@@ -47,12 +47,14 @@ router.post('/', async (req, res) => {
     const salt = bcrypt.genSaltSync(10);
     const password_hash = bcrypt.hashSync(password, salt);
 
-    await db.execute(`
-      INSERT INTO users (username, password_hash, role, full_name, phone, barangay)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `, [username.trim().toLowerCase(), password_hash, role, full_name.trim(), phone.trim(), barangay.trim()]);
+    const finalAgency = role === 'Responder' ? (agency_type || null) : null;
 
-    await db.logAudit(`User account created by admin: @${username.trim().toLowerCase()} (Role: ${role})`, req.user.username, req.ip);
+    await db.execute(`
+      INSERT INTO users (username, password_hash, role, agency_type, full_name, phone, barangay)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [username.trim().toLowerCase(), password_hash, role, finalAgency, full_name.trim(), phone.trim(), barangay.trim()]);
+
+    await db.logAudit(`User account created by admin: @${username.trim().toLowerCase()} (Role: ${role}, Agency: ${finalAgency || 'N/A'})`, req.user.username, req.ip);
     return res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
     console.error('Create user error:', error);
@@ -94,7 +96,7 @@ router.get('/', async (req, res) => {
 
     // Get paginated users
     const dataQuery = `
-      SELECT id, username, role, full_name, phone, barangay, avatar, is_active, created_at
+      SELECT id, username, role, agency_type, full_name, phone, barangay, avatar, is_active, created_at
       ${baseQuery}
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
@@ -121,7 +123,7 @@ router.get('/', async (req, res) => {
 // Update user details & role
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { full_name, phone, barangay, role } = req.body;
+  const { full_name, phone, barangay, role, agency_type } = req.body;
 
   if (!full_name || !phone || !barangay || !role) {
     return res.status(400).json({ message: 'All fields are required' });
@@ -141,13 +143,15 @@ router.put('/:id', async (req, res) => {
     const [rows] = await db.execute('SELECT username FROM users WHERE id = ?', [id]);
     const targetUser = rows[0];
 
+    const finalAgency = role === 'Responder' ? (agency_type || null) : null;
+
     await db.execute(`
       UPDATE users
-      SET full_name = ?, phone = ?, barangay = ?, role = ?
+      SET full_name = ?, phone = ?, barangay = ?, role = ?, agency_type = ?
       WHERE id = ?
-    `, [full_name.trim(), phone.trim(), barangay.trim(), role, id]);
+    `, [full_name.trim(), phone.trim(), barangay.trim(), role, finalAgency, id]);
 
-    await db.logAudit(`User details/role updated for @${targetUser ? targetUser.username : id} (Role: ${role})`, req.user.username, req.ip);
+    await db.logAudit(`User details/role updated for @${targetUser ? targetUser.username : id} (Role: ${role}, Agency: ${finalAgency || 'N/A'})`, req.user.username, req.ip);
     return res.json({ message: 'User updated successfully' });
   } catch (error) {
     console.error('User update error:', error);

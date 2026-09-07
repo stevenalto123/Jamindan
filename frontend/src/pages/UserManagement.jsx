@@ -35,6 +35,7 @@ const UserManagement = () => {
   const [phone, setPhone] = useState('');
   const [barangay, setBarangay] = useState('');
   const [role, setRole] = useState('Resident');
+  const [agencyType, setAgencyType] = useState('MDRRMO'); // 'Police', 'Fire', 'Medical', 'MDRRMO'
   const [submitting, setSubmitting] = useState(false);
 
   const fetchUsers = async () => {
@@ -112,6 +113,7 @@ const UserManagement = () => {
     setPhone('');
     setBarangay(BARANGAYS[0] || '');
     setRole('Resident');
+    setAgencyType('MDRRMO');
     setShowModal(true);
   };
 
@@ -123,6 +125,7 @@ const UserManagement = () => {
     setPhone(u.phone);
     setBarangay(u.barangay);
     setRole(u.role);
+    setAgencyType(u.agency_type || 'MDRRMO');
     setShowModal(true);
   };
 
@@ -161,7 +164,8 @@ const UserManagement = () => {
           full_name: fullName,
           phone: phone,
           barangay: barangay,
-          role: role
+          role: role,
+          agency_type: agencyType
         });
       } else {
         // Add User via Admin endpoint (supports all roles)
@@ -171,7 +175,8 @@ const UserManagement = () => {
           full_name: fullName,
           phone,
           barangay,
-          role
+          role,
+          agency_type: agencyType
         });
       }
       setShowModal(false);
@@ -259,14 +264,25 @@ const UserManagement = () => {
                   {users.map((u) => (
                     <tr key={u.id} style={{ opacity: u.is_active === 0 ? 0.6 : 1 }}>
                       <td style={{ paddingLeft: '0' }}>
-                        <div style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '14px' }}>{u.full_name}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '2px' }}>@{u.username}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{u.full_name}</span>
+                          <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>@{u.username}</span>
+                        </div>
                       </td>
                       <td>
                         <div style={{ fontSize: '14px' }}>{u.phone}</div>
                         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{u.barangay}</div>
                       </td>
-                      <td>{getRoleBadge(u.role)}</td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {getRoleBadge(u.role)}
+                          {u.role === 'Responder' && u.agency_type && (
+                            <span style={{ fontSize: '10px', backgroundColor: 'var(--bg-color)', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', border: '1px solid var(--border-color)', width: 'fit-content' }}>
+                              {u.agency_type}
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td>
                         {u.is_active === 1 ? (
                           <span className="badge badge-resolved" style={{ fontSize: '10px', padding: '2px 8px' }}>Active</span>
@@ -459,11 +475,29 @@ const UserManagement = () => {
                     onChange={(e) => setRole(e.target.value)}
                     required
                   >
-                    {ROLES.map(r => (
-                      <option key={r} value={r}>{r}</option>
-                    ))}
+                    <option value="Resident">Resident (Standard User)</option>
+                    <option value="Responder">Responder (Emergency Staff)</option>
+                    <option value="Admin">Admin (Full Access)</option>
                   </select>
                 </div>
+
+                {role === 'Responder' && (
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label" htmlFor="m-agency">Agency / Department</label>
+                    <select
+                      id="m-agency"
+                      className="form-select"
+                      value={agencyType}
+                      onChange={(e) => setAgencyType(e.target.value)}
+                      required
+                    >
+                      <option value="MDRRMO">MDRRMO / General Rescue</option>
+                      <option value="Police">PNP / Police</option>
+                      <option value="Fire">BFP / Fire Department</option>
+                      <option value="Medical">Medical / Ambulance</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="modal-footer">

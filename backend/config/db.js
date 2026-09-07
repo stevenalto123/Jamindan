@@ -106,6 +106,12 @@ const initializeDatabase = async () => {
       } catch (e) {
         // Column already exists or table doesn't exist yet, which is fine
       }
+      try {
+        await pool.query('ALTER TABLE users ADD COLUMN agency_type VARCHAR(50) NULL AFTER role');
+        console.log('Successfully injected agency_type column into existing users table.');
+      } catch (e) {
+        // Column already exists or table doesn't exist yet, which is fine
+      }
     }
 
     // 3. Create Tables
@@ -116,6 +122,7 @@ const initializeDatabase = async () => {
         email VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         role VARCHAR(20) NOT NULL, -- 'Admin', 'Responder', 'Resident'
+        agency_type VARCHAR(50) NULL, -- 'Police', 'Fire', 'Medical', etc.
         full_name VARCHAR(100) NOT NULL,
         phone VARCHAR(20) NOT NULL,
         barangay VARCHAR(100) NOT NULL,
