@@ -29,6 +29,7 @@ import TrackStatus from './pages/TrackStatus';
 import NewsUpdates from './pages/NewsUpdates';
 import AdminDashboard from './pages/AdminDashboard';
 import UserManagement from './pages/UserManagement';
+import CommandMap from './pages/CommandMap';
 
 // Subpages
 import EmergencyTips from './pages/EmergencyTips';
@@ -499,6 +500,11 @@ function App() {
                   <AppLayout>
                     <AdminDashboard />
                   </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/command-map" element={
+                <ProtectedRoute allowedRoles={['Admin', 'Responder']}>
+                  <CommandMap />
                 </ProtectedRoute>
               } />
               <Route path="/verifications" element={

@@ -64,7 +64,7 @@ router.post('/', async (req, res) => {
 
 // Get all users (with search, role filter, and pagination)
 router.get('/', async (req, res) => {
-  const { search, role, page = 1, limit = 10 } = req.query;
+  const { search, role, is_on_duty, page = 1, limit = 10 } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
 
   try {
@@ -85,6 +85,12 @@ router.get('/', async (req, res) => {
       params.push(role);
     }
 
+    // Duty filter
+    if (is_on_duty !== undefined) {
+      conditions.push('is_on_duty = ?');
+      params.push(is_on_duty);
+    }
+
     if (conditions.length > 0) {
       baseQuery += ' WHERE ' + conditions.join(' AND ');
     }
@@ -96,7 +102,7 @@ router.get('/', async (req, res) => {
 
     // Get paginated users
     const dataQuery = `
-      SELECT id, username, role, agency_type, full_name, phone, barangay, avatar, is_active, created_at
+      SELECT id, username, role, agency_type, full_name, phone, barangay, avatar, is_active, is_on_duty, current_lat, current_lng, created_at
       ${baseQuery}
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?

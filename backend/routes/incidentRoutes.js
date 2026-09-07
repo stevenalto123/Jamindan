@@ -207,8 +207,15 @@ router.get('/', authRequired, async (req, res) => {
 
     // Filter by status
     if (status) {
-      conditions.push('i.status = ?');
-      params.push(status);
+      if (status.includes(',')) {
+        const statuses = status.split(',').map(s => s.trim());
+        const placeholders = statuses.map(() => '?').join(',');
+        conditions.push(`i.status IN (${placeholders})`);
+        params.push(...statuses);
+      } else {
+        conditions.push('i.status = ?');
+        params.push(status);
+      }
     }
 
     // Filter by type
