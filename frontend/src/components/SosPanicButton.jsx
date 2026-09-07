@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ShieldAlert, AlertTriangle } from 'lucide-react';
 import { Haptics } from '@capacitor/haptics';
 import { Geolocation } from '@capacitor/geolocation';
+import { useSystem } from '../context/SystemContext';
 
 const SosPanicButton = () => {
   const [holdProgress, setHoldProgress] = useState(0); // 0 to 100
@@ -11,6 +12,7 @@ const SosPanicButton = () => {
   const [loading, setLoading] = useState(false);
   const progressIntervalRef = useRef(null);
   const navigate = useNavigate();
+  const { settings } = useSystem();
 
   // Helper to trigger haptic vibration
   const triggerVibrate = async (pattern) => {
@@ -128,7 +130,33 @@ const SosPanicButton = () => {
     }
   };
 
+  const triggerSmsFallback = (lat, lng) => {
+    const hotline = settings?.emergency_hotline || '09171234567';
+    let message = 'SOS EMERGENCY! I need help immediately.';
+    if (lat && lng) {
+      message += ` My location: https://maps.google.com/?q=${lat},${lng}`;
+    }
+    
+    // Check OS for proper SMS URI formatting
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const separator = isIOS ? '&' : '?';
+    
+    const uri = `sms:${hotline}${separator}body=${encodeURIComponent(message)}`;
+    
+    alert('Network error detected. Redirecting to SMS to send emergency text.');
+    window.location.href = uri;
+    
+    setHoldProgress(0);
+    setIsHolding(false);
+    setLoading(false);
+  };
+
   const sendSosRequest = async (lat, lng) => {
+    if (!navigator.onLine) {
+      triggerSmsFallback(lat, lng);
+      return;
+    }
+
     try {
       const payload = {
         type: 'SOS Panic',
@@ -146,10 +174,14 @@ const SosPanicButton = () => {
       navigate(`/incidents/${res.data.incidentId}`);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Failed to send SOS Panic. Please call emergency hotline directly!');
-      setHoldProgress(0);
-      setIsHolding(false);
-      setLoading(false);
+      if (!err.response || err.code === 'ECONNABORTED' || err.message === 'Network Error') {
+        triggerSmsFallback(lat, lng);
+      } else {
+        alert(err.response?.data?.message || 'Failed to send SOS Panic. Please call emergency hotline directly!');
+        setHoldProgress(0);
+        setIsHolding(false);
+        setLoading(false);
+      }
     }
   };
 
