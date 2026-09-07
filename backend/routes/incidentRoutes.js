@@ -451,4 +451,63 @@ router.delete('/:id', authRequired, requireRole(['Admin']), async (req, res) => 
   }
 });
 
+// --- INCIDENT CHAT ROUTES ---
+
+// Get chat history for an incident
+router.get('/:id/chat', authRequired, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [messages] = await db.query(`
+      SELECT c.*, u.full_name, u.role, u.avatar 
+      FROM incident_chats c
+      JOIN users u ON c.sender_id = u.id
+      WHERE c.incident_id = ?
+      ORDER BY c.created_at ASC
+    `, [id]);
+    return res.json({ messages });
+  } catch (error) {
+    console.error('Fetch chat error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Send a chat message
+router.post('/:id/chat', authRequired, async (req, res) => {
+  const { id } = req.params;
+  const { message } = req.body;
+  
+  if (!message || message.trim() === '') {
+    return res.status(400).json({ message: 'Message cannot be empty.' });
+  }
+
+  try {
+    // Save to database
+    const [result] = await db.query(
+      'INSERT INTO incident_chats (incident_id, sender_id, message) VALUES (?, ?, ?)',
+      [id, req.user.id, message.trim()]
+    );
+
+    // Fetch the inserted message with sender details
+    const [newMsgRows] = await db.query(`
+      SELECT c.*, u.full_name, u.role, u.avatar 
+      FROM incident_chats c
+      JOIN users u ON c.sender_id = u.id
+      WHERE c.id = ?
+    `, [result.insertId]);
+
+    const newMessage = newMsgRows[0];
+
+    // Emit to Socket.io Room
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`incident-${id}`).emit('new-chat-message', newMessage);
+    }
+
+    return res.status(201).json({ message: newMessage });
+  } catch (error) {
+    console.error('Send chat error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

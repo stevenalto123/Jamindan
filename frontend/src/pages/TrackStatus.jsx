@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import MapDisplay from '../components/MapDisplay';
 import LiveStreamBroadcaster from '../components/LiveStreamBroadcaster';
 import LiveStreamViewer from '../components/LiveStreamViewer';
+import IncidentChat from '../components/IncidentChat';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -489,6 +490,11 @@ const TrackStatus = () => {
             </>
           )}
         </div>
+      </div>
+
+      {/* Live Incident Chat Section */}
+      <div style={{ marginTop: '24px' }} className="no-print">
+        <IncidentChat incidentId={id} incidentStatus={incident.status} />
       </div>
     </div>
   );

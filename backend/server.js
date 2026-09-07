@@ -15,6 +15,9 @@ const io = new Server(server, {
   }
 });
 
+// Expose io to routes
+app.set('io', io);
+
 const PORT = process.env.PORT || 5000;
 
 // CORS configuration
