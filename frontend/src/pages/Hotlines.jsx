@@ -32,19 +32,25 @@ const Hotlines = () => {
       const res = await axios.get('/api/emergency/hotlines');
       if (res.data && res.data.length > 0) {
         setHotlines(res.data);
+        localStorage.setItem('cached_hotlines', JSON.stringify(res.data));
       } else {
         throw new Error("No data");
       }
     } catch (err) {
       console.warn("Offline or API failed, using fallback hotlines.", err);
       // Fallback data for offline mode
-      setHotlines([
-        { id: 'fb1', agency_name: 'Jamindan Municipal Police Station', contact_number: '0998 598 6075', barangay: 'Poblacion' },
-        { id: 'fb2', agency_name: 'Jamindan Fire Station (BFP)', contact_number: '0915 602 1234', barangay: 'Poblacion' },
-        { id: 'fb3', agency_name: 'Jamindan MDRRMO', contact_number: '0961 123 4567', barangay: 'Poblacion' },
-        { id: 'fb4', agency_name: 'Jamindan Rural Health Unit (RHU)', contact_number: '0917 890 1234', barangay: 'Poblacion' },
-        { id: 'fb5', agency_name: 'Camp Peralta Station Hospital', contact_number: '0919 456 7890', barangay: 'Jaena Norte' }
-      ]);
+      const cached = localStorage.getItem('cached_hotlines');
+      if (cached) {
+        setHotlines(JSON.parse(cached));
+      } else {
+        setHotlines([
+          { id: 'fb1', agency_name: 'Jamindan Municipal Police Station', contact_number: '0998 598 6075', barangay: 'Poblacion' },
+          { id: 'fb2', agency_name: 'Jamindan Fire Station (BFP)', contact_number: '0915 602 1234', barangay: 'Poblacion' },
+          { id: 'fb3', agency_name: 'Jamindan MDRRMO', contact_number: '0961 123 4567', barangay: 'Poblacion' },
+          { id: 'fb4', agency_name: 'Jamindan Rural Health Unit (RHU)', contact_number: '0917 890 1234', barangay: 'Poblacion' },
+          { id: 'fb5', agency_name: 'Camp Peralta Station Hospital', contact_number: '0919 456 7890', barangay: 'Jaena Norte' }
+        ]);
+      }
     } finally {
       setLoading(false);
     }

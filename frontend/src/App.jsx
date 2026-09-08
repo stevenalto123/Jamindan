@@ -102,6 +102,7 @@ const AppLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const { user } = useAuth();
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   const [installPrompt, setInstallPrompt] = useState(null);
   
@@ -110,8 +111,19 @@ const AppLayout = ({ children }) => {
       e.preventDefault();
       setInstallPrompt(e);
     };
+    
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   const handleInstallClick = async () => {
@@ -360,6 +372,11 @@ const AppLayout = ({ children }) => {
     <div className={`app-container ${path === '/dashboard' || path === '/admin' ? 'mobile-hide-header' : ''}`}>
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <div className="main-content">
+        {isOffline && (
+          <div style={{ backgroundColor: '#f39c12', color: 'white', padding: '10px', textAlign: 'center', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '18px' }}>⚠️</span> Offline Mode: Showing cached emergency data.
+          </div>
+        )}
         <Header title={pageTitle} subtitle={pageSubtitle} toggleSidebar={toggleSidebar} />
         {children}
       </div>
