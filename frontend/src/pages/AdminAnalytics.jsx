@@ -3,7 +3,6 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import L from 'leaflet';
-import 'leaflet.heat'; // Make sure this runs
 import 'leaflet/dist/leaflet.css';
 import { ArrowLeft, TrendingUp, CheckCircle, Clock, Map as MapIcon, BarChart3 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -60,17 +59,18 @@ const AdminAnalytics = () => {
         mapRef.current.removeLayer(heatLayerRef.current);
       }
       
-      // Ensure L.heatLayer is available (from leaflet.heat)
-      if (L.heatLayer) {
-        heatLayerRef.current = L.heatLayer(heatData, {
-          radius: 25,
-          blur: 15,
-          maxZoom: 17,
-          gradient: { 0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red' }
-        }).addTo(mapRef.current);
-      } else {
-        console.warn('leaflet.heat plugin not loaded properly.');
-      }
+      // Fix leaflet.heat window scope in Vite
+      window.L = L;
+      import('leaflet.heat').then(() => {
+        if (L.heatLayer) {
+          heatLayerRef.current = L.heatLayer(heatData, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 17,
+            gradient: { 0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red' }
+          }).addTo(mapRef.current);
+        }
+      }).catch(err => console.error("Failed to load leaflet.heat", err));
     }
 
     return () => {
