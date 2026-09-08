@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
-const { authRequired, requireRole } = require('../middleware/authMiddleware');
+const { authRequired, requireRole } = require('../middleware/auth');
 
 // Get all vehicles
 router.get('/', authRequired, requireRole(['Admin', 'Responder']), async (req, res) => {
