@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ArrowLeft, TrendingUp, CheckCircle, Clock, Map as MapIcon, BarChart3 } from 'lucide-react';
+import { ArrowLeft, TrendingUp, CheckCircle, Clock, Map as MapIcon, BarChart3, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const AdminAnalytics = () => {
