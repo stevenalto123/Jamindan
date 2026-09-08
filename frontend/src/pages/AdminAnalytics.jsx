@@ -49,8 +49,8 @@ const AdminAnalytics = () => {
     if (!mapRef.current) {
       // Initialize map (Default to Jamindan)
       mapRef.current = L.map(mapContainerRef.current).setView([11.3969, 122.3995], 13);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors & CARTO'
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
       }).addTo(mapRef.current);
     }
 
