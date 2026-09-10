@@ -122,6 +122,8 @@ io.on('connection', (socket) => {
   socket.on('join-incident-room', (incidentId) => {
     socket.join(`incident-${incidentId}`);
     console.log(`Socket ${socket.id} joined incident room: ${incidentId}`);
+    // Notify others in the room that someone joined (useful for WebRTC renegotiation)
+    socket.to(`incident-${incidentId}`).emit('viewer-joined');
   });
 
   // Relay WebRTC Offer from Viewer (Admin) to Broadcaster (Resident)

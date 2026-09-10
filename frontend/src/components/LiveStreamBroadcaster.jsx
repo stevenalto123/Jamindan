@@ -87,11 +87,21 @@ const LiveStreamBroadcaster = ({ incidentId }) => {
         setStreamActive(true);
 
         // Create and send Offer to Viewer
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        socket.emit('webrtc-offer', {
-          incidentId,
-          offer
+        const sendOffer = async () => {
+          const offer = await peerConnection.createOffer();
+          await peerConnection.setLocalDescription(offer);
+          socket.emit('webrtc-offer', {
+            incidentId,
+            offer
+          });
+        };
+
+        await sendOffer();
+
+        // If a new viewer joins later, re-send the offer
+        socket.on('viewer-joined', async () => {
+          console.log('Viewer joined, re-sending offer...');
+          await sendOffer();
         });
 
       } catch (err) {
