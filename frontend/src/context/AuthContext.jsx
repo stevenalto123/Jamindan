@@ -102,6 +102,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (username, password) => {
+    // Request permission immediately on click to prevent mobile browsers from blocking it
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      try {
+        await Notification.requestPermission();
+      } catch (err) {
+        console.warn('Silent permission request failed', err);
+      }
+    }
+
     const res = await axios.post('/api/auth/login', { username, password });
     setToken(res.data.token);
     setUser(res.data.user);
