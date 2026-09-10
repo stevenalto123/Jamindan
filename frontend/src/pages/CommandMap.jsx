@@ -32,7 +32,7 @@ const CommandMap = () => {
       const incRes = await axios.get('/api/incidents', {
         params: { status: 'Pending,Acknowledged,Responding,On Scene', limit: 100 }
       });
-      setIncidents(incRes.data.incidents || []);
+      setIncidents(Array.isArray(incRes.data) ? incRes.data : []);
 
       // Fetch On-Duty Responders
       const resRes = await axios.get('/api/users', {
