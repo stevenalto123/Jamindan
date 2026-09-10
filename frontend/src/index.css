@@ -1440,4 +1440,12 @@ input[type="password"]::-ms-clear {
     border-right: none !important; 
     border-bottom: 1px solid #333 !important; 
   } 
+  
+  .walkie-talkie-container {
+    bottom: 80px !important; /* Move above the mobile bottom nav */
+  }
+}
+
+.walkie-talkie-container {
+  bottom: 20px; /* Default desktop position */
 }
