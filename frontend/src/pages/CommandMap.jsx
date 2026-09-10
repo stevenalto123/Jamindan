@@ -30,7 +30,7 @@ const CommandMap = () => {
     try {
       // Fetch Active Incidents
       const incRes = await axios.get('/api/incidents', {
-        params: { status: 'Pending,En Route,In Progress', limit: 100 }
+        params: { status: 'Pending,Acknowledged,Responding,On Scene', limit: 100 }
       });
       setIncidents(incRes.data.incidents || []);
 
