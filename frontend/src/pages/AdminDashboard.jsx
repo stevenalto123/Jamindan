@@ -124,7 +124,7 @@ const AdminDashboard = () => {
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <Link to="/incidents" style={{ color: 'var(--text-light)', position: 'relative' }}>
+          <Link to="/notifications" style={{ color: 'var(--text-light)', position: 'relative' }}>
             <Bell size={24} />
             {data?.metrics?.pendingReports > 0 && (
               <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', backgroundColor: 'var(--primary-color)', borderRadius: '50%' }}></span>
