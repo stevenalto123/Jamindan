@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Mic, MicOff, Radio, Volume2 } from 'lucide-react';
 
@@ -24,7 +25,7 @@ const WalkieTalkie = () => {
     if (!isStaff) return;
 
     // Connect to Socket
-    const socketUrl = import.meta.env.VITE_API_URL || '';
+    const socketUrl = axios.defaults.baseURL || '';
     socketRef.current = io(socketUrl, { transports: ['websocket', 'polling'] });
     
     socketRef.current.emit('join-global-radio');

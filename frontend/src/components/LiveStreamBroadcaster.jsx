@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
+import axios from 'axios';
 import { Camera, Mic, MicOff, CameraOff, AlertTriangle } from 'lucide-react';
 
 const LiveStreamBroadcaster = ({ incidentId }) => {
@@ -15,7 +16,8 @@ const LiveStreamBroadcaster = ({ incidentId }) => {
     if (!incidentId) return;
 
     // Connect to Socket.IO signaling server
-    const socket = io('/', { path: '/socket.io' });
+    const socketUrl = axios.defaults.baseURL || '';
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
     socket.on('connect', () => {

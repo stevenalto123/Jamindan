@@ -25,7 +25,7 @@ const IncidentChat = ({ incidentId, incidentStatus }) => {
     fetchChatHistory();
 
     // 2. Initialize Socket.io
-    const socketUrl = import.meta.env.VITE_API_URL || '';
+    const socketUrl = axios.defaults.baseURL || '';
     socketRef.current = io(socketUrl, { transports: ['websocket', 'polling'] });
     
     // Join the specific incident room
