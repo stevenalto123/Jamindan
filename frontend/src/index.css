@@ -1442,7 +1442,7 @@ input[type="password"]::-ms-clear {
   } 
   
   .walkie-talkie-container {
-    bottom: 120px !important; /* Move above the mobile bottom nav */
+    bottom: 100px !important; /* Move above the mobile bottom nav */
   }
 }
 
