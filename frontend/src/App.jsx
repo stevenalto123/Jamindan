@@ -7,6 +7,7 @@ import {
   useLocation 
 } from 'react-router-dom';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { SystemProvider } from './context/SystemContext';
@@ -118,11 +119,26 @@ const AppLayout = ({ children }) => {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    // Listen for global mass broadcasts to show an in-app popup and vibrate
+    const socketUrl = axios.defaults.baseURL || '';
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+
+    socket.on('new-broadcast', (data) => {
+      if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200, 100, 200]); // SOS vibration pattern
+      }
+      
+      // Show an in-app browser alert
+      const prefix = data.type === 'evacuation' ? '🚨 EVACUATION ALERT 🚨' : '📢 LGU BROADCAST';
+      window.alert(`${prefix}\n\n${data.title}\n${data.message}`);
+    });
     
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      socket.disconnect();
     };
   }, []);
 

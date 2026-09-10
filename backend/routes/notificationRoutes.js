@@ -100,6 +100,11 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
       );
     }
 
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('new-broadcast', { title, message });
+    }
+
     return res.json({ message: `Broadcast sent to ${sentCount} devices successfully.` });
   } catch (error) {
     console.error('Broadcast error:', error);
@@ -155,6 +160,12 @@ router.post('/broadcast-evacuation', requireRole(['Admin']), async (req, res) =>
     }
 
     await db.logAudit(`Broadcasted evacuation alert to ${users.length} users in geofence`, req.user.username, req.ip);
+    
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('new-broadcast', { title, message, type: 'evacuation' });
+    }
+
     res.json({ message: 'Evacuation broadcast sent successfully', target_users: users.length, pushes_sent: sentCount });
 
   } catch (error) {
