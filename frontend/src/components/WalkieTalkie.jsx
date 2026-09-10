@@ -11,6 +11,7 @@ const WalkieTalkie = () => {
   const [incomingTransmissions, setIncomingTransmissions] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSender, setCurrentSender] = useState(null);
+  const [activeTransmitter, setActiveTransmitter] = useState(null);
   
   const socketRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -35,6 +36,16 @@ const WalkieTalkie = () => {
       console.log('Incoming transmission from:', data.senderName);
       queueRef.current.push(data);
       processQueue();
+    });
+
+    socketRef.current.on('radio-active', (data) => {
+      if (data.senderName !== user.full_name) {
+        setActiveTransmitter(data.senderName);
+      }
+    });
+
+    socketRef.current.on('radio-inactive', () => {
+      setActiveTransmitter(null);
     });
 
     return () => {
@@ -108,6 +119,10 @@ const WalkieTalkie = () => {
 
       mediaRecorderRef.current.start();
       setIsRecording(true);
+      
+      if (socketRef.current) {
+        socketRef.current.emit('radio-active', { senderName: user.full_name });
+      }
     } catch (err) {
       console.error('Error accessing microphone:', err);
       alert('Microphone access is required for the Walkie-Talkie feature.');
@@ -118,6 +133,10 @@ const WalkieTalkie = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      
+      if (socketRef.current) {
+        socketRef.current.emit('radio-inactive');
+      }
     }
   };
 
@@ -153,6 +172,24 @@ const WalkieTalkie = () => {
         }}>
           <Volume2 size={16} />
           Receiving: {currentSender}
+        </div>
+      )}
+
+      {(!isPlaying && activeTransmitter) && (
+        <div style={{
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          color: '#e74c3c',
+          padding: '8px 16px',
+          borderRadius: '20px',
+          fontSize: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          animation: 'pulse 1.5s infinite'
+        }}>
+          <Radio size={16} />
+          {activeTransmitter} is speaking...
         </div>
       )}
 

@@ -153,6 +153,14 @@ io.on('connection', (socket) => {
     socket.to('global-radio').emit('radio-transmission', data);
   });
 
+  socket.on('radio-active', (data) => {
+    socket.to('global-radio').emit('radio-active', data);
+  });
+
+  socket.on('radio-inactive', () => {
+    socket.to('global-radio').emit('radio-inactive');
+  });
+
   socket.on('disconnect', () => {
     console.log('Socket Disconnected:', socket.id);
   });
