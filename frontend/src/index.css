@@ -1449,3 +1449,8 @@ input[type="password"]::-ms-clear {
 .walkie-talkie-container {
   bottom: 20px; /* Default desktop position */
 }
+
+/* Hide Leaflet map attribution globally for cleaner design */
+.leaflet-control-attribution {
+  display: none !important;
+}
