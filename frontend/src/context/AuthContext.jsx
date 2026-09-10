@@ -39,8 +39,8 @@ export const AuthProvider = ({ children }) => {
         setUser(res.data);
         localStorage.setItem('cached_user', JSON.stringify(res.data));
         
-        // Auto-subscribe Responders/Admins to Web Push Notifications
-        if (res.data && (res.data.role === 'Responder' || res.data.role === 'Admin')) {
+        // Auto-subscribe ALL users to Web Push Notifications (so Residents get mass broadcasts)
+        if (res.data) {
           subscribeToPushNotifications();
         }
       } catch (err) {
@@ -107,7 +107,7 @@ export const AuthProvider = ({ children }) => {
     setUser(res.data.user);
     localStorage.setItem('cached_user', JSON.stringify(res.data.user));
     
-    if (res.data.user && (res.data.user.role === 'Responder' || res.data.user.role === 'Admin')) {
+    if (res.data.user) {
       subscribeToPushNotifications();
     }
     
