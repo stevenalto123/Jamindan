@@ -182,11 +182,23 @@ const WalkieTalkie = () => {
         )}
 
         <button
-          onMouseDown={startRecording}
-          onMouseUp={stopRecording}
-          onMouseLeave={stopRecording} // Stop if dragged out
-          onTouchStart={startRecording}
-          onTouchEnd={stopRecording}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            startRecording();
+          }}
+          onPointerUp={(e) => {
+            e.preventDefault();
+            stopRecording();
+          }}
+          onPointerLeave={(e) => {
+            e.preventDefault();
+            stopRecording();
+          }}
+          onPointerCancel={(e) => {
+            e.preventDefault();
+            stopRecording();
+          }}
+          onContextMenu={(e) => e.preventDefault()}
           disabled={isPlaying}
           style={{
             width: '60px',
@@ -203,7 +215,9 @@ const WalkieTalkie = () => {
             transition: 'all 0.2s',
             outline: 'none',
             userSelect: 'none',
-            WebkitUserSelect: 'none'
+            WebkitUserSelect: 'none',
+            WebkitTouchCallout: 'none',
+            touchAction: 'none'
           }}
         >
           {isRecording ? <Mic size={28} /> : (isPlaying ? <Volume2 size={28} /> : <Radio size={28} />)}
