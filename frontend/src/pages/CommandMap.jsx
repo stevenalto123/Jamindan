@@ -179,11 +179,11 @@ const CommandMap = () => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div className="command-map-wrapper" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         
         {/* Sidebar */}
-        <div style={{ 
-          width: '320px', 
+        <div className="command-map-sidebar" style={{ 
+          width: '350px', 
           backgroundColor: '#1a1a1a', 
           borderRight: '1px solid #333',
           display: 'flex',

@@ -1428,3 +1428,5 @@ input[type="password"]::-ms-clear {
   --sidebar-active: #2c3e32;
   --sidebar-hover: #2a2a2a;
 }
+@ m e d i a   ( m a x - w i d t h :   7 6 8 p x )   {   . c o m m a n d - m a p - w r a p p e r   {   f l e x - d i r e c t i o n :   c o l u m n   ! i m p o r t a n t ;   }   . c o m m a n d - m a p - s i d e b a r   {   w i d t h :   1 0 0 %   ! i m p o r t a n t ;   h e i g h t :   3 5 0 p x   ! i m p o r t a n t ;   f l e x :   n o n e   ! i m p o r t a n t ;   b o r d e r - r i g h t :   n o n e   ! i m p o r t a n t ;   b o r d e r - b o t t o m :   1 p x   s o l i d   # 3 3 3   ! i m p o r t a n t ;   }   }  
+ 
