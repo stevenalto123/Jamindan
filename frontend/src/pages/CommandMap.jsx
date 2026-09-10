@@ -22,9 +22,9 @@ const CommandMap = () => {
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
 
-  // Dark mode map tiles
-  const tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
-  const attribution = 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ';
+  // Standard colorful map tiles
+  const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   const fetchData = async () => {
     try {
