@@ -53,7 +53,8 @@ const WalkieTalkie = () => {
     
     try {
       // Convert ArrayBuffer to Blob and play
-      const blob = new Blob([transmission.audioBlob], { type: 'audio/webm;codecs=opus' });
+      const mimeType = transmission.mimeType || 'audio/webm;codecs=opus';
+      const blob = new Blob([transmission.audioBlob], { type: mimeType });
       const audioUrl = URL.createObjectURL(blob);
       
       audioPlayerRef.current.src = audioUrl;
@@ -78,7 +79,8 @@ const WalkieTalkie = () => {
     if (!isStaff || isPlaying) return; // Prevent talking over someone
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+      // Let the browser choose the best supported audio codec (fixes iOS/Safari crash)
+      mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
@@ -88,11 +90,13 @@ const WalkieTalkie = () => {
       };
 
       mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' });
+        const mimeType = mediaRecorderRef.current.mimeType;
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         // Send to server
         if (socketRef.current) {
           socketRef.current.emit('radio-transmission', {
             audioBlob,
+            mimeType,
             senderName: user.full_name,
             senderRole: user.role,
             timestamp: new Date().toISOString()
