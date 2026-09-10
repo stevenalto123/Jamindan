@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { FileText, Search, PlusCircle, Eye, Trash2, Download, Printer } from 'lucide-react';
@@ -41,6 +42,21 @@ const IncidentList = () => {
     const interval = setInterval(() => fetchIncidents(true), 3000);
     return () => clearInterval(interval);
   }, [statusFilter, typeFilter]);
+
+  // Real-time listener for status updates
+  useEffect(() => {
+    const socketUrl = axios.defaults.baseURL || '';
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    
+    socket.on('incident-status-updated', (data) => {
+      // Re-fetch the list when any incident status changes
+      fetchIncidents();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   const handleExportCSV = () => {
     if (!incidents || incidents.length === 0) {

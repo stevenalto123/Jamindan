@@ -419,8 +419,16 @@ router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), asy
       ]);
     });
 
-    await db.logAudit(`Incident status updated to [${status}] for ${incident.code}`, req.user.username, req.ip);
-    return res.json({ message: `Incident status updated to ${status} successfully.` });
+      await db.logAudit(`Incident status updated to [${status}] for ${incident.code}`, req.user.username, req.ip);
+      
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('incident-status-updated', { incidentId: id, status });
+        // Also emit to the specific incident room for residents tracking it
+        io.to(`incident-${id}`).emit('incident-status-updated', { incidentId: id, status });
+      }
+
+      return res.json({ message: `Incident status updated to ${status} successfully.` });
 
   } catch (error) {
     console.error('Update status error:', error);

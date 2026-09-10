@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import { useReactToPrint } from 'react-to-print';
 import { useAuth } from '../context/AuthContext';
 import MapDisplay from '../components/MapDisplay';
@@ -69,6 +70,27 @@ const TrackStatus = () => {
 
   useEffect(() => {
     fetchIncidentDetail();
+  }, [id]);
+
+  // Listen for real-time status updates
+  useEffect(() => {
+    const socketUrl = axios.defaults.baseURL || '';
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    
+    // Use the same incident room used for chat
+    socket.emit('join-incident-room', id);
+
+    socket.on('incident-status-updated', (data) => {
+      // Refresh the page data if the update belongs to the current incident
+      // We check data.incidentId just in case, though the room ensures it
+      if (String(data.incidentId) === String(id)) {
+        fetchIncidentDetail();
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, [id]);
 
   // Track Responder's own location
