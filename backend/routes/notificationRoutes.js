@@ -72,7 +72,7 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
   }
 
   try {
-    const [users] = await db.query('SELECT id, push_subscription FROM users WHERE is_active = 1');
+    const [users] = await db.query('SELECT id, push_subscription FROM users WHERE is_active = 1 AND id != ?', [req.user.id]);
     
     let sentCount = 0;
     const payload = JSON.stringify({
@@ -127,13 +127,14 @@ router.post('/broadcast-evacuation', requireRole(['Admin']), async (req, res) =>
       WHERE is_active = 1 
       AND current_lat IS NOT NULL 
       AND current_lng IS NOT NULL
+      AND id != ?
       AND (
         6371000 * acos(
           cos(radians(?)) * cos(radians(current_lat)) * cos(radians(current_lng) - radians(?)) + 
           sin(radians(?)) * sin(radians(current_lat))
         )
       ) <= ?
-    `, [lat, lng, lat, radius_meters]);
+    `, [req.user.id, lat, lng, lat, radius_meters]);
 
     let sentCount = 0;
     const payload = JSON.stringify({
