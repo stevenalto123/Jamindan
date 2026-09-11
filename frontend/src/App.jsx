@@ -580,7 +580,7 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/logs" element={
-                <ProtectedRoute allowedRoles={['Admin', 'Responder']}>
+                <ProtectedRoute allowedRoles={['Admin']}>
                   <AppLayout>
                     <SystemLogs />
                   </AppLayout>

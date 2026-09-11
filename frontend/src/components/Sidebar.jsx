@@ -170,25 +170,30 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
         {(isAdmin || isResponder) && (
           <>
-            <li className="sidebar-item">
-              <NavLink to="/news" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
-                <Radio size={18} />
-                <span>Announcements</span>
-              </NavLink>
-            </li>
-            <li className="sidebar-item">
-              <NavLink to="/logs" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
-                <History size={18} />
-                <span>System Logs</span>
-              </NavLink>
-            </li>
-            <li className="sidebar-item">
-              <NavLink to="/settings" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
-                <Settings size={18} />
-                <span>Settings</span>
-              </NavLink>
-            </li>
-          </>
+          <li className="sidebar-item">
+            <NavLink to="/news" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
+              <Radio size={18} />
+              <span>Announcements</span>
+            </NavLink>
+          </li>
+        )}
+
+        {isAdmin && (
+          <li className="sidebar-item">
+            <NavLink to="/logs" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
+              <History size={18} />
+              <span>System Logs</span>
+            </NavLink>
+          </li>
+        )}
+
+        {(isAdmin || isResponder) && (
+          <li className="sidebar-item">
+            <NavLink to="/settings" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
+              <Settings size={18} />
+              <span>Settings</span>
+            </NavLink>
+          </li>
         )}
 
         <li className="sidebar-item" style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
