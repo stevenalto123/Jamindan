@@ -111,16 +111,57 @@ const AppLayout = ({ children }) => {
   // Continuous alarm for evacuation
   useEffect(() => {
     let interval;
+    let audioCtx;
+    let osc;
+
     if (activeEvacuation) {
-      // Vibrate continuously every 1.5 seconds until acknowledged
-      interval = setInterval(() => {
-        if (navigator.vibrate) {
-          navigator.vibrate([500, 200, 500, 200]);
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          audioCtx = new AudioContext();
+          
+          osc = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+          
+          osc.type = 'square';
+          osc.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          
+          // Start the siren
+          osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+          osc.start();
+          gainNode.gain.value = 0.3; // 30% volume to prevent blowing out speakers
+
+          let isHigh = true;
+          interval = setInterval(() => {
+            if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200]);
+            
+            if (osc) {
+              isHigh = !isHigh;
+              // Toggle between 800Hz and 1200Hz (European emergency siren style)
+              osc.frequency.setValueAtTime(isHigh ? 800 : 1200, audioCtx.currentTime);
+            }
+          }, 800);
         }
-      }, 1500);
+      } catch (err) {
+        console.warn('Audio API failed or blocked:', err);
+        interval = setInterval(() => {
+          if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200]);
+        }, 1500);
+      }
     }
+    
     return () => {
       if (interval) clearInterval(interval);
+      if (osc) {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch(e){}
+      }
+      if (audioCtx && audioCtx.state !== 'closed') {
+        audioCtx.close().catch(e => console.warn(e));
+      }
     };
   }, [activeEvacuation]);
   
