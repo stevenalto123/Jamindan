@@ -53,7 +53,7 @@ const Settings = () => {
   };
 
   return (
-    <div className="content-body" style={{ paddingBottom: '80px', maxWidth: '600px', margin: '0 auto' }}>
+    <div className="content-body" style={{ paddingBottom: '80px', margin: '0 auto' }}>
       
       <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '0', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', marginBottom: '20px', overflow: 'hidden' }}>
         

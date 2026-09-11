@@ -48,7 +48,7 @@ const ResidentDashboard = () => {
   const latestAdvisory = stats?.latestAdvisories?.[0];
 
   return (
-    <div className="content-body" style={{ padding: '20px', maxWidth: '600px', margin: '0 auto', paddingBottom: '80px' }}>
+    <div className="content-body" style={{ padding: '20px', margin: '0 auto', paddingBottom: '80px' }}>
       
       {/* Custom Mobile Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>

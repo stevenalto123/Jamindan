@@ -33,7 +33,7 @@ const MoreMenu = () => {
   ];
 
   return (
-    <div className="content-body" style={{ padding: '20px', maxWidth: '600px', margin: '0 auto', paddingBottom: '80px' }}>
+    <div className="content-body" style={{ padding: '20px', margin: '0 auto', paddingBottom: '80px' }}>
 
       {/* User Mini Profile Card */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px', backgroundColor: 'var(--card-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '24px' }}>
