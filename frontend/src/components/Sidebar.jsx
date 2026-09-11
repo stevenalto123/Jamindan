@@ -169,7 +169,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         )}
 
         {(isAdmin || isResponder) && (
-          <>
           <li className="sidebar-item">
             <NavLink to="/news" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
               <Radio size={18} />
