@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, ShieldCheck } from 'lucide-react';
+import { User, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { BARANGAYS } from './Register';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -20,6 +20,8 @@ const UserProfile = () => {
   
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -177,14 +179,24 @@ const UserProfile = () => {
             {t('securitySettings')}
           </h3>
           <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-            <div className="form-group" style={{ margin: 0 }}>
+            <div className="form-group" style={{ margin: 0, position: 'relative' }}>
               <label className="form-label">{t('currentPasswordLabel')}</label>
-              <input type="password" className="form-input" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
+              <div style={{ position: 'relative' }}>
+                <input type={showCurrentPassword ? "text" : "password"} className="form-input" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
+                <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#666', cursor: 'pointer', padding: 0 }}>
+                  {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
-            <div className="form-group" style={{ margin: 0 }}>
+            <div className="form-group" style={{ margin: 0, position: 'relative' }}>
               <label className="form-label">{t('newPasswordLabel')}</label>
-              <input type="password" className="form-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+              <div style={{ position: 'relative' }}>
+                <input type={showNewPassword ? "text" : "password"} className="form-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#666', cursor: 'pointer', padding: 0 }}>
+                  {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={submitting} style={{ height: '40px' }}>
