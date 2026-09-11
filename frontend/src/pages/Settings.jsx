@@ -9,7 +9,9 @@ const Settings = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
-  const [pushEnabled, setPushEnabled] = useState(Notification.permission === 'granted');
+  const [pushEnabled, setPushEnabled] = useState(
+    'Notification' in window && Notification.permission === 'granted'
+  );
   const [emailEnabled, setEmailEnabled] = useState(localStorage.getItem('emailAlerts') !== 'false');
   const [smsEnabled, setSmsEnabled] = useState(localStorage.getItem('smsAlerts') !== 'false');
   const [darkMode, setDarkMode] = useState(document.documentElement.getAttribute('data-theme') === 'dark');
