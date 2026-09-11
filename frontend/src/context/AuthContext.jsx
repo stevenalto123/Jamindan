@@ -102,10 +102,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (username, password) => {
-    // Request permission immediately on click to prevent mobile browsers from blocking it
+    // Request permission immediately on click but DO NOT await it so it doesn't block login if browser hangs
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       try {
-        await Notification.requestPermission();
+        Notification.requestPermission().catch(err => console.warn('Silent permission request failed', err));
       } catch (err) {
         console.warn('Silent permission request failed', err);
       }
