@@ -106,6 +106,23 @@ const AppLayout = ({ children }) => {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [activeEvacuation, setActiveEvacuation] = useState(null);
+  
+  // Continuous alarm for evacuation
+  useEffect(() => {
+    let interval;
+    if (activeEvacuation) {
+      // Vibrate continuously every 1.5 seconds until acknowledged
+      interval = setInterval(() => {
+        if (navigator.vibrate) {
+          navigator.vibrate([500, 200, 500, 200]);
+        }
+      }, 1500);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeEvacuation]);
   
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
@@ -125,13 +142,14 @@ const AppLayout = ({ children }) => {
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
 
     socket.on('new-broadcast', (data) => {
-      if (navigator.vibrate) {
-        navigator.vibrate([200, 100, 200, 100, 200]); // SOS vibration pattern
+      if (data.type === 'evacuation') {
+        setActiveEvacuation(data);
+      } else {
+        if (navigator.vibrate) {
+          navigator.vibrate([200, 100, 200, 100, 200]); // Normal vibration
+        }
+        window.alert(`📢 LGU BROADCAST\n\n${data.title}\n${data.message}`);
       }
-      
-      // Show an in-app browser alert
-      const prefix = data.type === 'evacuation' ? '🚨 EVACUATION ALERT 🚨' : '📢 LGU BROADCAST';
-      window.alert(`${prefix}\n\n${data.title}\n${data.message}`);
     });
     
     return () => {
@@ -413,6 +431,19 @@ const AppLayout = ({ children }) => {
           style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 95 }}
           className="menu-toggle"
         />
+      )}
+      {activeEvacuation && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(192, 57, 43, 0.95)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center', color: 'white', animation: 'pulse 1s infinite' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '20px' }}>⚠️ EVACUATION ALERT ⚠️</h1>
+          <h2 style={{ fontSize: '22px', marginBottom: '15px' }}>{activeEvacuation.title}</h2>
+          <p style={{ fontSize: '16px', marginBottom: '40px', maxWidth: '400px' }}>{activeEvacuation.message}</p>
+          <button 
+            onClick={() => setActiveEvacuation(null)}
+            style={{ padding: '16px 32px', fontSize: '16px', fontWeight: 'bold', backgroundColor: 'white', color: '#c0392b', border: 'none', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }}
+          >
+            ACKNOWLEDGE & STOP ALARM
+          </button>
+        </div>
       )}
     </div>
   );
