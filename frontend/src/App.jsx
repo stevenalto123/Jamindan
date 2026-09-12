@@ -447,7 +447,7 @@ const AppLayout = ({ children }) => {
   }
 
   return (
-    <div className={`app-container ${path === '/dashboard' || path === '/admin' ? 'mobile-hide-header' : ''}`}>
+    <div className="app-container">
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <div className="main-content">
         {isOffline && (
