@@ -1194,7 +1194,7 @@ h1, h2, h3, h4, h5, h6 {
 .notif-btn {
   background: none;
   border: none;
-  color: var(--text-light);
+  color: var(--text-main);
   cursor: pointer;
   padding: 8px;
   border-radius: var(--radius-full);
