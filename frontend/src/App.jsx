@@ -421,8 +421,8 @@ const AppLayout = ({ children }) => {
     pageTitle = "Settings";
     pageSubtitle = "Manage system preferences";
   } else if (path === '/admin') {
-    pageTitle = "Admin Dashboard";
-    pageSubtitle = "Overview of the system";
+    pageTitle = user?.role === 'Responder' ? "Responder Dashboard" : "Admin Dashboard";
+    pageSubtitle = user?.role === 'Responder' ? "Active Incident Operations" : "Overview of the system";
   } else if (path === '/users') {
     pageTitle = "User Management";
     pageSubtitle = "Manage all platform users";
