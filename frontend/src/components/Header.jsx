@@ -31,7 +31,7 @@ const Header = ({ title, toggleSidebar }) => {
             {lang === 'en' ? 'EN | hil' : 'en | HIL'}
           </button>
           
-          {user?.role !== 'Responder' && <NotificationBell />}
+          <NotificationBell />
 
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }} className="hide-mobile">
             <span style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '13px' }}>{user?.full_name}</span>
