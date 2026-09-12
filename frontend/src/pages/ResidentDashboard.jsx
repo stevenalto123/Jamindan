@@ -50,31 +50,6 @@ const ResidentDashboard = () => {
   return (
     <div className="content-body" style={{ padding: '20px', margin: '0 auto', paddingBottom: '80px' }}>
       
-      {/* Custom Mobile Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0', color: 'var(--text-main)', lineHeight: '1.2' }}>
-            Welcome, {user?.full_name?.split(' ')[0] || 'User'}
-          </h1>
-          <p style={{ margin: '0', color: 'var(--text-light)', fontSize: '14px' }}>
-            {user?.barangay || 'Jamindan'}, Capiz
-          </p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <Link to="/notifications" style={{ color: 'var(--text-light)', position: 'relative' }}>
-            <Bell size={24} />
-            {activeAlertsCount > 0 && (
-              <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', backgroundColor: 'var(--primary-color)', borderRadius: '50%' }}></span>
-            )}
-          </Link>
-          <Link to="/profile" style={{ textDecoration: 'none' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#0d47a1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}>
-              {getInitials(user?.full_name)}
-            </div>
-          </Link>
-        </div>
-      </div>
-
       {/* Official SOS Panic Button Component */}
       <SosPanicButton />
 
