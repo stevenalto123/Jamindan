@@ -30,9 +30,14 @@ const Header = ({ title, toggleSidebar }) => {
           >
             {lang === 'en' ? 'EN | hil' : 'en | HIL'}
           </button>
+          
+          <NotificationBell />
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontSize: '13px' }} className="hide-mobile">
-            <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>{user?.full_name}</span>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }} className="hide-mobile">
+            <span style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '13px' }}>{user?.full_name}</span>
+            <div className="avatar-circle" style={{ width: '32px', height: '32px', fontSize: '12px' }}>
+              {user?.full_name?.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}
+            </div>
           </div>
         </div>
       </div>
