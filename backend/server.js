@@ -88,7 +88,7 @@ const vehicleRoutes = require('./routes/vehicleRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 
 // Mount Routes
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/news', newsRoutes);

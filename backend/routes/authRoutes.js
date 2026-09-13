@@ -9,6 +9,16 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const rateLimit = require('express-rate-limit');
+
+// Strict Authentication Rate Limiter (Max 15 requests per 15 minutes)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  message: { message: 'SECURITY ALERT: Too many login/registration attempts. You have been temporarily blocked for 15 minutes to prevent brute-force attacks.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const { storage } = require('../config/cloudinary');
 
@@ -27,8 +37,8 @@ const upload = multer({
   }
 });
 
-// Register Resident
-router.post('/register', upload.fields([{ name: 'id_photo', maxCount: 1 }, { name: 'selfie_photo', maxCount: 1 }]), async (req, res) => {
+// Resident Self-Registration Endpoint
+router.post('/register', authLimiter, upload.fields([{ name: 'id_photo', maxCount: 1 }, { name: 'selfie_photo', maxCount: 1 }]), async (req, res) => {
   const { username, email, password, full_name, phone, barangay, age, id_type } = req.body;
 
   if (!username || !email || !password || !full_name || !phone || !barangay || !age || !id_type) {
@@ -95,8 +105,8 @@ router.post('/register', upload.fields([{ name: 'id_photo', maxCount: 1 }, { nam
   }
 });
 
-// Login
-router.post('/login', async (req, res) => {
+// Login Route
+router.post('/login', authLimiter, async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
