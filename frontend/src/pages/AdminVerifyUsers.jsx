@@ -4,7 +4,8 @@ import axios from 'axios';
 const AdminVerifyUsers = () => {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const [processingId, setProcessingId] = useState(null);
 
   const fetchPendingUsers = async () => {
     try {
@@ -31,12 +32,15 @@ const AdminVerifyUsers = () => {
       
     if (!window.confirm(confirmMessage)) return;
 
+    setProcessingId(userId);
     try {
       await axios.put(`/api/auth/verify-user/${userId}`, { action });
       fetchPendingUsers(); // refresh list
     } catch (err) {
       console.error(`Failed to ${action} user:`, err);
       alert(`Failed to ${action} user.`);
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -96,15 +100,17 @@ const AdminVerifyUsers = () => {
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button 
                   onClick={() => handleVerify(user.id, 'approve')}
-                  style={{ flex: 1, padding: '10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                  disabled={processingId === user.id}
+                  style={{ flex: 1, padding: '10px', background: processingId === user.id ? '#9E9E9E' : '#4CAF50', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: processingId === user.id ? 'not-allowed' : 'pointer' }}
                 >
-                  Approve User
+                  {processingId === user.id ? 'Processing...' : 'Approve User'}
                 </button>
                 <button 
                   onClick={() => handleVerify(user.id, 'reject')}
-                  style={{ flex: 1, padding: '10px', background: '#F44336', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                  disabled={processingId === user.id}
+                  style={{ flex: 1, padding: '10px', background: processingId === user.id ? '#9E9E9E' : '#F44336', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: processingId === user.id ? 'not-allowed' : 'pointer' }}
                 >
-                  Reject & Delete
+                  {processingId === user.id ? 'Processing...' : 'Reject & Delete'}
                 </button>
               </div>
 
