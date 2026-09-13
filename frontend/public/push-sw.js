@@ -6,7 +6,6 @@ self.addEventListener('push', function(event) {
         body: data.body || 'New emergency alert received.',
         icon: data.icon || '/jamindan-seal.png',
         vibrate: [200, 100, 200, 100, 200, 100, 200],
-        requireInteraction: true,
         data: {
           url: data.url || '/'
         }
