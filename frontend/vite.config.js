@@ -54,6 +54,7 @@ export default defineConfig({
         enabled: true
       },
       workbox: {
+        importScripts: ['/push-sw.js'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB limit for MapLibre chunk
         globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
         runtimeCaching: [

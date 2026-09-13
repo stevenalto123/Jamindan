@@ -82,13 +82,16 @@ export const AuthProvider = ({ children }) => {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') return;
 
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      await navigator.serviceWorker.ready;
+      const registration = await navigator.serviceWorker.ready;
+      if (!registration) {
+        console.warn("No active service worker found for push subscription.");
+        return;
+      }
 
       let subscription = await registration.pushManager.getSubscription();
       if (!subscription) {
         // VAPID Public Key from .env
-        const publicVapidKey = 'BJd5fK6r2z9Z39nPfgkV3kKcE9K3K7nvIAC7GFQdgZodVaVz-DRXaCVUoeb3VSjQxQCgJ3jPiDKm6cOI1PuU-oM';
+        const publicVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BJd5fK6r2z9Z39nPfgkV3kKcE9K3K7nvIAC7GFQdgZodVaVz-DRXaCVUoeb3VSjQxQCgJ3jPiDKm6cOI1PuU-oM';
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
