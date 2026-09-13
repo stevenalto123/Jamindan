@@ -52,7 +52,7 @@ const rateLimit = require('express-rate-limit');
 // 1. Global API Rate Limiter (Max 200 requests per 15 minutes per IP)
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
-  max: 10000, 
+  max: 200, 
   message: { message: 'Too many requests from this IP, please try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -61,7 +61,7 @@ const globalLimiter = rateLimit({
 // 2. Strict Authentication Rate Limiter (Max 15 requests per 15 minutes for login/register)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10000,
+  max: 15,
   message: { message: 'SECURITY ALERT: Too many login/registration attempts. You have been temporarily blocked for 15 minutes to prevent brute-force attacks.' },
   standardHeaders: true,
   legacyHeaders: false,

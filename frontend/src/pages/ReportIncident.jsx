@@ -355,7 +355,7 @@ const ReportIncident = () => {
               disabled={loading}
               style={{ height: '40px', backgroundColor: 'var(--primary-color)', minWidth: '150px' }}
             >
-              {loading ? 'Submitting...' : t('submit')}
+              {loading ? 'Uploading & Submitting...' : t('submit')}
             </button>
           </div>
         </form>
