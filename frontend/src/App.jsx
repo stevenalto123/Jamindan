@@ -466,7 +466,13 @@ const AppLayout = ({ children }) => {
       <div className="main-content">
         {showEmergencyAlert && (
           <div 
-            onClick={() => setShowEmergencyAlert(false)}
+            onClick={() => {
+              setShowEmergencyAlert(false);
+              const testAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+              testAudio.volume = 1.0;
+              testAudio.play().catch(e => console.error(e));
+              if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100]);
+            }}
             style={{ backgroundColor: 'var(--danger-color)', color: 'white', padding: '15px', textAlign: 'center', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', animation: 'pulse 1s infinite' }}
           >
             <span style={{ fontSize: '24px' }}>🚨</span> NEW EMERGENCY DETECTED! CLICK HERE TO ACKNOWLEDGE
