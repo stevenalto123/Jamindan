@@ -49,10 +49,10 @@ app.use(express.urlencoded({ extended: true }));
 // Rate Limiting Security
 const rateLimit = require('express-rate-limit');
 
-// 1. Global API Rate Limiter (Max 200 requests per 15 minutes per IP)
+// 1. Global API Rate Limiter (Max 3000 requests per 15 minutes per IP)
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
-  max: 200, 
+  max: 3000, 
   message: { message: 'Too many requests from this IP, please try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
