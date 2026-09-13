@@ -312,25 +312,13 @@ const AppLayout = ({ children }) => {
 
     const playSiren = () => {
       try {
+        let oscillator = null;
+        let gainNode = null;
+        
         // 1. Play loud real emergency siren MP3 audio (works on Android APK WebView)
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         audio.volume = 1.0;
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(e => console.warn("Audio autoplay blocked:", e));
-        }
 
-        // 2. Web Audio Synth Fallback
-        if (!globalAudioCtx) {
-          globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (globalAudioCtx.state === 'suspended') {
-          globalAudioCtx.resume();
-        }
-
-        const oscillator = globalAudioCtx.createOscillator();
-        const gainNode = globalAudioCtx.createGain();
-        
         window.stopGlobalSiren = () => {
           try {
             audio.pause();
@@ -346,28 +334,52 @@ const AppLayout = ({ children }) => {
             if (navigator.vibrate) navigator.vibrate(0); 
           } catch(e) {}
         };
-        
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(400, globalAudioCtx.currentTime); 
 
-        const durationLoops = 8; 
-        for (let i = 0; i < durationLoops; i++) {
-          const startTime = globalAudioCtx.currentTime + (i * 0.8);
-          oscillator.frequency.linearRampToValueAtTime(800, startTime + 0.4); 
-          oscillator.frequency.linearRampToValueAtTime(400, startTime + 0.8); 
+        const playSynthFallback = () => {
+          // 2. Web Audio Synth Fallback (Only plays if MP3 fails)
+          if (!globalAudioCtx) {
+            globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          if (globalAudioCtx.state === 'suspended') {
+            globalAudioCtx.resume();
+          }
+
+          oscillator = globalAudioCtx.createOscillator();
+          gainNode = globalAudioCtx.createGain();
+          
+          oscillator.type = 'square';
+          oscillator.frequency.setValueAtTime(400, globalAudioCtx.currentTime); 
+
+          const durationLoops = 8; 
+          for (let i = 0; i < durationLoops; i++) {
+            const startTime = globalAudioCtx.currentTime + (i * 0.8);
+            oscillator.frequency.linearRampToValueAtTime(800, startTime + 0.4); 
+            oscillator.frequency.linearRampToValueAtTime(400, startTime + 0.8); 
+          }
+          
+          const totalDuration = durationLoops * 0.8;
+          gainNode.gain.setValueAtTime(0.1, globalAudioCtx.currentTime); 
+          gainNode.gain.exponentialRampToValueAtTime(1, globalAudioCtx.currentTime + 0.1); 
+          gainNode.gain.setValueAtTime(1, globalAudioCtx.currentTime + totalDuration - 0.5); 
+          gainNode.gain.exponentialRampToValueAtTime(0.01, globalAudioCtx.currentTime + totalDuration); 
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(globalAudioCtx.destination);
+          
+          oscillator.start();
+          oscillator.stop(globalAudioCtx.currentTime + totalDuration + 0.1);
+        };
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(e => {
+            console.warn("Audio autoplay blocked, using synth fallback:", e);
+            playSynthFallback();
+          });
+        } else {
+          // In case play() doesn't return a promise on older browsers
+          playSynthFallback();
         }
-        
-        const totalDuration = durationLoops * 0.8;
-        gainNode.gain.setValueAtTime(0.1, globalAudioCtx.currentTime); 
-        gainNode.gain.exponentialRampToValueAtTime(1, globalAudioCtx.currentTime + 0.1); 
-        gainNode.gain.setValueAtTime(1, globalAudioCtx.currentTime + totalDuration - 0.5); 
-        gainNode.gain.exponentialRampToValueAtTime(0.01, globalAudioCtx.currentTime + totalDuration); 
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(globalAudioCtx.destination);
-        
-        oscillator.start();
-        oscillator.stop(globalAudioCtx.currentTime + totalDuration + 0.1);
       } catch (e) {
         console.warn("Audio Context Error", e);
       }
