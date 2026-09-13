@@ -10,20 +10,8 @@ const fs = require('fs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
-const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+const { storage } = require('../config/cloudinary');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
 const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
@@ -66,8 +54,8 @@ router.post('/register', upload.fields([{ name: 'id_photo', maxCount: 1 }, { nam
     return res.status(400).json({ message: 'You must be at least 18 years old to register. Minors should ask a parent or guardian to report for them.' });
   }
 
-  const id_photo_path = req.files && req.files['id_photo'] ? `/uploads/${req.files['id_photo'][0].filename}` : null;
-  const selfie_photo_path = req.files && req.files['selfie_photo'] ? `/uploads/${req.files['selfie_photo'][0].filename}` : null;
+  const id_photo_path = req.files && req.files['id_photo'] ? req.files['id_photo'][0].path : null;
+  const selfie_photo_path = req.files && req.files['selfie_photo'] ? req.files['selfie_photo'][0].path : null;
 
   if (!id_photo_path || !selfie_photo_path) {
     return res.status(400).json({ message: 'Both ID and Selfie photos are required for verification.' });

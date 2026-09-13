@@ -302,7 +302,7 @@ const TrackStatus = () => {
             {incident.photo_path && (
               <div style={{ marginTop: '16px' }}>
                 <img 
-                  src={`https://jamindan.onrender.com${incident.photo_path}`} 
+                  src={incident.photo_path.startsWith('http') ? incident.photo_path : `https://jamindan.onrender.com${incident.photo_path}`} 
                   alt="Evidence" 
                   style={{ width: '100%', maxHeight: '300px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }} 
                 />

@@ -21,22 +21,7 @@ try {
   console.error('Failed to initialize webpush:', err.message);
 }
 
-// Make sure uploads directory exists
-const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+const { storage } = require('../config/cloudinary');
 
 const upload = multer({
   storage: storage,
@@ -79,7 +64,7 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
 
   try {
     const code = await generateIncidentCode();
-    const photo_path = req.file ? `/uploads/${req.file.filename}` : null;
+    const photo_path = req.file ? req.file.path : null;
     const lat = (location_lat !== null && location_lat !== undefined && !isNaN(parseFloat(location_lat))) ? parseFloat(location_lat) : null;
     const lng = (location_lng !== null && location_lng !== undefined && !isNaN(parseFloat(location_lng))) ? parseFloat(location_lng) : null;
     const address = location_address || (lat ? null : 'GPS Location Unavailable');

@@ -154,7 +154,7 @@ const NewsUpdates = () => {
             <div key={article.id} className="news-list-card">
               {article.image_path ? (
                 <img 
-                  src={`${BACKEND_URL}${article.image_path}`} 
+                  src={article.image_path.startsWith('http') ? article.image_path : `${BACKEND_URL}${article.image_path}`} 
                   alt={article.title} 
                   className="news-list-thumb" 
                 />

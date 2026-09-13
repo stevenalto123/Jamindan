@@ -6,22 +6,7 @@ const fs = require('fs');
 const db = require('../config/db');
 const { authRequired, requireRole } = require('../middleware/auth');
 
-// Make sure uploads directory exists
-const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, 'news-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+const { storage } = require('../config/cloudinary');
 
 const upload = multer({
   storage: storage,
@@ -102,7 +87,7 @@ router.post('/', authRequired, requireRole(['Admin']), upload.single('image'), a
     return res.status(400).json({ message: 'Invalid category selection' });
   }
 
-  const image_path = req.file ? `/uploads/${req.file.filename}` : null;
+  const image_path = req.file ? req.file.path : null;
 
   try {
     const [result] = await db.execute(`
@@ -158,14 +143,7 @@ router.put('/:id', authRequired, requireRole(['Admin']), upload.single('image'),
 
     let image_path = article.image_path;
     if (req.file) {
-      image_path = `/uploads/${req.file.filename}`;
-      // Optional: Delete old image from disk
-      if (article.image_path) {
-        const oldPath = path.join(__dirname, '..', article.image_path);
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
-      }
+      image_path = req.file.path;
     }
 
     await db.execute(`
@@ -194,14 +172,7 @@ router.delete('/:id', authRequired, requireRole(['Admin']), async (req, res) => 
       return res.status(404).json({ message: 'Announcement not found' });
     }
 
-    // Delete image file if exists
-    if (article.image_path) {
-      const imgPath = path.join(__dirname, '..', article.image_path);
-      if (fs.existsSync(imgPath)) {
-        fs.unlinkSync(imgPath);
-      }
-    }
-
+    // No local deletion since images are on Cloudinary
     await db.execute('DELETE FROM news WHERE id = ?', [id]);
     await db.logAudit(`Announcement deleted (ID: ${id})`, req.user.username, req.ip);
     return res.json({ message: 'Announcement deleted successfully' });
