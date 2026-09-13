@@ -287,6 +287,7 @@ const AppLayout = ({ children }) => {
 
   // Global Audio Alarm for New Emergencies (Responders & Admins)
   const [lastPendingCount, setLastPendingCount] = useState(-1);
+  const [showEmergencyAlert, setShowEmergencyAlert] = useState(false);
 
   useEffect(() => {
     const initAudio = () => {
@@ -379,6 +380,7 @@ const AppLayout = ({ children }) => {
         
         if (lastPendingCount !== -1 && pending.length > lastPendingCount) {
           playSiren();
+          setShowEmergencyAlert(true);
           if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500, 200, 500, 200]); 
         }
         setLastPendingCount(pending.length);
@@ -450,6 +452,14 @@ const AppLayout = ({ children }) => {
     <div className="app-container">
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <div className="main-content">
+        {showEmergencyAlert && (
+          <div 
+            onClick={() => setShowEmergencyAlert(false)}
+            style={{ backgroundColor: 'var(--danger-color)', color: 'white', padding: '15px', textAlign: 'center', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', animation: 'pulse 1s infinite' }}
+          >
+            <span style={{ fontSize: '24px' }}>🚨</span> NEW EMERGENCY DETECTED! CLICK HERE TO ACKNOWLEDGE
+          </div>
+        )}
         {isOffline && (
           <div style={{ backgroundColor: '#f39c12', color: 'white', padding: '10px', textAlign: 'center', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <span style={{ fontSize: '18px' }}>⚠️</span> Offline Mode: Showing cached emergency data.
