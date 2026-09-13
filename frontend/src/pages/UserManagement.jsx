@@ -395,6 +395,35 @@ const UserManagement = () => {
             <form onSubmit={handleSaveSubmit}>
               <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 
+                {editingUser && editingUser.role === 'Resident' && (editingUser.id_photo_path || editingUser.selfie_photo_path) && (
+                  <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', paddingBottom: '15px', borderBottom: '1px solid var(--border-color)' }}>
+                    {editingUser.id_photo_path && (
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '5px' }}>Valid ID <span style={{ color: 'var(--primary-color)' }}>({editingUser.id_type || 'N/A'})</span></p>
+                        <img 
+                          src={editingUser.id_photo_path.startsWith('http') ? editingUser.id_photo_path : `https://jamindan.onrender.com${editingUser.id_photo_path}`} 
+                          alt="ID Document" 
+                          style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer' }}
+                          onClick={(e) => window.open(e.target.src, '_blank')}
+                          title="Click to view full size"
+                        />
+                      </div>
+                    )}
+                    {editingUser.selfie_photo_path && (
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '5px' }}>Live Selfie</p>
+                        <img 
+                          src={editingUser.selfie_photo_path.startsWith('http') ? editingUser.selfie_photo_path : `https://jamindan.onrender.com${editingUser.selfie_photo_path}`} 
+                          alt="Live Selfie" 
+                          style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer' }}
+                          onClick={(e) => window.open(e.target.src, '_blank')}
+                          title="Click to view full size"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {!editingUser && (
                   <>
                     <div className="form-group" style={{ margin: 0 }}>
