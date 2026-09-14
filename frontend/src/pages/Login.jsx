@@ -34,7 +34,7 @@ const Login = () => {
     setError('');
 
     try {
-      const user = await login(username, password);
+      const user = await login(username, password, rememberMe);
       if (user.role === 'Admin' || user.role === 'Responder') {
         navigate('/admin', { replace: true });
       } else {

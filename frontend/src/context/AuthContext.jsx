@@ -13,17 +13,17 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [token, setToken] = useState(localStorage.getItem('token') || sessionStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
 
   // Sync token to Axios headers
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      localStorage.setItem('token', token);
     } else {
       delete axios.defaults.headers.common['Authorization'];
       localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
     }
   }, [token]);
 
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
         console.error('Failed to load user profile on startup', err);
         // If it's a network error (offline), DO NOT log them out. Just use cached user.
         if (!err.response) {
-          const cachedUser = localStorage.getItem('cached_user');
+          const cachedUser = localStorage.getItem('cached_user') || sessionStorage.getItem('cached_user');
           if (cachedUser) {
             setUser(JSON.parse(cachedUser));
           }
@@ -56,6 +56,7 @@ export const AuthProvider = ({ children }) => {
           setToken(null);
           setUser(null);
           localStorage.removeItem('cached_user');
+          sessionStorage.removeItem('cached_user');
         }
       } finally {
         setLoading(false);
@@ -104,7 +105,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (username, password) => {
+  const login = async (username, password, rememberMe = false) => {
     // Request permission immediately on click but DO NOT await it so it doesn't block login if browser hangs
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       try {
@@ -115,9 +116,17 @@ export const AuthProvider = ({ children }) => {
     }
 
     const res = await axios.post('/api/auth/login', { username, password });
+    
+    if (rememberMe) {
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('cached_user', JSON.stringify(res.data.user));
+    } else {
+      sessionStorage.setItem('token', res.data.token);
+      sessionStorage.setItem('cached_user', JSON.stringify(res.data.user));
+    }
+    
     setToken(res.data.token);
     setUser(res.data.user);
-    localStorage.setItem('cached_user', JSON.stringify(res.data.user));
     
     if (res.data.user) {
       subscribeToPushNotifications();
@@ -140,6 +149,7 @@ export const AuthProvider = ({ children }) => {
       setToken(null);
       setUser(null);
       localStorage.removeItem('cached_user');
+      sessionStorage.removeItem('cached_user');
     }
   };
 
