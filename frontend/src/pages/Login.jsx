@@ -282,20 +282,20 @@ const Login = () => {
           font-weight: 500;
         }
 
-        /* Right Side: Abstract Art Panel */
+        /* Right Side: Solid Green + Logo */
         .login-right {
           flex: 1.1;
-          background-color: var(--bg-color);
-          position: relative;
-          overflow: hidden;
+          background-color: var(--primary-color);
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
-        .login-right svg {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
+        .login-right img {
+          width: 120px;
+          height: 120px;
+          object-fit: contain;
+          filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.15));
         }
 
         /* Mobile specific styling */
@@ -392,58 +392,9 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Right Panel — Flowing Abstract Landscape */}
+        {/* Right Panel — Solid Green + Logo Only */}
         <div className="login-right">
-          <svg viewBox="0 0 600 800" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#e8f0ec" />
-                <stop offset="100%" stopColor="#d4e4da" />
-              </linearGradient>
-            </defs>
-
-            {/* Sky background */}
-            <rect width="600" height="800" fill="url(#skyGrad)" />
-
-            {/* Soft layered waves — back to front */}
-            <path d="M0,520 C100,480 200,540 300,500 C400,460 500,520 600,490 L600,800 L0,800 Z" fill="#b8d4c4" opacity="0.5" />
-            <path d="M0,560 C120,530 220,580 340,550 C460,520 520,570 600,540 L600,800 L0,800 Z" fill="#8fbfa3" opacity="0.6" />
-            <path d="M0,610 C80,580 180,630 300,600 C420,570 500,620 600,590 L600,800 L0,800 Z" fill="#6ba882" opacity="0.7" />
-            <path d="M0,660 C150,640 250,680 350,650 C450,620 530,670 600,650 L600,800 L0,800 Z" fill="#4d9466" opacity="0.8" />
-            <path d="M0,710 C100,690 220,730 350,700 C480,670 550,720 600,710 L600,800 L0,800 Z" fill="#3d7a50" />
-
-            {/* Subtle dots / particles scattered */}
-            <circle cx="80" cy="200" r="3" fill="#3d7a50" opacity="0.15" />
-            <circle cx="200" cy="150" r="5" fill="#3d7a50" opacity="0.1" />
-            <circle cx="350" cy="100" r="4" fill="#3d7a50" opacity="0.12" />
-            <circle cx="500" cy="180" r="6" fill="#3d7a50" opacity="0.08" />
-            <circle cx="450" cy="300" r="3" fill="#3d7a50" opacity="0.14" />
-            <circle cx="120" cy="350" r="4" fill="#3d7a50" opacity="0.1" />
-            <circle cx="530" cy="420" r="5" fill="#3d7a50" opacity="0.12" />
-            <circle cx="280" cy="280" r="3" fill="#3d7a50" opacity="0.1" />
-
-            {/* Centered content group */}
-            <g transform="translate(300, 380)" textAnchor="middle">
-              {/* Shield / badge shape */}
-              <path d="M0,-80 L50,-60 L50,10 C50,50 25,70 0,85 C-25,70 -50,50 -50,10 L-50,-60 Z" 
-                    fill="white" opacity="0.9" />
-              <path d="M0,-65 L38,-48 L38,8 C38,40 20,56 0,68 C-20,56 -38,40 -38,8 L-38,-48 Z" 
-                    fill="#3d7a50" opacity="0.15" />
-              
-              {/* Cross icon inside shield */}
-              <rect x="-4" y="-45" width="8" height="30" rx="3" fill="#3d7a50" opacity="0.6" />
-              <rect x="-15" y="-34" width="30" height="8" rx="3" fill="#3d7a50" opacity="0.6" />
-
-              {/* Text below shield */}
-              <text y="120" fill="#3d7a50" fontSize="20" fontWeight="800" fontFamily="system-ui, sans-serif" opacity="0.7">
-                JAMINDAN
-              </text>
-              <text y="145" fill="#3d7a50" fontSize="11" fontWeight="500" fontFamily="system-ui, sans-serif" letterSpacing="3" opacity="0.4">
-                EMERGENCY RESPONSE
-              </text>
-            </g>
-
-          </svg>
+          <img src="/logo.png" alt="Jamindan Seal" />
         </div>
 
       </div>
