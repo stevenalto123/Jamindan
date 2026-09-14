@@ -471,6 +471,8 @@ const Register = () => {
             </label>
           </div>
 
+          {error && <div className="alert alert-danger" style={{ marginTop: '15px', marginBottom: '10px' }}>{error}</div>}
+
           <button type="submit" className="btn btn-primary btn-full" disabled={loading} style={{ marginTop: '10px' }}>
             {loading ? t('submittingReg') : t('submitRegBtn')}
           </button>
