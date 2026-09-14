@@ -468,9 +468,34 @@ const AppLayout = ({ children }) => {
           <div 
             onClick={() => {
               setShowEmergencyAlert(false);
-              const testAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-              testAudio.volume = 1.0;
-              testAudio.play().catch(e => console.error(e));
+              try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                  const ctx = new AudioContextClass();
+                  const osc = ctx.createOscillator();
+                  const gain = ctx.createGain();
+                  osc.connect(gain);
+                  gain.connect(ctx.destination);
+                  osc.type = 'sawtooth';
+                  osc.start(0);
+                  
+                  let high = false;
+                  let loops = 0;
+                  const fmInterval = setInterval(() => {
+                    loops++;
+                    if (loops > 20) { // Play for ~7 seconds then stop automatically
+                      clearInterval(fmInterval);
+                      osc.stop();
+                      return;
+                    }
+                    osc.frequency.setValueAtTime(high ? 1100.00 : 750.00, ctx.currentTime);
+                    gain.gain.setValueAtTime(high ? 0.3 : 0.2, ctx.currentTime); // LOUD
+                    high = !high;
+                  }, 350);
+                }
+              } catch (e) {
+                console.error("Synth failed", e);
+              }
               if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100]);
             }}
             style={{ backgroundColor: 'var(--danger-color)', color: 'white', padding: '15px', textAlign: 'center', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', animation: 'pulse 1s infinite' }}
