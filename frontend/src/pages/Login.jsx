@@ -60,7 +60,7 @@ const Login = () => {
           align-items: center;
           justify-content: center;
           min-height: 100vh;
-          background-color: #f3f4f6; /* Light gray background */
+          background-color: #09090b; /* Deepest dark background */
           padding: 20px;
           font-family: 'Inter', system-ui, sans-serif;
         }
@@ -70,10 +70,10 @@ const Login = () => {
           width: 100%;
           max-width: 1000px;
           min-height: 600px;
-          background-color: #ffffff; /* Clean white card */
+          background-color: #17181a;
           border-radius: 28px;
           overflow: hidden;
-          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08); /* Soft elegant shadow */
+          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
         }
 
         /* Left Side: Form */
@@ -82,8 +82,10 @@ const Login = () => {
           padding: 60px 70px;
           display: flex;
           flex-direction: column;
-          color: #18181b; /* Dark slate text */
+          color: white;
           justify-content: center;
+          position: relative;
+          z-index: 10;
         }
 
         .brand-header {
@@ -94,29 +96,28 @@ const Login = () => {
         }
 
         .brand-logo {
-          width: 38px;
-          height: 38px;
+          width: 36px;
+          height: 36px;
           object-fit: contain;
         }
 
         .brand-name {
-          font-size: 22px;
-          font-weight: 800;
-          color: #059669; /* Deep solid green */
+          font-size: 20px;
+          font-weight: 700;
+          color: #a7f3d0; /* Soft green */
           letter-spacing: -0.5px;
         }
 
         .welcome-title {
-          font-size: 34px;
-          font-weight: 800;
+          font-size: 32px;
+          font-weight: 700;
           margin: 0 0 10px 0;
-          color: #18181b;
-          letter-spacing: -1px;
+          color: #ffffff;
         }
 
         .welcome-subtitle {
-          font-size: 15px;
-          color: #52525b; /* Muted gray */
+          font-size: 14px;
+          color: #a1a1aa;
           margin: 0 0 35px 0;
         }
 
@@ -125,26 +126,25 @@ const Login = () => {
           position: relative;
         }
 
-        .light-input {
+        .dark-input {
           width: 100%;
-          background-color: #f4f4f5; /* Light gray input */
-          border: 1px solid #e4e4e7;
-          color: #18181b;
+          background-color: #212226;
+          border: 1px solid #212226;
+          color: white;
           padding: 16px 16px;
           border-radius: 12px;
-          font-size: 15px;
+          font-size: 14px;
           transition: all 0.3s ease;
         }
 
-        .light-input::placeholder {
-          color: #a1a1aa;
+        .dark-input::placeholder {
+          color: #71717a;
         }
 
-        .light-input:focus {
+        .dark-input:focus {
           outline: none;
-          border-color: #10b981; /* Bright green accent */
-          background-color: #ffffff;
-          box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+          border-color: #34d399; /* Accent green */
+          background-color: #27282d;
         }
 
         .show-btn {
@@ -155,14 +155,14 @@ const Login = () => {
           background: none;
           border: none;
           color: #71717a;
-          font-size: 13.5px;
-          font-weight: 600;
+          font-size: 13px;
+          font-weight: 500;
           cursor: pointer;
           transition: color 0.2s;
         }
 
         .show-btn:hover {
-          color: #18181b;
+          color: #e4e4e7;
         }
 
         .options-row {
@@ -177,43 +177,40 @@ const Login = () => {
           align-items: center;
           gap: 8px;
           cursor: pointer;
-          font-size: 13.5px;
-          color: #3f3f46;
-          font-weight: 500;
+          font-size: 13px;
+          color: #a1a1aa;
         }
 
         .custom-checkbox {
           appearance: none;
           width: 18px;
           height: 18px;
-          border-radius: 5px;
-          background-color: #ffffff;
-          border: 1px solid #d4d4d8;
+          border-radius: 4px;
+          background-color: #212226;
+          border: 1px solid #3f3f46;
           cursor: pointer;
           position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s;
         }
 
         .custom-checkbox:checked {
-          background-color: #10b981;
-          border-color: #10b981;
+          background-color: #a7f3d0;
+          border-color: #a7f3d0;
         }
 
         .custom-checkbox:checked::after {
           content: '✓';
-          color: #ffffff;
+          color: #17181a;
           font-size: 12px;
           font-weight: bold;
         }
 
         .forgot-link {
-          font-size: 13.5px;
-          color: #059669;
+          font-size: 13px;
+          color: #a7f3d0;
           text-decoration: none;
-          font-weight: 600;
           transition: opacity 0.2s;
         }
 
@@ -223,8 +220,8 @@ const Login = () => {
 
         .submit-btn {
           width: 100%;
-          background-color: #10b981; /* Bright green */
-          color: #ffffff;
+          background-color: #a7f3d0;
+          color: #121212;
           border: none;
           padding: 16px;
           border-radius: 12px;
@@ -235,67 +232,60 @@ const Login = () => {
           justify-content: center;
           align-items: center;
           gap: 8px;
-          transition: all 0.2s;
+          transition: background-color 0.2s;
           margin-bottom: 25px;
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
         .submit-btn:hover {
-          background-color: #059669; /* Darker green on hover */
-          transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+          background-color: #6ee7b7;
         }
 
         .submit-btn:disabled {
           opacity: 0.7;
           cursor: not-allowed;
-          transform: none;
         }
 
         .register-text {
           text-align: center;
-          font-size: 14px;
-          color: #52525b;
+          font-size: 13px;
+          color: #71717a;
         }
 
         .register-text a {
-          color: #059669;
-          font-weight: 700;
+          color: #a7f3d0;
+          font-weight: 600;
           text-decoration: none;
         }
 
         .error-message {
-          background-color: #fee2e2;
-          border-left: 4px solid #ef4444;
-          color: #b91c1c;
+          background-color: rgba(239, 68, 68, 0.1);
+          border: 1px solid rgba(239, 68, 68, 0.2);
+          color: #fca5a5;
           padding: 12px 16px;
-          border-radius: 6px;
+          border-radius: 12px;
           font-size: 13px;
-          font-weight: 500;
           margin-bottom: 20px;
         }
 
-        /* Right Side: Illustration */
+        /* Right Side: Photo Background */
         .login-right {
           flex: 1.1;
-          background: linear-gradient(180deg, #38bdf8 0%, #0ea5e9 30%, #86efac 100%);
+          background-image: url('https://old.dailyguardian.com.ph/wp-content/uploads/2023/07/Jamindan-municipal-hall.jpg');
+          background-size: cover;
+          background-position: center;
           position: relative;
-          overflow: hidden;
         }
 
-        /* Vertical Landscape SVG Container */
-        .illustration-container {
+        /* Seamless fade overlay between the solid left panel and the photo */
+        .login-right::after {
+          content: '';
           position: absolute;
           top: 0;
           left: 0;
-          width: 100%;
-          height: 100%;
-        }
-        
-        .illustration-container svg {
-          width: 100%;
-          height: 100%;
-          display: block;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(to right, rgba(23, 24, 26, 1) 0%, rgba(23, 24, 26, 0.3) 30%, rgba(0, 0, 0, 0.1) 100%);
+          pointer-events: none;
         }
 
         /* Mobile specific styling */
@@ -308,7 +298,7 @@ const Login = () => {
             padding: 40px 30px;
           }
           .login-right {
-            display: none; /* Hide illustration on mobile */
+            display: none; /* Hide photo on mobile */
           }
           .brand-header {
             margin-bottom: 30px;
@@ -322,7 +312,7 @@ const Login = () => {
 
       <div className="login-container">
         
-        {/* Left Form Area (Light Mode) */}
+        {/* Left Form Area (Dark Mode) */}
         <div className="login-left">
           <div className="brand-header">
             <img src="/logo.png" alt="Logo" className="brand-logo" />
@@ -338,7 +328,7 @@ const Login = () => {
             <div className="input-group">
               <input
                 type="text"
-                className="light-input"
+                className="dark-input"
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -349,7 +339,7 @@ const Login = () => {
             <div className="input-group">
               <input
                 type={showPassword ? "text" : "password"}
-                className="light-input"
+                className="dark-input"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -388,78 +378,8 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Right Illustration Area */}
+        {/* Right Photo Area */}
         <div className="login-right">
-          <div className="illustration-container">
-            <svg viewBox="0 0 600 800" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
-              {/* Sky base is handled by css gradient, so we just add clouds and hills */}
-              
-              {/* Clouds */}
-              <circle cx="150" cy="150" r="50" fill="#ffffff" opacity="0.8" />
-              <circle cx="220" cy="130" r="70" fill="#ffffff" opacity="0.8" />
-              <circle cx="300" cy="160" r="60" fill="#ffffff" opacity="0.8" />
-              
-              <circle cx="450" cy="220" r="40" fill="#ffffff" opacity="0.6" />
-              <circle cx="500" cy="200" r="50" fill="#ffffff" opacity="0.6" />
-
-              {/* Background Mountains (Blue-ish) */}
-              <path d="M-50,600 L150,350 L400,550 L650,250 L800,600 Z" fill="#0284c7" opacity="0.6" />
-              <path d="M-50,600 L250,450 L500,300 L750,550 L800,600 Z" fill="#0369a1" opacity="0.8" />
-
-              {/* Foreground Hills (Greens) */}
-              <path d="M-50,850 C150,750 250,650 450,700 C650,750 750,600 850,650 L850,850 Z" fill="#a3e635" />
-              <path d="M-50,850 C150,680 350,820 600,750 C750,700 800,720 850,850 L850,850 Z" fill="#84cc16" opacity="0.9" />
-
-              {/* A winding path */}
-              <path d="M-50,850 Q200,750 350,850 T650,780 L850,850 Z" fill="#fef08a" opacity="0.8" />
-
-              {/* Cute Abstract Trees (Yellow and Green) */}
-              <g transform="translate(100, 600)">
-                <rect x="25" y="60" width="10" height="40" fill="#78350f" rx="3" />
-                <circle cx="30" cy="30" r="35" fill="#eab308" />
-                <circle cx="10" cy="70" r="15" fill="#84cc16" />
-                <circle cx="55" cy="65" r="20" fill="#65a30d" />
-              </g>
-
-              {/* Jamindan Command Center (Sleek minimalist version) */}
-              <g transform="translate(350, 620)">
-                <rect x="0" y="30" width="80" height="70" fill="#1e293b" rx="8" />
-                {/* Windows */}
-                <rect x="15" y="45" width="15" height="15" fill="#a7f3d0" rx="3" />
-                <rect x="50" y="45" width="15" height="15" fill="#a7f3d0" rx="3" />
-                <rect x="15" y="70" width="15" height="15" fill="#a7f3d0" rx="3" />
-                <rect x="50" y="70" width="15" height="15" fill="#a7f3d0" rx="3" />
-                {/* Antenna */}
-                <line x1="40" y1="30" x2="40" y2="0" stroke="#64748b" strokeWidth="4" />
-                <circle cx="40" cy="-5" r="6" fill="#ef4444" />
-              </g>
-
-              {/* Cute Ambulance Van */}
-              <g transform="translate(180, 720)">
-                {/* Wheels */}
-                <circle cx="20" cy="50" r="12" fill="#17181a" />
-                <circle cx="20" cy="50" r="4" fill="#a1a1aa" />
-                <circle cx="80" cy="50" r="12" fill="#17181a" />
-                <circle cx="80" cy="50" r="4" fill="#a1a1aa" />
-                
-                {/* Body */}
-                <rect x="0" y="0" width="100" height="50" fill="#f8fafc" rx="10" />
-                <path d="M80,0 L110,20 L110,50 L80,50 Z" fill="#f8fafc" />
-                
-                {/* Window */}
-                <rect x="85" y="5" width="15" height="15" fill="#1e293b" rx="2" />
-                
-                {/* Green Cross */}
-                <rect x="40" y="15" width="16" height="16" fill="#10b981" rx="2" />
-                <rect x="44" y="11" width="8" height="24" fill="#10b981" rx="2" />
-                <rect x="36" y="19" width="24" height="8" fill="#10b981" rx="2" />
-                
-                {/* Siren */}
-                <rect x="70" y="-8" width="12" height="8" fill="#ef4444" rx="3" />
-              </g>
-
-            </svg>
-          </div>
         </div>
 
       </div>
