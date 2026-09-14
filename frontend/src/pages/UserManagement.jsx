@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import { 
   Users, 
   Search, 
   Trash2, 
   Edit2, 
+  Eye,
   X,
   PlusCircle,
   ShieldCheck,
@@ -293,6 +295,15 @@ const UserManagement = () => {
                       </td>
                       <td style={{ textAlign: 'right', paddingRight: '0' }}>
                         <div style={{ display: 'inline-flex', gap: '4px' }}>
+                          <Link 
+                            to={`/admin/users/${u.id}`}
+                            className="notif-btn" 
+                            style={{ padding: '6px', color: 'var(--primary-color)' }}
+                            title="View Full Profile & History"
+                          >
+                            <Eye size={16} />
+                          </Link>
+
                           <button 
                             className="notif-btn" 
                             style={{ padding: '6px', color: 'var(--text-light)' }}

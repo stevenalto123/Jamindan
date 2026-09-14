@@ -42,6 +42,7 @@ import UserProfile from './pages/UserProfile';
 import AdminResponders from './pages/AdminResponders';
 import SystemLogs from './pages/SystemLogs';
 import AdminVerifyUsers from './pages/AdminVerifyUsers';
+import AdminViewUser from './pages/AdminViewUser';
 import MoreMenu from './pages/MoreMenu';
 
 // New Pages
@@ -705,6 +706,13 @@ function App() {
                 <ProtectedRoute allowedRoles={['Admin']}>
                   <AppLayout>
                     <UserManagement />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/users/:id" element={
+                <ProtectedRoute allowedRoles={['Admin']}>
+                  <AppLayout>
+                    <AdminViewUser />
                   </AppLayout>
                 </ProtectedRoute>
               } />

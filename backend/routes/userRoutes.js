@@ -126,6 +126,58 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get single user profile and history
+router.get('/:id/profile', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // 1. Fetch user basic details
+    const [userRows] = await db.execute(`
+      SELECT id, username, role, agency_type, full_name, phone, barangay, avatar, is_active, is_on_duty, created_at, id_photo_path, selfie_photo_path, id_type
+      FROM users 
+      WHERE id = ?
+    `, [id]);
+    
+    if (userRows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const user = userRows[0];
+
+    // 2. Fetch incident history depending on role
+    let incidents = [];
+    if (user.role === 'Resident') {
+      const [incidentRows] = await db.execute(`
+        SELECT id, type, status, location_address, created_at
+        FROM incidents
+        WHERE reported_by = ?
+        ORDER BY created_at DESC
+      `, [id]);
+      incidents = incidentRows;
+    } else if (user.role === 'Responder' || user.role === 'Admin') {
+      const [incidentRows] = await db.execute(`
+        SELECT id, type, status, location_address, created_at
+        FROM incidents
+        WHERE responder_id = ?
+        ORDER BY created_at DESC
+      `, [id]);
+      incidents = incidentRows;
+    }
+
+    return res.json({
+      user,
+      incidents,
+      stats: {
+        totalIncidents: incidents.length,
+        resolvedIncidents: incidents.filter(i => i.status === 'Resolved').length
+      }
+    });
+
+  } catch (error) {
+    console.error('Fetch user profile error:', error);
+    return res.status(500).json({ message: 'Server error while fetching user profile' });
+  }
+});
+
 // Update user details & role
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
