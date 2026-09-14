@@ -343,7 +343,7 @@ const Register = () => {
                 </div>
                 <div>
                   <label className="form-label" htmlFor="age">Age</label>
-                  <input type="number" id="age" name="age" className="form-input" value={formData.age} readOnly style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-muted)' }} placeholder="Auto-calculated" />
+                  <input type="number" id="age" name="age" className="form-input" value={formData.age} readOnly style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-muted)' }} />
                 </div>
               </div>
 
