@@ -65,34 +65,20 @@ const Login = () => {
           font-family: var(--font-main);
         }
 
-        .login-container {
-          display: flex;
+        .login-card {
           width: 100%;
-          max-width: 1050px;
-          min-height: 600px;
+          max-width: 440px;
           background-color: var(--card-bg);
           border-radius: var(--radius-lg);
-          overflow: hidden;
+          padding: 50px 45px;
           box-shadow: var(--shadow-lg);
-        }
-
-        /* Left Side: Form */
-        .login-left {
-          flex: 1;
-          padding: 60px 70px;
-          display: flex;
-          flex-direction: column;
-          color: var(--text-main);
-          justify-content: center;
-          position: relative;
-          z-index: 10;
         }
 
         .brand-header {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-bottom: 50px;
+          margin-bottom: 40px;
         }
 
         .brand-logo {
@@ -110,17 +96,17 @@ const Login = () => {
         }
 
         .welcome-title {
-          font-size: 34px;
+          font-size: 30px;
           font-weight: 800;
-          margin: 0 0 10px 0;
+          margin: 0 0 8px 0;
           color: var(--text-main);
-          letter-spacing: -1px;
+          letter-spacing: -0.5px;
         }
 
         .welcome-subtitle {
-          font-size: 15px;
+          font-size: 14px;
           color: var(--text-light);
-          margin: 0 0 35px 0;
+          margin: 0 0 32px 0;
           line-height: 1.5;
         }
 
@@ -196,7 +182,7 @@ const Login = () => {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 30px;
+          margin-bottom: 28px;
         }
 
         .remember-label {
@@ -243,7 +229,7 @@ const Login = () => {
           align-items: center;
           gap: 8px;
           transition: all 0.2s;
-          margin-bottom: 25px;
+          margin-bottom: 24px;
           box-shadow: 0 4px 10px rgba(61, 122, 80, 0.2);
         }
 
@@ -282,33 +268,9 @@ const Login = () => {
           font-weight: 500;
         }
 
-        /* Right Side: Solid Green + Logo */
-        .login-right {
-          flex: 1.1;
-          background-color: var(--primary-color);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .login-right img {
-          width: 120px;
-          height: 120px;
-          object-fit: contain;
-          filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.15));
-        }
-
-        /* Mobile specific styling */
-        @media (max-width: 768px) {
-          .login-container {
-            flex-direction: column;
-            min-height: auto;
-          }
-          .login-left {
-            padding: 40px 30px;
-          }
-          .login-right {
-            display: none;
+        @media (max-width: 480px) {
+          .login-card {
+            padding: 35px 28px;
           }
           .brand-header {
             margin-bottom: 30px;
@@ -316,87 +278,77 @@ const Login = () => {
         }
       `}</style>
 
-      <div className="login-container">
-        
-        {/* Left Form Area */}
-        <div className="login-left">
-          <div className="brand-header">
-            <img src="/logo.png" alt="Logo" className="brand-logo" />
-            <span className="brand-name">Jamindan ER</span>
-          </div>
-
-          <h1 className="welcome-title">Sign In</h1>
-          <p className="welcome-subtitle">Your community's safety starts here.</p>
-
-          {error && <div className="error-message">{error}</div>}
-
-          <form onSubmit={handleSubmit}>
-            <div className="input-group">
-              <label>Username</label>
-              <div className="system-input-wrapper">
-                <input
-                  type="text"
-                  className="system-input"
-                  placeholder="Enter username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-                <User size={18} className="icon-left" />
-              </div>
-            </div>
-
-            <div className="input-group">
-              <label>Password</label>
-              <div className="system-input-wrapper">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className="system-input"
-                  placeholder="Enter password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <Lock size={18} className="icon-left" />
-                <button
-                  type="button"
-                  className="icon-btn-right"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            <div className="options-row">
-              <label className="remember-label">
-                <input 
-                  type="checkbox" 
-                  className="custom-checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                Remember me
-              </label>
-              <Link to="/forgot-password" className="forgot-link">Forgot password?</Link>
-            </div>
-
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? 'Authenticating...' : 'Log In'}
-              {!loading && <ArrowRight size={18} />}
-            </button>
-          </form>
-
-          <div className="register-text">
-            Don't have an account? <Link to="/register">Sign up</Link>
-          </div>
+      <div className="login-card">
+        <div className="brand-header">
+          <img src="/logo.png" alt="Logo" className="brand-logo" />
+          <span className="brand-name">Jamindan ER</span>
         </div>
 
-        {/* Right Panel — Solid Green + Logo Only */}
-        <div className="login-right">
-          <img src="/logo.png" alt="Jamindan Seal" />
-        </div>
+        <h1 className="welcome-title">Sign In</h1>
+        <p className="welcome-subtitle">Your community's safety starts here.</p>
 
+        {error && <div className="error-message">{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div className="input-group">
+            <label>Username</label>
+            <div className="system-input-wrapper">
+              <input
+                type="text"
+                className="system-input"
+                placeholder="Enter username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+              <User size={18} className="icon-left" />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label>Password</label>
+            <div className="system-input-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="system-input"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <Lock size={18} className="icon-left" />
+              <button
+                type="button"
+                className="icon-btn-right"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <div className="options-row">
+            <label className="remember-label">
+              <input 
+                type="checkbox" 
+                className="custom-checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              Remember me
+            </label>
+            <Link to="/forgot-password" className="forgot-link">Forgot password?</Link>
+          </div>
+
+          <button type="submit" className="submit-btn" disabled={loading}>
+            {loading ? 'Authenticating...' : 'Log In'}
+            {!loading && <ArrowRight size={18} />}
+          </button>
+        </form>
+
+        <div className="register-text">
+          Don't have an account? <Link to="/register">Sign up</Link>
+        </div>
       </div>
     </div>
   );
