@@ -90,7 +90,7 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="content-body" style={{ maxWidth: '900px' }}>
+    <div className="content-body" style={{ maxWidth: '900px', margin: '0 auto' }}>
 
       {success && <div className="alert alert-success" style={{ fontSize: '13px', padding: '10px 14px' }}>{success}</div>}
       {error && <div className="alert alert-danger" style={{ fontSize: '13px', padding: '10px 14px' }}>{error}</div>}
