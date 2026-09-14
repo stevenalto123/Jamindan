@@ -153,68 +153,72 @@ const UserProfile = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">{t('barangayLabel')}</label>
-                <select className="form-select" value={barangay} onChange={(e) => setBarangay(e.target.value)} required>
-                  {BARANGAYS.map((brg) => (
-                    <option key={brg} value={brg}>{brg}</option>
-                  ))}
-                </select>
-              </div>
+            {user?.role === 'Resident' && (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">{t('barangayLabel')}</label>
+                    <select className="form-select" value={barangay} onChange={(e) => setBarangay(e.target.value)} required>
+                      {BARANGAYS.map((brg) => (
+                        <option key={brg} value={brg}>{brg}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">{t('purokSitioLabel')}</label>
-                <input type="text" className="form-input" placeholder={t('purokSitioPlaceholder')} value={purokSitio} onChange={(e) => setPurokSitio(e.target.value)} />
-              </div>
-            </div>
-
-            {/* Medical Info Section */}
-            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '8px' }}>
-              <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '12px' }}>🩹 {t('medicalInfoHeading')}</h4>
-              
-              <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label className="form-label">{t('bloodTypeLabel')}</label>
-                <select className="form-select" value={bloodType} onChange={(e) => setBloodType(e.target.value)}>
-                  <option value="">{t('unknownSelect')}</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
-                </select>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label className="form-label">{t('allergiesLabel')}</label>
-                <textarea className="form-input" placeholder={t('allergiesPlaceholder')} value={allergies} onChange={(e) => setAllergies(e.target.value)} rows={2} style={{ resize: 'vertical', minHeight: '60px' }} />
-              </div>
-
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">{t('medicalConditionsLabel')}</label>
-                <textarea className="form-input" placeholder={t('medicalConditionsPlaceholder')} value={medicalConditions} onChange={(e) => setMedicalConditions(e.target.value)} rows={2} style={{ resize: 'vertical', minHeight: '60px' }} />
-              </div>
-            </div>
-
-            {/* Emergency Contact Section */}
-            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '8px' }}>
-              <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '12px' }}>📞 {t('emergencyContactHeading')}</h4>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">{t('contactNameLabel')}</label>
-                  <input type="text" className="form-input" placeholder={t('contactNamePlaceholder')} value={emergencyContactName} onChange={(e) => setEmergencyContactName(e.target.value)} />
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">{t('purokSitioLabel')}</label>
+                    <input type="text" className="form-input" placeholder={t('purokSitioPlaceholder')} value={purokSitio} onChange={(e) => setPurokSitio(e.target.value)} />
+                  </div>
                 </div>
 
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">{t('contactPhoneLabel')}</label>
-                  <input type="text" className="form-input" placeholder={t('contactPhonePlaceholder')} value={emergencyContactPhone} onChange={(e) => setEmergencyContactPhone(e.target.value)} />
+                {/* Medical Info Section */}
+                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '8px' }}>
+                  <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '12px' }}>🩹 {t('medicalInfoHeading')}</h4>
+                  
+                  <div className="form-group" style={{ marginBottom: '12px' }}>
+                    <label className="form-label">{t('bloodTypeLabel')}</label>
+                    <select className="form-select" value={bloodType} onChange={(e) => setBloodType(e.target.value)}>
+                      <option value="">{t('unknownSelect')}</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: '12px' }}>
+                    <label className="form-label">{t('allergiesLabel')}</label>
+                    <textarea className="form-input" placeholder={t('allergiesPlaceholder')} value={allergies} onChange={(e) => setAllergies(e.target.value)} rows={2} style={{ resize: 'vertical', minHeight: '60px' }} />
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">{t('medicalConditionsLabel')}</label>
+                    <textarea className="form-input" placeholder={t('medicalConditionsPlaceholder')} value={medicalConditions} onChange={(e) => setMedicalConditions(e.target.value)} rows={2} style={{ resize: 'vertical', minHeight: '60px' }} />
+                  </div>
                 </div>
-              </div>
-            </div>
+
+                {/* Emergency Contact Section */}
+                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '8px' }}>
+                  <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '12px' }}>📞 {t('emergencyContactHeading')}</h4>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label">{t('contactNameLabel')}</label>
+                      <input type="text" className="form-input" placeholder={t('contactNamePlaceholder')} value={emergencyContactName} onChange={(e) => setEmergencyContactName(e.target.value)} />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label">{t('contactPhoneLabel')}</label>
+                      <input type="text" className="form-input" placeholder={t('contactPhonePlaceholder')} value={emergencyContactPhone} onChange={(e) => setEmergencyContactPhone(e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
             <button type="submit" className="btn btn-primary" disabled={submitting} style={{ height: '40px', marginTop: '12px' }}>
               {submitting ? t('savingDetails') : t('saveEmergencyProfile')}
