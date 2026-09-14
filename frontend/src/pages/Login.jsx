@@ -317,10 +317,6 @@ const Login = () => {
           }
           .brand-header {
             margin-bottom: 30px;
-            justify-content: center;
-          }
-          .welcome-title, .welcome-subtitle {
-            text-align: center;
           }
         }
       `}</style>
