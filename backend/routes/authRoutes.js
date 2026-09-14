@@ -429,8 +429,18 @@ router.put('/verify-user/:userId', authRequired, requireRole('Admin'), async (re
 async function getTransporter() {
   // Try to use a real SMTP if provided in .env
   if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    let hostToUse = process.env.SMTP_HOST;
+    try {
+      // Force IPv4 resolution to prevent Render ENETUNREACH IPv6 errors
+      const dns = require('dns');
+      const lookup = await dns.promises.lookup(process.env.SMTP_HOST, { family: 4 });
+      hostToUse = lookup.address;
+    } catch (err) {
+      console.warn('DNS lookup for SMTP host failed, falling back to original string.');
+    }
+
     return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
+      host: hostToUse,
       port: process.env.SMTP_PORT || 587,
       secure: process.env.SMTP_PORT == 465,
       auth: {
@@ -438,9 +448,9 @@ async function getTransporter() {
         pass: process.env.SMTP_PASS
       },
       tls: {
-        rejectUnauthorized: false
-      },
-      family: 4 // Force IPv4 to prevent Render ENETUNREACH IPv6 errors
+        rejectUnauthorized: false,
+        servername: process.env.SMTP_HOST // Ensure TLS cert matches original host, not the raw IP
+      }
     });
   }
   
