@@ -233,6 +233,15 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   margin-bottom: 20px;
   font-size: 13px;
+  gap: 5px;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 480px) {
+  .form-options-row {
+    font-size: 11px;
+    white-space: nowrap;
+  }
 }
 
 .checkbox-label {
