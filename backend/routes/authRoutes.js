@@ -181,7 +181,7 @@ router.post('/logout', authRequired, async (req, res) => {
 // Get profile
 router.get('/me', authRequired, async (req, res) => {
   try {
-    const [rows] = await db.execute('SELECT id, username, role, agency_type, full_name, phone, barangay, purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone, avatar, is_on_duty, created_at FROM users WHERE id = ?', [req.user.id]);
+    const [rows] = await db.execute('SELECT id, username, email, role, agency_type, full_name, phone, barangay, purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone, avatar, is_on_duty, created_at FROM users WHERE id = ?', [req.user.id]);
     const user = rows[0];
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -214,7 +214,7 @@ router.put('/duty', authRequired, async (req, res) => {
 
 // Update profile
 router.put('/profile', authRequired, async (req, res) => {
-  const { full_name, phone, barangay, avatar, purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone } = req.body;
+  const { full_name, email, phone, barangay, avatar, purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone } = req.body;
 
   if (!full_name || !phone || !barangay) {
     return res.status(400).json({ message: 'Full name, phone, and barangay are required' });
@@ -223,12 +223,13 @@ router.put('/profile', authRequired, async (req, res) => {
   try {
     await db.execute(`
       UPDATE users 
-      SET full_name = ?, phone = ?, barangay = ?, avatar = ?,
+      SET full_name = ?, email = ?, phone = ?, barangay = ?, avatar = ?,
           purok_sitio = ?, blood_type = ?, allergies = ?, medical_conditions = ?,
           emergency_contact_name = ?, emergency_contact_phone = ?
       WHERE id = ?
     `, [
       full_name.trim(),
+      email ? email.trim() : null,
       phone.trim(),
       barangay.trim(),
       avatar || null,
