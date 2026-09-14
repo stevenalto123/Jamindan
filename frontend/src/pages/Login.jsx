@@ -60,7 +60,7 @@ const Login = () => {
           align-items: center;
           justify-content: center;
           min-height: 100vh;
-          background-color: var(--bg-color); /* Connect to system background */
+          background-color: var(--bg-color);
           padding: 20px;
           font-family: var(--font-main);
         }
@@ -70,7 +70,7 @@ const Login = () => {
           width: 100%;
           max-width: 1050px;
           min-height: 600px;
-          background-color: var(--card-bg); /* Connect to system card */
+          background-color: var(--card-bg);
           border-radius: var(--radius-lg);
           overflow: hidden;
           box-shadow: var(--shadow-lg);
@@ -121,6 +121,7 @@ const Login = () => {
           font-size: 15px;
           color: var(--text-light);
           margin: 0 0 35px 0;
+          line-height: 1.5;
         }
 
         .input-group {
@@ -152,7 +153,7 @@ const Login = () => {
 
         .system-input {
           width: 100%;
-          background-color: var(--bg-color); /* Soft greyish-green instead of harsh white */
+          background-color: var(--bg-color);
           border: 1px solid var(--border-color);
           color: var(--text-main);
           padding: 14px 14px 14px 45px;
@@ -281,26 +282,118 @@ const Login = () => {
           font-weight: 500;
         }
 
-        /* Right Side: Custom Illustration */
+        /* Right Side: Branded Panel */
         .login-right {
           flex: 1.1;
-          background-color: var(--bg-color);
+          background: linear-gradient(160deg, var(--primary-color) 0%, #2a5e3f 100%);
           position: relative;
           overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
-        .illustration-container {
+        /* Abstract background shapes */
+        .login-right::before {
+          content: '';
           position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
+          top: -120px;
+          right: -120px;
+          width: 400px;
+          height: 400px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.06);
         }
-        
-        .illustration-container svg {
-          width: 100%;
-          height: 100%;
-          display: block;
+
+        .login-right::after {
+          content: '';
+          position: absolute;
+          bottom: -80px;
+          left: -80px;
+          width: 300px;
+          height: 300px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        .branded-content {
+          position: relative;
+          z-index: 2;
+          text-align: center;
+          padding: 60px 50px;
+          color: white;
+        }
+
+        .branded-logo {
+          width: 90px;
+          height: 90px;
+          object-fit: contain;
+          margin-bottom: 30px;
+          filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
+        }
+
+        .branded-title {
+          font-size: 28px;
+          font-weight: 800;
+          font-family: var(--font-display);
+          letter-spacing: -0.5px;
+          margin: 0 0 8px 0;
+          line-height: 1.2;
+        }
+
+        .branded-municipality {
+          font-size: 14px;
+          font-weight: 500;
+          opacity: 0.7;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          margin: 0 0 30px 0;
+        }
+
+        .branded-divider {
+          width: 50px;
+          height: 3px;
+          background: rgba(255,255,255,0.3);
+          border-radius: 2px;
+          margin: 0 auto 30px auto;
+        }
+
+        .branded-tagline {
+          font-size: 16px;
+          font-weight: 400;
+          opacity: 0.85;
+          line-height: 1.6;
+          margin: 0;
+          max-width: 280px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .branded-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 40px;
+          padding: 8px 16px;
+          background: rgba(255,255,255,0.12);
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          opacity: 0.8;
+        }
+
+        .branded-badge-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #4ade80;
+          animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.3); }
         }
 
         /* Mobile specific styling */
@@ -313,7 +406,7 @@ const Login = () => {
             padding: 40px 30px;
           }
           .login-right {
-            display: none; /* Hide illustration on mobile */
+            display: none;
           }
           .brand-header {
             margin-bottom: 30px;
@@ -323,7 +416,7 @@ const Login = () => {
 
       <div className="login-container">
         
-        {/* Left Form Area (Using Global System Colors) */}
+        {/* Left Form Area */}
         <div className="login-left">
           <div className="brand-header">
             <img src="/logo.png" alt="Logo" className="brand-logo" />
@@ -331,7 +424,7 @@ const Login = () => {
           </div>
 
           <h1 className="welcome-title">Sign In</h1>
-          <p className="welcome-subtitle">Securely access the emergency response platform.</p>
+          <p className="welcome-subtitle">Your community's safety starts here.</p>
 
           {error && <div className="error-message">{error}</div>}
 
@@ -397,69 +490,18 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Right Illustration Area */}
+        {/* Right Branded Panel */}
         <div className="login-right">
-          <div className="illustration-container">
-            <svg viewBox="0 0 600 800" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
-              
-              {/* Clouds */}
-              <circle cx="150" cy="150" r="50" fill="#ffffff" opacity="0.8" />
-              <circle cx="220" cy="130" r="70" fill="#ffffff" opacity="0.8" />
-              <circle cx="300" cy="160" r="60" fill="#ffffff" opacity="0.8" />
-              
-              <circle cx="450" cy="220" r="40" fill="#ffffff" opacity="0.6" />
-              <circle cx="500" cy="200" r="50" fill="#ffffff" opacity="0.6" />
-
-              {/* Background Mountains */}
-              <path d="M-50,600 L150,350 L400,550 L650,250 L800,600 Z" fill="var(--border-color)" opacity="0.6" />
-              <path d="M-50,600 L250,450 L500,300 L750,550 L800,600 Z" fill="#c3d6cb" opacity="0.8" />
-
-              {/* Foreground Hills */}
-              <path d="M-50,850 C150,750 250,650 450,700 C650,750 750,600 850,650 L850,850 Z" fill="var(--accent-color)" opacity="0.7" />
-              <path d="M-50,850 C150,680 350,820 600,750 C750,700 800,720 850,850 L850,850 Z" fill="var(--primary-color)" />
-
-              {/* Path */}
-              <path d="M-50,850 Q200,750 350,850 T650,780 L850,850 Z" fill="#ffffff" opacity="0.2" />
-
-              {/* Abstract Trees */}
-              <g transform="translate(100, 600)">
-                <rect x="25" y="60" width="10" height="40" fill="#2c3e50" opacity="0.5" rx="3" />
-                <circle cx="30" cy="30" r="35" fill="var(--accent-color)" />
-                <circle cx="10" cy="70" r="15" fill="var(--primary-hover)" />
-                <circle cx="55" cy="65" r="20" fill="var(--primary-color)" />
-              </g>
-
-              {/* Jamindan Command Center */}
-              <g transform="translate(350, 620)">
-                <rect x="0" y="30" width="80" height="70" fill="var(--primary-hover)" rx="4" />
-                <rect x="15" y="45" width="15" height="15" fill="#ffffff" rx="2" />
-                <rect x="50" y="45" width="15" height="15" fill="#ffffff" rx="2" />
-                <rect x="15" y="70" width="15" height="15" fill="#ffffff" rx="2" />
-                <rect x="50" y="70" width="15" height="15" fill="#ffffff" rx="2" />
-                <line x1="40" y1="30" x2="40" y2="0" stroke="var(--primary-color)" strokeWidth="4" />
-                <circle cx="40" cy="-5" r="6" fill="#ffffff" />
-              </g>
-
-              {/* Ambulance Van */}
-              <g transform="translate(180, 720)">
-                <circle cx="20" cy="50" r="12" fill="#2c3e50" />
-                <circle cx="20" cy="50" r="4" fill="#ffffff" />
-                <circle cx="80" cy="50" r="12" fill="#2c3e50" />
-                <circle cx="80" cy="50" r="4" fill="#ffffff" />
-                
-                <rect x="0" y="0" width="100" height="50" fill="#ffffff" rx="10" />
-                <path d="M80,0 L110,20 L110,50 L80,50 Z" fill="#ffffff" />
-                
-                <rect x="85" y="5" width="15" height="15" fill="var(--bg-color)" rx="2" />
-                
-                <rect x="40" y="15" width="16" height="16" fill="var(--primary-color)" rx="2" />
-                <rect x="44" y="11" width="8" height="24" fill="var(--primary-color)" rx="2" />
-                <rect x="36" y="19" width="24" height="8" fill="var(--primary-color)" rx="2" />
-                
-                <rect x="70" y="-8" width="12" height="8" fill="var(--accent-color)" rx="3" />
-              </g>
-
-            </svg>
+          <div className="branded-content">
+            <img src="/logo.png" alt="Jamindan Seal" className="branded-logo" />
+            <h2 className="branded-title">Emergency Response</h2>
+            <p className="branded-municipality">Municipality of Jamindan</p>
+            <div className="branded-divider"></div>
+            <p className="branded-tagline">Protecting our community through rapid coordination and real-time response.</p>
+            <div className="branded-badge">
+              <span className="branded-badge-dot"></span>
+              System Online
+            </div>
           </div>
         </div>
 
