@@ -261,23 +261,21 @@ const Register = () => {
           </div>
 
           <div className="form-group" style={{ display: 'flex', gap: '15px' }}>
-            <div style={{ flex: 1 }}>
-              <label className="form-label" htmlFor="phone">{t('phoneNumberLabel')}</label>
-              <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '14px', fontWeight: 'bold' }}>+63</span>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  className="form-input"
-                  style={{ paddingLeft: '45px' }}
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="9XXXXXXXXX"
-                  required
-                />
+              <div style={{ flex: 1 }}>
+                <label className="form-label" htmlFor="phone">{t('phoneNumberLabel')}</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    className="form-input"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="09XXXXXXXXX"
+                    required
+                  />
+                </div>
               </div>
-            </div>
             <div style={{ flex: 1 }}>
               <label className="form-label" htmlFor="age">{t('ageLabel')}</label>
               <input
