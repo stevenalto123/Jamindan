@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { X } from 'lucide-react';
 
 const AdminVerifyUsers = () => {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+  const [viewImage, setViewImage] = useState(null);
 
   const fetchPendingUsers = async () => {
     try {
@@ -73,26 +75,26 @@ const AdminVerifyUsers = () => {
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '5px' }}>Valid ID <span style={{ color: 'var(--primary-color)' }}>({user.id_type || 'Not Specified'})</span></p>
                   {user.id_photo_path ? (
-                    <img 
-                      src={user.id_photo_path.startsWith('http') ? user.id_photo_path : `https://jamindan.onrender.com${user.id_photo_path}`} 
-                      alt="ID Document" 
-                      style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer' }}
-                      onClick={(e) => window.open(e.target.src, '_blank')}
-                      title="Click to view full size"
-                    />
+                      <img 
+                        src={user.id_photo_path.startsWith('http') ? user.id_photo_path : `https://jamindan.onrender.com${user.id_photo_path}`} 
+                        alt="ID Document" 
+                        style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer' }}
+                        onClick={(e) => setViewImage(e.target.src)}
+                        title="Click to view full size"
+                      />
                   ) : <div style={{ height: '120px', background: '#eee', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>No ID</div>}
                 </div>
                 
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '5px' }}>Live Selfie</p>
                   {user.selfie_photo_path ? (
-                    <img 
-                      src={user.selfie_photo_path.startsWith('http') ? user.selfie_photo_path : `https://jamindan.onrender.com${user.selfie_photo_path}`} 
-                      alt="Live Selfie" 
-                      style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer' }}
-                      onClick={(e) => window.open(e.target.src, '_blank')}
-                      title="Click to view full size"
-                    />
+                      <img 
+                        src={user.selfie_photo_path.startsWith('http') ? user.selfie_photo_path : `https://jamindan.onrender.com${user.selfie_photo_path}`} 
+                        alt="Live Selfie" 
+                        style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer' }}
+                        onClick={(e) => setViewImage(e.target.src)}
+                        title="Click to view full size"
+                      />
                   ) : <div style={{ height: '120px', background: '#eee', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>No Selfie</div>}
                 </div>
               </div>
@@ -116,6 +118,16 @@ const AdminVerifyUsers = () => {
 
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Full Screen Image Viewer Modal */}
+      {viewImage && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 10000, display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => setViewImage(null)}>
+          <button style={{ position: 'absolute', top: '20px', right: '20px', background: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10001 }} onClick={() => setViewImage(null)}>
+            <X size={24} color="#000" />
+          </button>
+          <img src={viewImage} style={{ maxWidth: '95%', maxHeight: '95%', objectFit: 'contain' }} alt="Full screen view" />
         </div>
       )}
     </div>

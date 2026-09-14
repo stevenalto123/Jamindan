@@ -37,6 +37,7 @@ const UserManagement = () => {
   const [role, setRole] = useState('Resident');
   const [agencyType, setAgencyType] = useState('MDRRMO'); // 'Police', 'Fire', 'Medical', 'MDRRMO'
   const [submitting, setSubmitting] = useState(false);
+  const [viewImage, setViewImage] = useState(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -404,7 +405,7 @@ const UserManagement = () => {
                           src={editingUser.id_photo_path.startsWith('http') ? editingUser.id_photo_path : `https://jamindan.onrender.com${editingUser.id_photo_path}`} 
                           alt="ID Document" 
                           style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer' }}
-                          onClick={(e) => window.open(e.target.src, '_blank')}
+                          onClick={(e) => setViewImage(e.target.src)}
                           title="Click to view full size"
                         />
                       </div>
@@ -416,7 +417,7 @@ const UserManagement = () => {
                           src={editingUser.selfie_photo_path.startsWith('http') ? editingUser.selfie_photo_path : `https://jamindan.onrender.com${editingUser.selfie_photo_path}`} 
                           alt="Live Selfie" 
                           style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer' }}
-                          onClick={(e) => window.open(e.target.src, '_blank')}
+                          onClick={(e) => setViewImage(e.target.src)}
                           title="Click to view full size"
                         />
                       </div>
@@ -539,6 +540,15 @@ const UserManagement = () => {
               </div>
             </form>
           </div>
+        </div>
+      )}
+      {/* Full Screen Image Viewer Modal */}
+      {viewImage && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 10000, display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={() => setViewImage(null)}>
+          <button style={{ position: 'absolute', top: '20px', right: '20px', background: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10001 }} onClick={() => setViewImage(null)}>
+            <X size={24} color="#000" />
+          </button>
+          <img src={viewImage} style={{ maxWidth: '95%', maxHeight: '95%', objectFit: 'contain' }} alt="Full screen view" />
         </div>
       )}
     </div>
