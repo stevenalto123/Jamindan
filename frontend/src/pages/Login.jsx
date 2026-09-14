@@ -281,15 +281,26 @@ const Login = () => {
           font-weight: 500;
         }
 
-        /* Right Side: Photo Background */
+        /* Right Side: Custom Illustration */
         .login-right {
           flex: 1.1;
-          background-image: url('https://old.dailyguardian.com.ph/wp-content/uploads/2023/07/Jamindan-municipal-hall.jpg');
-          background-size: cover;
-          /* Shifted background position from 'center' to '30% center' to better frame the building */
-          background-position: 30% center; 
-          background-repeat: no-repeat;
+          background: linear-gradient(180deg, #38bdf8 0%, #0ea5e9 30%, #86efac 100%);
           position: relative;
+          overflow: hidden;
+        }
+
+        .illustration-container {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+        
+        .illustration-container svg {
+          width: 100%;
+          height: 100%;
+          display: block;
         }
 
         /* Mobile specific styling */
@@ -302,7 +313,7 @@ const Login = () => {
             padding: 40px 30px;
           }
           .login-right {
-            display: none; /* Hide photo on mobile */
+            display: none; /* Hide illustration on mobile */
           }
           .brand-header {
             margin-bottom: 30px;
@@ -390,8 +401,70 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Right Photo Area */}
+        {/* Right Illustration Area */}
         <div className="login-right">
+          <div className="illustration-container">
+            <svg viewBox="0 0 600 800" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+              
+              {/* Clouds */}
+              <circle cx="150" cy="150" r="50" fill="#ffffff" opacity="0.8" />
+              <circle cx="220" cy="130" r="70" fill="#ffffff" opacity="0.8" />
+              <circle cx="300" cy="160" r="60" fill="#ffffff" opacity="0.8" />
+              
+              <circle cx="450" cy="220" r="40" fill="#ffffff" opacity="0.6" />
+              <circle cx="500" cy="200" r="50" fill="#ffffff" opacity="0.6" />
+
+              {/* Background Mountains */}
+              <path d="M-50,600 L150,350 L400,550 L650,250 L800,600 Z" fill="#0284c7" opacity="0.6" />
+              <path d="M-50,600 L250,450 L500,300 L750,550 L800,600 Z" fill="#0369a1" opacity="0.8" />
+
+              {/* Foreground Hills */}
+              <path d="M-50,850 C150,750 250,650 450,700 C650,750 750,600 850,650 L850,850 Z" fill="#a3e635" />
+              <path d="M-50,850 C150,680 350,820 600,750 C750,700 800,720 850,850 L850,850 Z" fill="#84cc16" opacity="0.9" />
+
+              {/* Path */}
+              <path d="M-50,850 Q200,750 350,850 T650,780 L850,850 Z" fill="#fef08a" opacity="0.8" />
+
+              {/* Abstract Trees */}
+              <g transform="translate(100, 600)">
+                <rect x="25" y="60" width="10" height="40" fill="#78350f" rx="3" />
+                <circle cx="30" cy="30" r="35" fill="#eab308" />
+                <circle cx="10" cy="70" r="15" fill="#84cc16" />
+                <circle cx="55" cy="65" r="20" fill="#65a30d" />
+              </g>
+
+              {/* Jamindan Command Center */}
+              <g transform="translate(350, 620)">
+                <rect x="0" y="30" width="80" height="70" fill="#1e293b" rx="8" />
+                <rect x="15" y="45" width="15" height="15" fill="#a7f3d0" rx="3" />
+                <rect x="50" y="45" width="15" height="15" fill="#a7f3d0" rx="3" />
+                <rect x="15" y="70" width="15" height="15" fill="#a7f3d0" rx="3" />
+                <rect x="50" y="70" width="15" height="15" fill="#a7f3d0" rx="3" />
+                <line x1="40" y1="30" x2="40" y2="0" stroke="#64748b" strokeWidth="4" />
+                <circle cx="40" cy="-5" r="6" fill="#ef4444" />
+              </g>
+
+              {/* Ambulance Van */}
+              <g transform="translate(180, 720)">
+                <circle cx="20" cy="50" r="12" fill="#17181a" />
+                <circle cx="20" cy="50" r="4" fill="#a1a1aa" />
+                <circle cx="80" cy="50" r="12" fill="#17181a" />
+                <circle cx="80" cy="50" r="4" fill="#a1a1aa" />
+                
+                <rect x="0" y="0" width="100" height="50" fill="#f8fafc" rx="10" />
+                <path d="M80,0 L110,20 L110,50 L80,50 Z" fill="#f8fafc" />
+                
+                <rect x="85" y="5" width="15" height="15" fill="#1e293b" rx="2" />
+                
+                <rect x="40" y="15" width="16" height="16" fill="#10b981" rx="2" />
+                <rect x="44" y="11" width="8" height="24" fill="#10b981" rx="2" />
+                <rect x="36" y="19" width="24" height="8" fill="#10b981" rx="2" />
+                
+                <rect x="70" y="-8" width="12" height="8" fill="#ef4444" rx="3" />
+              </g>
+
+            </svg>
+          </div>
         </div>
 
       </div>
