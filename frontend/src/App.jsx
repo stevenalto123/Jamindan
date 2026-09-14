@@ -488,13 +488,18 @@ const AppLayout = ({ children }) => {
                     loops++;
                     if (loops > 20) { // Play for ~7 seconds then stop automatically
                       clearInterval(fmInterval);
-                      osc.stop();
+                      try { osc.stop(); } catch(e){}
                       return;
                     }
                     osc.frequency.setValueAtTime(high ? 1100.00 : 750.00, ctx.currentTime);
-                    gain.gain.setValueAtTime(high ? 0.3 : 0.2, ctx.currentTime); // LOUD
+                    gain.gain.setValueAtTime(high ? 0.3 : 0.2, ctx.currentTime);
                     high = !high;
                   }, 350);
+                  
+                  window.stopGlobalSiren = () => {
+                    try { clearInterval(fmInterval); } catch(e){}
+                    try { osc.stop(); } catch(e){}
+                  };
                 }
               } catch (e) {
                 console.error("Synth failed", e);
