@@ -7,6 +7,9 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 const app = express();
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first'); // Force IPv4 globally for Render to fix SMTP IPv6 ENETUNREACH error
+
 app.set('trust proxy', 1); // Trust Render reverse proxy for rate limiter
 const server = http.createServer(app);
 const io = new Server(server, {
