@@ -195,6 +195,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           </li>
         )}
 
+        <li className="sidebar-item">
+          <NavLink to="/profile" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
+            <User size={18} />
+            <span>Profile</span>
+          </NavLink>
+        </li>
+
         <li className="sidebar-item" style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
           <button onClick={logout} className="sidebar-link" style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
             <LogOut size={18} />
