@@ -341,33 +341,36 @@ const AppLayout = ({ children }) => {
             globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
           }
           if (globalAudioCtx.state === 'suspended') {
-            globalAudioCtx.resume();
+            globalAudioCtx.resume().catch(() => console.warn("Cannot resume audio context without user gesture"));
           }
 
           oscillator = globalAudioCtx.createOscillator();
           gainNode = globalAudioCtx.createGain();
           
-          oscillator.type = 'square';
-          oscillator.frequency.setValueAtTime(400, globalAudioCtx.currentTime); 
-
-          const durationLoops = 8; 
-          for (let i = 0; i < durationLoops; i++) {
-            const startTime = globalAudioCtx.currentTime + (i * 0.8);
-            oscillator.frequency.linearRampToValueAtTime(800, startTime + 0.4); 
-            oscillator.frequency.linearRampToValueAtTime(400, startTime + 0.8); 
-          }
-          
-          const totalDuration = durationLoops * 0.8;
-          gainNode.gain.setValueAtTime(0.1, globalAudioCtx.currentTime); 
-          gainNode.gain.exponentialRampToValueAtTime(1, globalAudioCtx.currentTime + 0.1); 
-          gainNode.gain.setValueAtTime(1, globalAudioCtx.currentTime + totalDuration - 0.5); 
-          gainNode.gain.exponentialRampToValueAtTime(0.01, globalAudioCtx.currentTime + totalDuration); 
-          
+          oscillator.type = 'sawtooth';
           oscillator.connect(gainNode);
           gainNode.connect(globalAudioCtx.destination);
+          oscillator.start(0);
+
+          let high = false;
+          let loops = 0;
+          const fmInterval = setInterval(() => {
+            loops++;
+            if (loops > 20) { // ~7 seconds
+              clearInterval(fmInterval);
+              try { oscillator.stop(); } catch(e){}
+              return;
+            }
+            oscillator.frequency.setValueAtTime(high ? 1100.00 : 750.00, globalAudioCtx.currentTime);
+            gainNode.gain.setValueAtTime(high ? 0.3 : 0.2, globalAudioCtx.currentTime);
+            high = !high;
+          }, 350);
           
-          oscillator.start();
-          oscillator.stop(globalAudioCtx.currentTime + totalDuration + 0.1);
+          // Allow global stop to clear interval
+          window.stopGlobalSiren = () => {
+            try { clearInterval(fmInterval); } catch(e){}
+            try { oscillator.stop(); } catch(e){}
+          };
         };
 
         const playPromise = audio.play();
