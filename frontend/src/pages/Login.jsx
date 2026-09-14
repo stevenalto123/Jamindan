@@ -282,118 +282,20 @@ const Login = () => {
           font-weight: 500;
         }
 
-        /* Right Side: Branded Panel */
+        /* Right Side: Abstract Art Panel */
         .login-right {
           flex: 1.1;
-          background: linear-gradient(160deg, var(--primary-color) 0%, #2a5e3f 100%);
+          background-color: var(--bg-color);
           position: relative;
           overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
         }
 
-        /* Abstract background shapes */
-        .login-right::before {
-          content: '';
+        .login-right svg {
           position: absolute;
-          top: -120px;
-          right: -120px;
-          width: 400px;
-          height: 400px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.06);
-        }
-
-        .login-right::after {
-          content: '';
-          position: absolute;
-          bottom: -80px;
-          left: -80px;
-          width: 300px;
-          height: 300px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.04);
-        }
-
-        .branded-content {
-          position: relative;
-          z-index: 2;
-          text-align: center;
-          padding: 60px 50px;
-          color: white;
-        }
-
-        .branded-logo {
-          width: 90px;
-          height: 90px;
-          object-fit: contain;
-          margin-bottom: 30px;
-          filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
-        }
-
-        .branded-title {
-          font-size: 28px;
-          font-weight: 800;
-          font-family: var(--font-display);
-          letter-spacing: -0.5px;
-          margin: 0 0 8px 0;
-          line-height: 1.2;
-        }
-
-        .branded-municipality {
-          font-size: 14px;
-          font-weight: 500;
-          opacity: 0.7;
-          letter-spacing: 2px;
-          text-transform: uppercase;
-          margin: 0 0 30px 0;
-        }
-
-        .branded-divider {
-          width: 50px;
-          height: 3px;
-          background: rgba(255,255,255,0.3);
-          border-radius: 2px;
-          margin: 0 auto 30px auto;
-        }
-
-        .branded-tagline {
-          font-size: 16px;
-          font-weight: 400;
-          opacity: 0.85;
-          line-height: 1.6;
-          margin: 0;
-          max-width: 280px;
-          margin-left: auto;
-          margin-right: auto;
-        }
-
-        .branded-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          margin-top: 40px;
-          padding: 8px 16px;
-          background: rgba(255,255,255,0.12);
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 600;
-          letter-spacing: 0.5px;
-          opacity: 0.8;
-        }
-
-        .branded-badge-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: #4ade80;
-          animation: pulse-dot 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-dot {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.3); }
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
         }
 
         /* Mobile specific styling */
@@ -490,19 +392,58 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Right Branded Panel */}
+        {/* Right Panel — Flowing Abstract Landscape */}
         <div className="login-right">
-          <div className="branded-content">
-            <img src="/logo.png" alt="Jamindan Seal" className="branded-logo" />
-            <h2 className="branded-title">Emergency Response</h2>
-            <p className="branded-municipality">Municipality of Jamindan</p>
-            <div className="branded-divider"></div>
-            <p className="branded-tagline">Protecting our community through rapid coordination and real-time response.</p>
-            <div className="branded-badge">
-              <span className="branded-badge-dot"></span>
-              System Online
-            </div>
-          </div>
+          <svg viewBox="0 0 600 800" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#e8f0ec" />
+                <stop offset="100%" stopColor="#d4e4da" />
+              </linearGradient>
+            </defs>
+
+            {/* Sky background */}
+            <rect width="600" height="800" fill="url(#skyGrad)" />
+
+            {/* Soft layered waves — back to front */}
+            <path d="M0,520 C100,480 200,540 300,500 C400,460 500,520 600,490 L600,800 L0,800 Z" fill="#b8d4c4" opacity="0.5" />
+            <path d="M0,560 C120,530 220,580 340,550 C460,520 520,570 600,540 L600,800 L0,800 Z" fill="#8fbfa3" opacity="0.6" />
+            <path d="M0,610 C80,580 180,630 300,600 C420,570 500,620 600,590 L600,800 L0,800 Z" fill="#6ba882" opacity="0.7" />
+            <path d="M0,660 C150,640 250,680 350,650 C450,620 530,670 600,650 L600,800 L0,800 Z" fill="#4d9466" opacity="0.8" />
+            <path d="M0,710 C100,690 220,730 350,700 C480,670 550,720 600,710 L600,800 L0,800 Z" fill="#3d7a50" />
+
+            {/* Subtle dots / particles scattered */}
+            <circle cx="80" cy="200" r="3" fill="#3d7a50" opacity="0.15" />
+            <circle cx="200" cy="150" r="5" fill="#3d7a50" opacity="0.1" />
+            <circle cx="350" cy="100" r="4" fill="#3d7a50" opacity="0.12" />
+            <circle cx="500" cy="180" r="6" fill="#3d7a50" opacity="0.08" />
+            <circle cx="450" cy="300" r="3" fill="#3d7a50" opacity="0.14" />
+            <circle cx="120" cy="350" r="4" fill="#3d7a50" opacity="0.1" />
+            <circle cx="530" cy="420" r="5" fill="#3d7a50" opacity="0.12" />
+            <circle cx="280" cy="280" r="3" fill="#3d7a50" opacity="0.1" />
+
+            {/* Centered content group */}
+            <g transform="translate(300, 380)" textAnchor="middle">
+              {/* Shield / badge shape */}
+              <path d="M0,-80 L50,-60 L50,10 C50,50 25,70 0,85 C-25,70 -50,50 -50,10 L-50,-60 Z" 
+                    fill="white" opacity="0.9" />
+              <path d="M0,-65 L38,-48 L38,8 C38,40 20,56 0,68 C-20,56 -38,40 -38,8 L-38,-48 Z" 
+                    fill="#3d7a50" opacity="0.15" />
+              
+              {/* Cross icon inside shield */}
+              <rect x="-4" y="-45" width="8" height="30" rx="3" fill="#3d7a50" opacity="0.6" />
+              <rect x="-15" y="-34" width="30" height="8" rx="3" fill="#3d7a50" opacity="0.6" />
+
+              {/* Text below shield */}
+              <text y="120" fill="#3d7a50" fontSize="20" fontWeight="800" fontFamily="system-ui, sans-serif" opacity="0.7">
+                JAMINDAN
+              </text>
+              <text y="145" fill="#3d7a50" fontSize="11" fontWeight="500" fontFamily="system-ui, sans-serif" letterSpacing="3" opacity="0.4">
+                EMERGENCY RESPONSE
+              </text>
+            </g>
+
+          </svg>
         </div>
 
       </div>
