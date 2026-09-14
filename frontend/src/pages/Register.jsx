@@ -565,7 +565,12 @@ const Register = () => {
 
               <div className="form-group">
                 <label className="form-label" htmlFor="idPhoto">{t('uploadId')?.replace('{idType}', formData.id_type || 'Valid ID') || `Upload ${formData.id_type || 'Valid ID'}`}</label>
-                <input type="file" id="idPhoto" name="idPhoto" className="form-input" accept="image/*" onChange={handleIdPhotoChange} required style={{ padding: '8px' }} />
+                <input type="file" id="idPhoto" name="idPhoto" className="form-input" accept="image/*" onChange={handleIdPhotoChange} required={!idPhoto} style={{ padding: '8px' }} />
+                {idPhoto && (
+                  <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--success-color)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <CheckCircle size={14} /> File attached: {idPhoto.name}
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
