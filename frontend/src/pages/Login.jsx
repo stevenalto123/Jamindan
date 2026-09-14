@@ -60,7 +60,7 @@ const Login = () => {
           align-items: center;
           justify-content: center;
           min-height: 100vh;
-          background-color: #09090b; /* Deepest dark background */
+          background-color: #e2f0d9; /* Very soft light green background for the page */
           padding: 20px;
           font-family: 'Inter', system-ui, sans-serif;
         }
@@ -69,11 +69,11 @@ const Login = () => {
           display: flex;
           width: 100%;
           max-width: 1000px;
-          min-height: 600px;
-          background-color: #17181a;
+          min-height: 550px;
+          background: linear-gradient(135deg, #1e3c28 0%, #2e593e 100%); /* Deep soothing forest green, NOT black */
           border-radius: 28px;
           overflow: hidden;
-          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+          box-shadow: 0 20px 40px rgba(30, 60, 40, 0.3);
         }
 
         /* Left Side: Form */
@@ -92,7 +92,7 @@ const Login = () => {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-bottom: 50px;
+          margin-bottom: 45px;
         }
 
         .brand-logo {
@@ -104,7 +104,7 @@ const Login = () => {
         .brand-name {
           font-size: 20px;
           font-weight: 700;
-          color: #a7f3d0; /* Soft green */
+          color: #a7f3d0; /* Soft bright green */
           letter-spacing: -0.5px;
         }
 
@@ -117,7 +117,7 @@ const Login = () => {
 
         .welcome-subtitle {
           font-size: 14px;
-          color: #a1a1aa;
+          color: #b0d6be;
           margin: 0 0 35px 0;
         }
 
@@ -126,10 +126,10 @@ const Login = () => {
           position: relative;
         }
 
-        .dark-input {
+        .themed-input {
           width: 100%;
-          background-color: #212226;
-          border: 1px solid #212226;
+          background-color: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
           color: white;
           padding: 16px 16px;
           border-radius: 12px;
@@ -137,14 +137,15 @@ const Login = () => {
           transition: all 0.3s ease;
         }
 
-        .dark-input::placeholder {
-          color: #71717a;
+        .themed-input::placeholder {
+          color: rgba(255, 255, 255, 0.5);
         }
 
-        .dark-input:focus {
+        .themed-input:focus {
           outline: none;
-          border-color: #34d399; /* Accent green */
-          background-color: #27282d;
+          border-color: #a7f3d0; 
+          background-color: rgba(255, 255, 255, 0.15);
+          box-shadow: 0 0 0 4px rgba(167, 243, 208, 0.1);
         }
 
         .show-btn {
@@ -154,7 +155,7 @@ const Login = () => {
           transform: translateY(-50%);
           background: none;
           border: none;
-          color: #71717a;
+          color: rgba(255, 255, 255, 0.6);
           font-size: 13px;
           font-weight: 500;
           cursor: pointer;
@@ -162,7 +163,7 @@ const Login = () => {
         }
 
         .show-btn:hover {
-          color: #e4e4e7;
+          color: #ffffff;
         }
 
         .options-row {
@@ -178,7 +179,7 @@ const Login = () => {
           gap: 8px;
           cursor: pointer;
           font-size: 13px;
-          color: #a1a1aa;
+          color: #b0d6be;
         }
 
         .custom-checkbox {
@@ -186,13 +187,14 @@ const Login = () => {
           width: 18px;
           height: 18px;
           border-radius: 4px;
-          background-color: #212226;
-          border: 1px solid #3f3f46;
+          background-color: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.3);
           cursor: pointer;
           position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
+          transition: all 0.2s;
         }
 
         .custom-checkbox:checked {
@@ -202,7 +204,7 @@ const Login = () => {
 
         .custom-checkbox:checked::after {
           content: '✓';
-          color: #17181a;
+          color: #1e3c28;
           font-size: 12px;
           font-weight: bold;
         }
@@ -221,7 +223,7 @@ const Login = () => {
         .submit-btn {
           width: 100%;
           background-color: #a7f3d0;
-          color: #121212;
+          color: #1e3c28;
           border: none;
           padding: 16px;
           border-radius: 12px;
@@ -232,23 +234,26 @@ const Login = () => {
           justify-content: center;
           align-items: center;
           gap: 8px;
-          transition: background-color 0.2s;
+          transition: all 0.2s;
           margin-bottom: 25px;
         }
 
         .submit-btn:hover {
           background-color: #6ee7b7;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(167, 243, 208, 0.2);
         }
 
         .submit-btn:disabled {
           opacity: 0.7;
           cursor: not-allowed;
+          transform: none;
         }
 
         .register-text {
           text-align: center;
           font-size: 13px;
-          color: #71717a;
+          color: #b0d6be;
         }
 
         .register-text a {
@@ -258,8 +263,8 @@ const Login = () => {
         }
 
         .error-message {
-          background-color: rgba(239, 68, 68, 0.1);
-          border: 1px solid rgba(239, 68, 68, 0.2);
+          background-color: rgba(239, 68, 68, 0.15);
+          border: 1px solid rgba(239, 68, 68, 0.3);
           color: #fca5a5;
           padding: 12px 16px;
           border-radius: 12px;
@@ -273,10 +278,11 @@ const Login = () => {
           background-image: url('https://old.dailyguardian.com.ph/wp-content/uploads/2023/07/Jamindan-municipal-hall.jpg');
           background-size: cover;
           background-position: center;
+          background-repeat: no-repeat;
           position: relative;
         }
 
-        /* Seamless fade overlay between the solid left panel and the photo */
+        /* Adding a very soft green tint over the photo so it blends with the form nicely */
         .login-right::after {
           content: '';
           position: absolute;
@@ -284,7 +290,7 @@ const Login = () => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: linear-gradient(to right, rgba(23, 24, 26, 1) 0%, rgba(23, 24, 26, 0.3) 30%, rgba(0, 0, 0, 0.1) 100%);
+          background: linear-gradient(to right, rgba(30, 60, 40, 1) 0%, rgba(30, 60, 40, 0.2) 40%, rgba(0, 0, 0, 0) 100%);
           pointer-events: none;
         }
 
@@ -298,7 +304,7 @@ const Login = () => {
             padding: 40px 30px;
           }
           .login-right {
-            display: none; /* Hide photo on mobile */
+            display: none; /* Hide photo on mobile so the form stays clean */
           }
           .brand-header {
             margin-bottom: 30px;
@@ -312,7 +318,7 @@ const Login = () => {
 
       <div className="login-container">
         
-        {/* Left Form Area (Dark Mode) */}
+        {/* Left Form Area (Forest Green) */}
         <div className="login-left">
           <div className="brand-header">
             <img src="/logo.png" alt="Logo" className="brand-logo" />
@@ -328,7 +334,7 @@ const Login = () => {
             <div className="input-group">
               <input
                 type="text"
-                className="dark-input"
+                className="themed-input"
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -339,7 +345,7 @@ const Login = () => {
             <div className="input-group">
               <input
                 type={showPassword ? "text" : "password"}
-                className="dark-input"
+                className="themed-input"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
