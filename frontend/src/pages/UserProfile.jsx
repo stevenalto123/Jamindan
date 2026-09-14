@@ -10,6 +10,18 @@ const UserProfile = () => {
   
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [email, setEmail] = useState(user?.email || '');
+  
+  // Format date correctly for input type="date"
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      return new Date(dateStr).toISOString().split('T')[0];
+    } catch(e) {
+      return '';
+    }
+  };
+  
+  const [dateOfBirth, setDateOfBirth] = useState(formatDate(user?.date_of_birth));
   const [age, setAge] = useState(user?.age || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [barangay, setBarangay] = useState(user?.barangay || '');
@@ -39,6 +51,7 @@ const UserProfile = () => {
         full_name: fullName, 
         email,
         age,
+        date_of_birth: dateOfBirth,
         phone, 
         barangay,
         purok_sitio: purokSitio,
@@ -107,14 +120,36 @@ const UserProfile = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Email Address</label>
                 <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email (optional)" />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Date of Birth</label>
+                <input 
+                  type="date" 
+                  className="form-input" 
+                  value={dateOfBirth} 
+                  onChange={(e) => {
+                    setDateOfBirth(e.target.value);
+                    if (e.target.value) {
+                      const today = new Date();
+                      const birthDate = new Date(e.target.value);
+                      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+                      const m = today.getMonth() - birthDate.getMonth();
+                      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                        calculatedAge--;
+                      }
+                      setAge(calculatedAge);
+                    }
+                  }} 
+                  required 
+                />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Age</label>
-                <input type="number" className="form-input" value={age} onChange={(e) => setAge(e.target.value)} required />
+                <input type="number" className="form-input" value={age} readOnly style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-muted)' }} />
               </div>
             </div>
 

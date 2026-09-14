@@ -38,50 +38,53 @@ const upload = multer({
 });
 
 // Resident Self-Registration Endpoint
-router.post('/register', authLimiter, upload.fields([{ name: 'id_photo', maxCount: 1 }, { name: 'selfie_photo', maxCount: 1 }]), async (req, res) => {
-  const { username, email, password, full_name, phone, barangay, age, id_type } = req.body;
-
-  if (!username || !email || !password || !full_name || !phone || !barangay || !age || !id_type) {
-    return res.status(400).json({ message: 'All fields including Email and ID Type are required' });
-  }
-
-  // Input Validation
-  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-  if (!usernameRegex.test(username.trim())) {
-    return res.status(400).json({ message: 'Username must be 3-20 characters long and contain only letters, numbers, or underscores' });
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email.trim())) {
-    return res.status(400).json({ message: 'Please provide a valid email address' });
-  }
-
-  if (password.length < 6) {
-    return res.status(400).json({ message: 'Password must be at least 6 characters long' });
-  }
-
-  if (parseInt(age) < 18) {
-    return res.status(400).json({ message: 'You must be at least 18 years old to register. Minors should ask a parent or guardian to report for them.' });
-  }
-
-  const id_photo_path = req.files && req.files['id_photo'] ? req.files['id_photo'][0].path : null;
-  const selfie_photo_path = req.files && req.files['selfie_photo'] ? req.files['selfie_photo'][0].path : null;
-
-  if (!id_photo_path || !selfie_photo_path) {
-    return res.status(400).json({ message: 'Both ID and Selfie photos are required for verification.' });
-  }
-
-  let cleanPhone = phone ? phone.trim().replace(/[\s\-\(\)\+]/g, '') : '';
-  if (cleanPhone.startsWith('639')) {
-    cleanPhone = '09' + cleanPhone.slice(3);
-  }
-
-  const phoneRegex = /^09\d{9}$/;
-  if (!phoneRegex.test(cleanPhone) || cleanPhone.length !== 11) {
-    return res.status(400).json({ message: 'Phone number must be exactly 11 digits long and start with 09 (e.g., 09171234567)' });
-  }
-
+router.post('/register', authLimiter, upload.fields([
+  { name: 'id_photo', maxCount: 1 },
+  { name: 'selfie_photo', maxCount: 1 }
+]), async (req, res) => {
   try {
+    const { username, email, password, full_name, phone, barangay, age, date_of_birth, id_type, purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone } = req.body;
+
+    if (!username || !email || !password || !full_name || !phone || !barangay || !age || !id_type) {
+      return res.status(400).json({ message: 'All fields including Email and ID Type are required' });
+    }
+
+    // Input Validation
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+    if (!usernameRegex.test(username.trim())) {
+      return res.status(400).json({ message: 'Username must be 3-20 characters long and contain only letters, numbers, or underscores' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({ message: 'Please provide a valid email address' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
+
+    if (parseInt(age) < 18) {
+      return res.status(400).json({ message: 'You must be at least 18 years old to register. Minors should ask a parent or guardian to report for them.' });
+    }
+
+    const id_photo_path = req.files && req.files['id_photo'] ? req.files['id_photo'][0].path : null;
+    const selfie_photo_path = req.files && req.files['selfie_photo'] ? req.files['selfie_photo'][0].path : null;
+
+    if (!id_photo_path || !selfie_photo_path) {
+      return res.status(400).json({ message: 'Both ID and Selfie photos are required for verification.' });
+    }
+
+    let cleanPhone = phone ? phone.trim().replace(/[\s\-\(\)\+]/g, '') : '';
+    if (cleanPhone.startsWith('639')) {
+      cleanPhone = '09' + cleanPhone.slice(3);
+    }
+
+    const phoneRegex = /^09\d{9}$/;
+    if (!phoneRegex.test(cleanPhone) || cleanPhone.length !== 11) {
+      return res.status(400).json({ message: 'Phone number must be exactly 11 digits long and start with 09 (e.g., 09171234567)' });
+    }
+
     // Check if username or email exists
     const [existing] = await db.execute('SELECT id FROM users WHERE username = ? OR email = ?', [username.trim().toLowerCase(), email.trim().toLowerCase()]);
     const existingUser = existing[0];
@@ -93,9 +96,19 @@ router.post('/register', authLimiter, upload.fields([{ name: 'id_photo', maxCoun
     const password_hash = bcrypt.hashSync(password, salt);
 
     await db.execute(`
-      INSERT INTO users (username, email, password_hash, role, full_name, phone, barangay, age, id_type, id_photo_path, selfie_photo_path, is_verified)
-      VALUES (?, ?, ?, 'Resident', ?, ?, ?, ?, ?, ?, ?, 0)
-    `, [username.trim().toLowerCase(), email.trim().toLowerCase(), password_hash, full_name.trim(), cleanPhone, barangay.trim(), parseInt(age), id_type.trim(), id_photo_path, selfie_photo_path]);
+      INSERT INTO users (
+        username, email, password_hash, role, full_name, phone, barangay, age, date_of_birth, 
+        id_type, id_photo_path, selfie_photo_path, is_verified,
+        purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone
+      )
+      VALUES (?, ?, ?, 'Resident', ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)
+    `, [
+      username.trim().toLowerCase(), email.trim().toLowerCase(), password_hash, 
+      full_name.trim(), cleanPhone, barangay.trim(), parseInt(age), date_of_birth || null,
+      id_type.trim(), id_photo_path, selfie_photo_path,
+      purok_sitio || null, blood_type || null, allergies || null, medical_conditions || null,
+      emergency_contact_name || null, emergency_contact_phone || null
+    ]);
 
     await db.logAudit(`User account registered: ${username.trim().toLowerCase()}`, username.trim().toLowerCase(), req.ip);
     return res.status(201).json({ message: 'Registration successful! You can now log in.' });
@@ -181,7 +194,7 @@ router.post('/logout', authRequired, async (req, res) => {
 // Get profile
 router.get('/me', authRequired, async (req, res) => {
   try {
-    const [rows] = await db.execute('SELECT id, username, email, role, agency_type, full_name, age, phone, barangay, purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone, avatar, is_on_duty, created_at FROM users WHERE id = ?', [req.user.id]);
+    const [rows] = await db.execute('SELECT id, username, email, role, agency_type, full_name, age, date_of_birth, phone, barangay, purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone, avatar, is_on_duty, created_at FROM users WHERE id = ?', [req.user.id]);
     const user = rows[0];
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -214,7 +227,7 @@ router.put('/duty', authRequired, async (req, res) => {
 
 // Update profile
 router.put('/profile', authRequired, async (req, res) => {
-  const { full_name, email, age, phone, barangay, avatar, purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone } = req.body;
+  const { full_name, email, age, date_of_birth, phone, barangay, avatar, purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone } = req.body;
 
   if (!full_name || !phone || !barangay) {
     return res.status(400).json({ message: 'Full name, phone, and barangay are required' });
@@ -223,7 +236,7 @@ router.put('/profile', authRequired, async (req, res) => {
   try {
     await db.execute(`
       UPDATE users 
-      SET full_name = ?, email = ?, age = ?, phone = ?, barangay = ?, avatar = ?,
+      SET full_name = ?, email = ?, age = ?, date_of_birth = ?, phone = ?, barangay = ?, avatar = ?,
           purok_sitio = ?, blood_type = ?, allergies = ?, medical_conditions = ?,
           emergency_contact_name = ?, emergency_contact_phone = ?
       WHERE id = ?
@@ -231,6 +244,7 @@ router.put('/profile', authRequired, async (req, res) => {
       full_name.trim(),
       email ? email.trim() : null,
       age ? parseInt(age) : 18,
+      date_of_birth || null,
       phone.trim(),
       barangay.trim(),
       avatar || null,

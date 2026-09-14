@@ -133,7 +133,7 @@ router.get('/:id/profile', async (req, res) => {
   try {
     // 1. Fetch user basic details
     const [userRows] = await db.execute(`
-      SELECT id, username, email, role, agency_type, full_name, age, phone, barangay, purok_sitio, 
+      SELECT id, username, email, role, agency_type, full_name, age, date_of_birth, phone, barangay, purok_sitio, 
              blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone, 
              avatar, is_active, is_on_duty, created_at, id_photo_path, selfie_photo_path, id_type
       FROM users 

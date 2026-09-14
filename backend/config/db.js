@@ -118,6 +118,12 @@ const initializeDatabase = async () => {
       } catch (e) {
         // Column already exists or table doesn't exist yet, which is fine
       }
+      try {
+        await pool.query('ALTER TABLE users ADD COLUMN date_of_birth DATE NULL AFTER age');
+        console.log('Successfully injected date_of_birth column into existing users table.');
+      } catch (e) {
+        // Column already exists or table doesn't exist yet, which is fine
+      }
     }
 
     // 3. Create Tables
@@ -146,6 +152,7 @@ const initializeDatabase = async () => {
         current_lng DOUBLE NULL,
         push_subscription TEXT NULL,
         age INT NOT NULL DEFAULT 18,
+        date_of_birth DATE NULL,
         is_verified TINYINT DEFAULT 0,
         is_active TINYINT DEFAULT 1, -- 1 = active, 0 = deactivated
         is_on_duty TINYINT DEFAULT 0, -- 1 = on shift, 0 = off shift
