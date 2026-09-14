@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Lock, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -60,166 +60,114 @@ const Login = () => {
           align-items: center;
           justify-content: center;
           min-height: 100vh;
-          background-color: #f0fdf4; /* Very light green */
-          position: relative;
-          overflow: hidden;
+          background-color: #121212; /* Very dark background */
           padding: 20px;
           font-family: 'Inter', system-ui, sans-serif;
-          z-index: 1;
         }
 
-        /* Animated Background Orbs */
-        .bg-orb-1 {
-          position: absolute;
-          top: -15%;
-          left: -10%;
-          width: 50vw;
-          height: 50vw;
-          background: radial-gradient(circle, rgba(167,243,208,0.7) 0%, rgba(255,255,255,0) 70%);
-          border-radius: 50%;
-          z-index: -1;
-          animation: float 15s ease-in-out infinite;
-        }
-
-        .bg-orb-2 {
-          position: absolute;
-          bottom: 5%;
-          right: -10%;
-          width: 40vw;
-          height: 40vw;
-          background: radial-gradient(circle, rgba(134,239,172,0.5) 0%, rgba(255,255,255,0) 70%);
-          border-radius: 50%;
-          z-index: -1;
-          animation: float 20s ease-in-out infinite reverse;
-        }
-
-        @keyframes float {
-          0% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(5%, 5%) scale(1.05); }
-          66% { transform: translate(-2%, 8%) scale(0.95); }
-          100% { transform: translate(0, 0) scale(1); }
-        }
-
-        /* Glassmorphism Card */
-        .login-card {
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.8);
-          border-radius: 24px;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+        .login-container {
+          display: flex;
           width: 100%;
-          max-width: 440px;
-          display: flex;
-          flex-direction: column;
-          z-index: 10;
-          position: relative;
-          margin-bottom: 80px; /* Space for the footer SVG so it doesn't overlap on small laptops */
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          max-width: 1000px;
+          min-height: 600px;
+          background-color: #17181a;
+          border-radius: 28px;
+          overflow: hidden;
+          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
         }
 
-        .login-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 25px 50px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05);
-        }
-
-        .login-card-body {
-          padding: 40px 40px 30px 40px;
+        /* Left Side: Form */
+        .login-left {
+          flex: 1;
+          padding: 60px 70px;
           display: flex;
           flex-direction: column;
+          color: white;
+          justify-content: center;
+        }
+
+        .brand-header {
+          display: flex;
           align-items: center;
+          gap: 12px;
+          margin-bottom: 50px;
         }
 
-        .auth-logo {
-          width: 80px;
-          height: 80px;
-          margin-bottom: 16px;
+        .brand-logo {
+          width: 36px;
+          height: 36px;
           object-fit: contain;
-          filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
         }
 
-        .auth-title {
-          font-size: 26px;
-          font-weight: 800;
-          color: var(--primary-color);
-          margin: 0 0 4px 0;
-          text-align: center;
+        .brand-name {
+          font-size: 20px;
+          font-weight: 700;
+          color: #a7f3d0; /* Soft green */
+          letter-spacing: -0.5px;
         }
 
-        .auth-subtitle {
-          font-size: 15px;
-          color: var(--text-light);
-          margin: 0 0 30px 0;
-          text-align: center;
+        .welcome-title {
+          font-size: 32px;
+          font-weight: 700;
+          margin: 0 0 10px 0;
+          color: #ffffff;
         }
 
-        .login-form {
-          width: 100%;
+        .welcome-subtitle {
+          font-size: 14px;
+          color: #a1a1aa;
+          margin: 0 0 35px 0;
         }
 
         .input-group {
-          margin-bottom: 18px;
-          width: 100%;
-        }
-
-        .modern-input-wrapper {
+          margin-bottom: 20px;
           position: relative;
-          display: flex;
-          align-items: center;
-          width: 100%;
         }
 
-        .modern-input-wrapper svg.icon-left {
-          position: absolute;
-          left: 16px;
-          color: var(--text-muted);
-          transition: color 0.3s;
-        }
-
-        .modern-input {
+        .dark-input {
           width: 100%;
-          background: rgba(255, 255, 255, 0.9);
-          border: 1px solid rgba(0,0,0,0.08);
-          color: var(--text-main);
-          padding: 14px 14px 14px 48px;
+          background-color: #212226;
+          border: 1px solid #212226;
+          color: white;
+          padding: 16px 16px;
           border-radius: 12px;
           font-size: 14px;
           transition: all 0.3s ease;
-          box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
 
-        .modern-input:focus {
+        .dark-input::placeholder {
+          color: #71717a;
+        }
+
+        .dark-input:focus {
           outline: none;
-          border-color: var(--primary-color);
-          box-shadow: 0 0 0 4px rgba(75, 142, 98, 0.15);
-          background: #ffffff;
+          border-color: #34d399; /* Accent green */
+          background-color: #27282d;
         }
 
-        .modern-input:focus + svg.icon-left {
-          color: var(--primary-color);
-        }
-
-        .icon-btn-right {
+        .show-btn {
           position: absolute;
-          right: 14px;
+          right: 16px;
+          top: 50%;
+          transform: translateY(-50%);
           background: none;
           border: none;
-          color: var(--text-muted);
+          color: #71717a;
+          font-size: 13px;
+          font-weight: 500;
           cursor: pointer;
-          display: flex;
-          padding: 4px;
           transition: color 0.2s;
         }
-        .icon-btn-right:hover {
-          color: var(--text-main);
+
+        .show-btn:hover {
+          color: #e4e4e7;
         }
 
         .options-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 25px;
-          width: 100%;
+          margin-bottom: 30px;
         }
 
         .remember-label {
@@ -227,237 +175,283 @@ const Login = () => {
           align-items: center;
           gap: 8px;
           cursor: pointer;
-          font-size: 13.5px;
-          color: var(--text-main);
-          font-weight: 500;
+          font-size: 13px;
+          color: #a1a1aa;
         }
 
-        .remember-checkbox {
+        .custom-checkbox {
+          appearance: none;
+          width: 18px;
+          height: 18px;
+          border-radius: 4px;
+          background-color: #212226;
+          border: 1px solid #3f3f46;
           cursor: pointer;
-          width: 16px;
-          height: 16px;
-          accent-color: var(--primary-color);
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .custom-checkbox:checked {
+          background-color: #a7f3d0;
+          border-color: #a7f3d0;
+        }
+
+        .custom-checkbox:checked::after {
+          content: '✓';
+          color: #17181a;
+          font-size: 12px;
+          font-weight: bold;
         }
 
         .forgot-link {
-          font-size: 13.5px;
-          color: var(--primary-color);
-          font-weight: 600;
+          font-size: 13px;
+          color: #a7f3d0;
           text-decoration: none;
+          transition: opacity 0.2s;
         }
 
-        .login-btn {
+        .forgot-link:hover {
+          opacity: 0.8;
+        }
+
+        .submit-btn {
           width: 100%;
-          background: var(--primary-color);
-          color: white;
+          background-color: #a7f3d0;
+          color: #121212;
           border: none;
-          padding: 15px;
+          padding: 16px;
           border-radius: 12px;
           font-size: 15px;
           font-weight: 700;
           cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 6px 15px rgba(75, 142, 98, 0.3);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 8px;
+          transition: background-color 0.2s;
+          margin-bottom: 25px;
         }
 
-        .login-btn:hover {
-          background: var(--primary-hover);
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(75, 142, 98, 0.4);
+        .submit-btn:hover {
+          background-color: #6ee7b7;
         }
 
-        .login-btn:disabled {
+        .submit-btn:disabled {
           opacity: 0.7;
           cursor: not-allowed;
-          transform: none;
         }
 
         .register-text {
-          margin-top: 25px;
           text-align: center;
-          font-size: 14px;
-          color: var(--text-light);
+          font-size: 13px;
+          color: #71717a;
         }
+
         .register-text a {
-          color: var(--primary-color);
-          font-weight: 700;
+          color: #a7f3d0;
+          font-weight: 600;
           text-decoration: none;
         }
 
-        /* Full Width Footer Landscape */
-        .landscape-footer {
+        .error-message {
+          background-color: rgba(239, 68, 68, 0.1);
+          border: 1px solid rgba(239, 68, 68, 0.2);
+          color: #fca5a5;
+          padding: 12px 16px;
+          border-radius: 12px;
+          font-size: 13px;
+          margin-bottom: 20px;
+        }
+
+        /* Right Side: Illustration */
+        .login-right {
+          flex: 1.1;
+          background: linear-gradient(180deg, #38bdf8 0%, #0ea5e9 30%, #86efac 100%);
+          position: relative;
+          overflow: hidden;
+        }
+
+        /* Vertical Landscape SVG Container */
+        .illustration-container {
           position: absolute;
-          bottom: 0;
+          top: 0;
           left: 0;
           width: 100%;
-          height: 15vh;
-          min-height: 120px;
-          max-height: 200px;
-          z-index: 2;
-          pointer-events: none; /* Let clicks pass through if needed */
+          height: 100%;
         }
-        .landscape-footer svg {
+        
+        .illustration-container svg {
           width: 100%;
           height: 100%;
           display: block;
         }
 
-        @media (max-width: 480px) {
-          .login-wrapper {
-            padding: 15px;
-            align-items: flex-start;
+        /* Mobile specific styling */
+        @media (max-width: 768px) {
+          .login-container {
+            flex-direction: column;
+            min-height: auto;
           }
-          .login-card {
-            margin-top: 20px;
-            margin-bottom: 40px;
+          .login-left {
+            padding: 40px 30px;
           }
-          .login-card-body {
-            padding: 30px 20px 25px 20px;
+          .login-right {
+            display: none; /* Hide illustration on mobile to save space, keeping it sleek */
           }
-          .auth-title {
-            font-size: 22px;
+          .brand-header {
+            margin-bottom: 30px;
+            justify-content: center;
           }
-          .landscape-footer {
-            height: 100px;
+          .welcome-title, .welcome-subtitle {
+            text-align: center;
           }
         }
       `}</style>
 
-      {/* Dynamic Background Orbs */}
-      <div className="bg-orb-1"></div>
-      <div className="bg-orb-2"></div>
+      <div className="login-container">
+        
+        {/* Left Form Area */}
+        <div className="login-left">
+          <div className="brand-header">
+            <img src="/logo.png" alt="Logo" className="brand-logo" />
+            <span className="brand-name">Jamindan ER</span>
+          </div>
 
-      {/* Glassmorphism Centered Card */}
-      <div className="login-card">
-        <div className="login-card-body">
-          <img src="/logo.png" alt="Jamindan Seal" className="auth-logo" />
-          <h1 className="auth-title">Jamindan ER</h1>
-          <p className="auth-subtitle">Emergency Response System</p>
+          <h1 className="welcome-title">Welcome back!</h1>
+          <p className="welcome-subtitle">Sign in to the emergency response platform.</p>
 
-          {error && (
-            <div style={{ background: '#fee2e2', borderLeft: '4px solid #ef4444', color: '#b91c1c', padding: '12px 16px', borderRadius: '8px', fontSize: '13px', marginBottom: '20px', fontWeight: '500', width: '100%' }}>
-              {error}
-            </div>
-          )}
+          {error && <div className="error-message">{error}</div>}
 
-          <form className="login-form" onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit}>
             <div className="input-group">
-              <div className="modern-input-wrapper">
-                <input
-                  type="text"
-                  className="modern-input"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Username"
-                  required
-                />
-                <User size={18} className="icon-left" />
-              </div>
+              <input
+                type="text"
+                className="dark-input"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
             </div>
 
             <div className="input-group">
-              <div className="modern-input-wrapper">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  className="modern-input"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  required
-                />
-                <Lock size={18} className="icon-left" />
-                <button
-                  type="button"
-                  className="icon-btn-right"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                className="dark-input"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button 
+                type="button" 
+                className="show-btn" 
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
             </div>
 
             <div className="options-row">
               <label className="remember-label">
                 <input 
                   type="checkbox" 
-                  className="remember-checkbox"
-                  checked={rememberMe} 
-                  onChange={(e) => setRememberMe(e.target.checked)} 
+                  className="custom-checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                 />
                 Remember me
               </label>
-              <Link to="/forgot-password" className="forgot-link">
-                Forgot password?
-              </Link>
+              <Link to="/forgot-password" className="forgot-link">Forgot password?</Link>
             </div>
 
-            <button type="submit" className="login-btn" disabled={loading}>
-              {loading ? 'Authenticating...' : 'Sign In'}
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? 'Authenticating...' : 'Log in'}
+              {!loading && <ArrowRight size={18} />}
             </button>
           </form>
 
           <div className="register-text">
-            Don't have an account? <Link to="/register">Register here</Link>
+            Don't have an Account? <Link to="/register">Sign up</Link>
           </div>
         </div>
-      </div>
 
-      {/* Detached Full-Width Landscape SVG Footer */}
-      <div className="landscape-footer">
-        <svg viewBox="0 0 1000 120" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
-          {/* Subtle green hills spanning the full width */}
-          <path d="M-50,120 L-50,95 C150,70 300,110 500,90 C700,70 850,110 1050,85 L1050,120 Z" fill="#b0d6be" opacity="0.8" />
-          <path d="M-50,120 L-50,102 C180,88 380,112 500,95 C620,78 820,105 1050,90 L1050,120 Z" fill="#9bc4aa" opacity="0.9" />
-          
-          {/* Trees distributed across the landscape */}
-          <g>
-            <line x1="80" y1="105" x2="80" y2="85" stroke="#689878" strokeWidth="2" />
-            <circle cx="80" cy="80" r="8" fill="#689878" />
-            <line x1="120" y1="110" x2="120" y2="92" stroke="#689878" strokeWidth="2" />
-            <circle cx="120" cy="86" r="6" fill="#689878" />
-            <line x1="320" y1="112" x2="320" y2="95" stroke="#689878" strokeWidth="2" />
-            <circle cx="320" cy="89" r="6" fill="#689878" />
-            <line x1="360" y1="110" x2="360" y2="98" stroke="#689878" strokeWidth="2" />
-            <circle cx="360" cy="94" r="5" fill="#689878" />
-            <line x1="750" y1="110" x2="750" y2="92" stroke="#689878" strokeWidth="2" />
-            <circle cx="750" cy="86" r="7" fill="#689878" />
-            <line x1="820" y1="112" x2="820" y2="95" stroke="#689878" strokeWidth="2" />
-            <circle cx="820" cy="89" r="6" fill="#689878" />
-            <line x1="880" y1="108" x2="880" y2="85" stroke="#689878" strokeWidth="2" />
-            <circle cx="880" cy="80" r="7" fill="#689878" />
-          </g>
-          
-          {/* Command Center Building (shifted left) */}
-          <g transform="translate(150, 0)">
-            <rect x="95" y="65" width="45" height="45" fill="#7ba88a" rx="2" />
-            <rect x="101" y="70" width="7" height="8" fill="#e2f0d9" rx="1" />
-            <rect x="114" y="70" width="7" height="8" fill="#e2f0d9" rx="1" />
-            <rect x="127" y="70" width="7" height="8" fill="#e2f0d9" rx="1" />
-            <rect x="101" y="82" width="7" height="8" fill="#e2f0d9" rx="1" />
-            <rect x="114" y="82" width="7" height="8" fill="#e2f0d9" rx="1" />
-            <rect x="127" y="82" width="7" height="8" fill="#e2f0d9" rx="1" />
-            <rect x="113" y="94" width="9" height="16" fill="#3d7a50" />
-            <line x1="117.5" y1="65" x2="117.5" y2="40" stroke="#3d7a50" strokeWidth="2" />
-            <line x1="110" y1="45" x2="125" y2="45" stroke="#3d7a50" strokeWidth="1.5" />
-            <line x1="112" y1="52" x2="123" y2="52" stroke="#3d7a50" strokeWidth="1.5" />
-            <circle cx="117.5" cy="38" r="2.5" fill="#e74c3c" />
-          </g>
-          
-          {/* Ambulance Van (shifted right) */}
-          <g transform="translate(580, 78)">
-            <circle cx="15" cy="26" r="6" fill="#2c3e50" />
-            <circle cx="15" cy="26" r="2" fill="#bdc3c7" />
-            <circle cx="48" cy="26" r="6" fill="#2c3e50" />
-            <circle cx="48" cy="26" r="2" fill="#bdc3c7" />
-            <rect x="0" y="0" width="60" height="24" fill="#ffffff" rx="4" />
-            <path d="M46,0 L58,10 L58,24 L46,24 Z" fill="#ffffff" />
-            <rect x="48" y="3" width="8" height="8" fill="#2c3e50" rx="1" />
-            <rect x="23" y="8" width="8" height="8" fill="#4b8e62" rx="0.5" />
-            <rect x="25" y="5" width="4" height="14" fill="#4b8e62" rx="0.5" />
-            <rect x="20" y="10" width="14" height="4" fill="#4b8e62" rx="0.5" />
-            <rect x="42" y="-2" width="6" height="3" fill="#e74c3c" rx="1" />
-          </g>
-        </svg>
+        {/* Right Illustration Area */}
+        <div className="login-right">
+          <div className="illustration-container">
+            <svg viewBox="0 0 600 800" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+              {/* Sky base is handled by css gradient, so we just add clouds and hills */}
+              
+              {/* Clouds */}
+              <circle cx="150" cy="150" r="50" fill="#ffffff" opacity="0.8" />
+              <circle cx="220" cy="130" r="70" fill="#ffffff" opacity="0.8" />
+              <circle cx="300" cy="160" r="60" fill="#ffffff" opacity="0.8" />
+              
+              <circle cx="450" cy="220" r="40" fill="#ffffff" opacity="0.6" />
+              <circle cx="500" cy="200" r="50" fill="#ffffff" opacity="0.6" />
+
+              {/* Background Mountains (Blue-ish) */}
+              <path d="M-50,600 L150,350 L400,550 L650,250 L800,600 Z" fill="#0284c7" opacity="0.6" />
+              <path d="M-50,600 L250,450 L500,300 L750,550 L800,600 Z" fill="#0369a1" opacity="0.8" />
+
+              {/* Foreground Hills (Greens) */}
+              <path d="M-50,850 C150,750 250,650 450,700 C650,750 750,600 850,650 L850,850 Z" fill="#a3e635" />
+              <path d="M-50,850 C150,680 350,820 600,750 C750,700 800,720 850,850 L850,850 Z" fill="#84cc16" opacity="0.9" />
+
+              {/* A winding path */}
+              <path d="M-50,850 Q200,750 350,850 T650,780 L850,850 Z" fill="#fef08a" opacity="0.8" />
+
+              {/* Cute Abstract Trees (Yellow and Green) */}
+              <g transform="translate(100, 600)">
+                <rect x="25" y="60" width="10" height="40" fill="#78350f" rx="3" />
+                <circle cx="30" cy="30" r="35" fill="#eab308" />
+                <circle cx="10" cy="70" r="15" fill="#84cc16" />
+                <circle cx="55" cy="65" r="20" fill="#65a30d" />
+              </g>
+
+              {/* Jamindan Command Center (Sleek minimalist version) */}
+              <g transform="translate(350, 620)">
+                <rect x="0" y="30" width="80" height="70" fill="#1e293b" rx="8" />
+                {/* Windows */}
+                <rect x="15" y="45" width="15" height="15" fill="#a7f3d0" rx="3" />
+                <rect x="50" y="45" width="15" height="15" fill="#a7f3d0" rx="3" />
+                <rect x="15" y="70" width="15" height="15" fill="#a7f3d0" rx="3" />
+                <rect x="50" y="70" width="15" height="15" fill="#a7f3d0" rx="3" />
+                {/* Antenna */}
+                <line x1="40" y1="30" x2="40" y2="0" stroke="#64748b" strokeWidth="4" />
+                <circle cx="40" cy="-5" r="6" fill="#ef4444" />
+              </g>
+
+              {/* Cute Ambulance Van */}
+              <g transform="translate(180, 720)">
+                {/* Wheels */}
+                <circle cx="20" cy="50" r="12" fill="#17181a" />
+                <circle cx="20" cy="50" r="4" fill="#a1a1aa" />
+                <circle cx="80" cy="50" r="12" fill="#17181a" />
+                <circle cx="80" cy="50" r="4" fill="#a1a1aa" />
+                
+                {/* Body */}
+                <rect x="0" y="0" width="100" height="50" fill="#f8fafc" rx="10" />
+                <path d="M80,0 L110,20 L110,50 L80,50 Z" fill="#f8fafc" />
+                
+                {/* Window */}
+                <rect x="85" y="5" width="15" height="15" fill="#1e293b" rx="2" />
+                
+                {/* Green Cross */}
+                <rect x="40" y="15" width="16" height="16" fill="#10b981" rx="2" />
+                <rect x="44" y="11" width="8" height="24" fill="#10b981" rx="2" />
+                <rect x="36" y="19" width="24" height="8" fill="#10b981" rx="2" />
+                
+                {/* Siren */}
+                <rect x="70" y="-8" width="12" height="8" fill="#ef4444" rx="3" />
+              </g>
+
+            </svg>
+          </div>
+        </div>
+
       </div>
     </div>
   );
