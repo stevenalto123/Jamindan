@@ -139,8 +139,18 @@ const Register = () => {
 
   const handleNext = () => {
     if (currentStep === 1) {
-      if (!formData.fullName || !formData.username || !formData.email || !formData.phone || !formData.date_of_birth || !formData.barangay || !formData.password || !formData.confirmPassword) {
-        setError(t('fillAllFields') || 'Please fill in all required fields.');
+      const missing = [];
+      if (!formData.fullName) missing.push('Full Name');
+      if (!formData.date_of_birth) missing.push('Date of Birth');
+      if (!formData.phone) missing.push('Phone Number');
+      if (!formData.email) missing.push('Email Address');
+      if (!formData.barangay) missing.push('Barangay');
+      if (!formData.username) missing.push('Username');
+      if (!formData.password) missing.push('Password');
+      if (!formData.confirmPassword) missing.push('Confirm Password');
+
+      if (missing.length > 0) {
+        setError(`Please fill in missing fields: ${missing.join(', ')}`);
         return;
       }
       if (passwordStrength.score < 4) {
