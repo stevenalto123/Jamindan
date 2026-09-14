@@ -334,8 +334,8 @@ const Login = () => {
             <span className="brand-name">Jamindan ER</span>
           </div>
 
-          <h1 className="welcome-title">Welcome back!</h1>
-          <p className="welcome-subtitle">Sign in to the emergency response platform.</p>
+          <h1 className="welcome-title">Sign In</h1>
+          <p className="welcome-subtitle">Securely access the emergency response platform.</p>
 
           {error && <div className="error-message">{error}</div>}
 
