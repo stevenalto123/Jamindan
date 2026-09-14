@@ -113,6 +113,7 @@ const AdminViewUser = () => {
           <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-main)' }}>Additional Info</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
             {profile.email && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-light)' }}>Email:</span> <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{profile.email}</span></div>}
+            {profile.age && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-light)' }}>Age:</span> <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{profile.age} yrs</span></div>}
             {profile.purok_sitio && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-light)' }}>Purok/Sitio:</span> <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{profile.purok_sitio}</span></div>}
             {profile.blood_type && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-light)' }}>Blood Type:</span> <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{profile.blood_type}</span></div>}
             {profile.allergies && <div style={{ display: 'flex', flexDirection: 'column', marginTop: '4px' }}><span style={{ color: 'var(--text-light)' }}>Allergies:</span> <span style={{ fontWeight: '500', color: 'var(--text-main)', marginTop: '2px' }}>{profile.allergies}</span></div>}

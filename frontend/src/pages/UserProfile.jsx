@@ -10,6 +10,7 @@ const UserProfile = () => {
   
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [age, setAge] = useState(user?.age || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [barangay, setBarangay] = useState(user?.barangay || '');
   const [purokSitio, setPurokSitio] = useState(user?.purok_sitio || '');
@@ -37,6 +38,7 @@ const UserProfile = () => {
       await updateProfile({ 
         full_name: fullName, 
         email,
+        age,
         phone, 
         barangay,
         purok_sitio: purokSitio,
@@ -105,9 +107,15 @@ const UserProfile = () => {
               </div>
             </div>
 
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Email Address</label>
-              <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email (optional)" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Email Address</label>
+                <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email (optional)" />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Age</label>
+                <input type="number" className="form-input" value={age} onChange={(e) => setAge(e.target.value)} required />
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
