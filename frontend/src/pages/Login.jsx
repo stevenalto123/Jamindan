@@ -99,7 +99,7 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="form-options-row">
+            <div className="form-options-row" style={{ justifyContent: 'center', marginBottom: '15px' }}>
               <label className="checkbox-label">
                 <input 
                   type="checkbox" 
@@ -108,14 +108,17 @@ const Login = () => {
                 />
                 Remember me
               </label>
-              <a href="#forgot" className="forgot-link" onClick={(e) => { e.preventDefault(); alert('Please contact the Municipality IT administrator to reset your password.'); }}>
-                Forgot password?
-              </a>
             </div>
 
             <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
               {loading ? 'Logging in...' : 'Login'}
             </button>
+
+            <div style={{ marginTop: '15px', textAlign: 'center' }}>
+              <a href="#forgot" className="forgot-link" onClick={(e) => { e.preventDefault(); alert('Please contact the Municipality IT administrator to reset your password.'); }}>
+                Forgot password?
+              </a>
+            </div>
           </form>
 
           <div style={{ marginTop: '20px', fontSize: '13px', color: 'var(--text-light)', textAlign: 'center' }}>
