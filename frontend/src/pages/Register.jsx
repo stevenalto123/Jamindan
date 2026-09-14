@@ -228,7 +228,9 @@ const Register = () => {
         const submitData = new FormData();
         Object.keys(formData).forEach(key => {
           if (key !== 'confirmPassword') {
-            submitData.append(key, formData[key]);
+            let formKey = key;
+            if (key === 'fullName') formKey = 'full_name';
+            submitData.append(formKey, formData[key]);
           }
         });
         
