@@ -391,7 +391,7 @@ const Login = () => {
             </div>
 
             <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? 'Authenticating...' : 'Log In Securely'}
+              {loading ? 'Authenticating...' : 'Log In'}
               {!loading && <ArrowRight size={18} />}
             </button>
           </form>
