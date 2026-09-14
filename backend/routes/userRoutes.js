@@ -151,7 +151,7 @@ router.get('/:id/profile', async (req, res) => {
       const [incidentRows] = await db.execute(`
         SELECT id, type, status, location_address, created_at
         FROM incidents
-        WHERE reported_by = ?
+        WHERE reporter_id = ?
         ORDER BY created_at DESC
       `, [id]);
       incidents = incidentRows;
