@@ -115,9 +115,9 @@ const Login = () => {
             </button>
 
             <div style={{ marginTop: '15px', textAlign: 'center', fontSize: '13px' }}>
-              <a href="#forgot" className="forgot-link" onClick={(e) => { e.preventDefault(); alert('Please contact the Municipality IT administrator to reset your password.'); }}>
+              <Link to="/forgot-password" className="forgot-link">
                 Forgot password?
-              </a>
+              </Link>
             </div>
           </form>
 
