@@ -177,6 +177,20 @@ const Register = () => {
     }
   };
 
+  const handleSkip = () => {
+    setFormData(prev => ({
+      ...prev,
+      purok_sitio: '',
+      blood_type: '',
+      allergies: '',
+      medical_conditions: '',
+      emergency_contact_name: '',
+      emergency_contact_phone: ''
+    }));
+    setError('');
+    setCurrentStep(3);
+  };
+
   const handlePrev = () => {
     setError('');
     setCurrentStep(currentStep - 1);
@@ -488,7 +502,7 @@ const Register = () => {
                   <ArrowLeft size={18} /> Back
                 </button>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button type="button" className="btn" style={{ backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)' }} onClick={handleNext}>
+                  <button type="button" className="btn" style={{ backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)' }} onClick={handleSkip}>
                     Skip
                   </button>
                   <button type="button" className="btn btn-primary" onClick={handleNext} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
