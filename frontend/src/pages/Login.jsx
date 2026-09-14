@@ -99,7 +99,7 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="form-options-row" style={{ justifyContent: 'center', marginBottom: '15px' }}>
+            <div className="form-options-row" style={{ justifyContent: 'flex-start', marginBottom: '15px' }}>
               <label className="checkbox-label">
                 <input 
                   type="checkbox" 
@@ -114,7 +114,7 @@ const Login = () => {
               {loading ? 'Logging in...' : 'Login'}
             </button>
 
-            <div style={{ marginTop: '15px', textAlign: 'center' }}>
+            <div style={{ marginTop: '15px', textAlign: 'center', fontSize: '13px' }}>
               <a href="#forgot" className="forgot-link" onClick={(e) => { e.preventDefault(); alert('Please contact the Municipality IT administrator to reset your password.'); }}>
                 Forgot password?
               </a>
