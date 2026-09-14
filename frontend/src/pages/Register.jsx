@@ -342,15 +342,18 @@ const Register = () => {
         
         @media (max-width: 480px) {
           .step-actions {
-            flex-direction: column-reverse;
-          }
-          .step-actions button {
-            width: 100%;
-            justify-content: center;
+            gap: 5px;
           }
           .step-actions-right {
-            flex-direction: column;
-            width: 100%;
+            gap: 5px;
+          }
+          .step-actions button {
+            padding: 8px 10px;
+            font-size: 13px;
+          }
+          .step-actions svg {
+            width: 14px;
+            height: 14px;
           }
         }
       `}</style>
