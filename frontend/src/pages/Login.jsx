@@ -393,7 +393,7 @@ const Login = () => {
           </form>
 
           <div className="register-text">
-            Don't have an Account? <Link to="/register">Sign up</Link>
+            Don't have an account? <Link to="/register">Sign up</Link>
           </div>
         </div>
 
