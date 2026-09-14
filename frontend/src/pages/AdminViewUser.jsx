@@ -108,6 +108,19 @@ const AdminViewUser = () => {
             </div>
           </div>
 
+          {/* Additional Info Section */}
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '15px 0' }} />
+          <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-main)' }}>Additional Info</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+            {profile.email && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-light)' }}>Email:</span> <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{profile.email}</span></div>}
+            {profile.purok_sitio && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-light)' }}>Purok/Sitio:</span> <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{profile.purok_sitio}</span></div>}
+            {profile.blood_type && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-light)' }}>Blood Type:</span> <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{profile.blood_type}</span></div>}
+            {profile.allergies && <div style={{ display: 'flex', flexDirection: 'column', marginTop: '4px' }}><span style={{ color: 'var(--text-light)' }}>Allergies:</span> <span style={{ fontWeight: '500', color: 'var(--text-main)', marginTop: '2px' }}>{profile.allergies}</span></div>}
+            {profile.medical_conditions && <div style={{ display: 'flex', flexDirection: 'column', marginTop: '4px' }}><span style={{ color: 'var(--text-light)' }}>Medical Conditions:</span> <span style={{ fontWeight: '500', color: 'var(--text-main)', marginTop: '2px' }}>{profile.medical_conditions}</span></div>}
+            {profile.emergency_contact_name && <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}><span style={{ color: 'var(--text-light)' }}>Emergency Contact:</span> <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{profile.emergency_contact_name}</span></div>}
+            {profile.emergency_contact_phone && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-light)' }}>Contact Phone:</span> <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{profile.emergency_contact_phone}</span></div>}
+          </div>
+
           {/* Identification Photos */}
           {(profile.id_photo_path || profile.selfie_photo_path) && (
             <>
