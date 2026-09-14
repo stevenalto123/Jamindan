@@ -60,7 +60,7 @@ const Login = () => {
           align-items: center;
           justify-content: center;
           min-height: 100vh;
-          background-color: #121212; /* Very dark background */
+          background-color: #f3f4f6; /* Light gray background */
           padding: 20px;
           font-family: 'Inter', system-ui, sans-serif;
         }
@@ -70,10 +70,10 @@ const Login = () => {
           width: 100%;
           max-width: 1000px;
           min-height: 600px;
-          background-color: #17181a;
+          background-color: #ffffff; /* Clean white card */
           border-radius: 28px;
           overflow: hidden;
-          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08); /* Soft elegant shadow */
         }
 
         /* Left Side: Form */
@@ -82,7 +82,7 @@ const Login = () => {
           padding: 60px 70px;
           display: flex;
           flex-direction: column;
-          color: white;
+          color: #18181b; /* Dark slate text */
           justify-content: center;
         }
 
@@ -94,28 +94,29 @@ const Login = () => {
         }
 
         .brand-logo {
-          width: 36px;
-          height: 36px;
+          width: 38px;
+          height: 38px;
           object-fit: contain;
         }
 
         .brand-name {
-          font-size: 20px;
-          font-weight: 700;
-          color: #a7f3d0; /* Soft green */
+          font-size: 22px;
+          font-weight: 800;
+          color: #059669; /* Deep solid green */
           letter-spacing: -0.5px;
         }
 
         .welcome-title {
-          font-size: 32px;
-          font-weight: 700;
+          font-size: 34px;
+          font-weight: 800;
           margin: 0 0 10px 0;
-          color: #ffffff;
+          color: #18181b;
+          letter-spacing: -1px;
         }
 
         .welcome-subtitle {
-          font-size: 14px;
-          color: #a1a1aa;
+          font-size: 15px;
+          color: #52525b; /* Muted gray */
           margin: 0 0 35px 0;
         }
 
@@ -124,25 +125,26 @@ const Login = () => {
           position: relative;
         }
 
-        .dark-input {
+        .light-input {
           width: 100%;
-          background-color: #212226;
-          border: 1px solid #212226;
-          color: white;
+          background-color: #f4f4f5; /* Light gray input */
+          border: 1px solid #e4e4e7;
+          color: #18181b;
           padding: 16px 16px;
           border-radius: 12px;
-          font-size: 14px;
+          font-size: 15px;
           transition: all 0.3s ease;
         }
 
-        .dark-input::placeholder {
-          color: #71717a;
+        .light-input::placeholder {
+          color: #a1a1aa;
         }
 
-        .dark-input:focus {
+        .light-input:focus {
           outline: none;
-          border-color: #34d399; /* Accent green */
-          background-color: #27282d;
+          border-color: #10b981; /* Bright green accent */
+          background-color: #ffffff;
+          box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
         }
 
         .show-btn {
@@ -153,14 +155,14 @@ const Login = () => {
           background: none;
           border: none;
           color: #71717a;
-          font-size: 13px;
-          font-weight: 500;
+          font-size: 13.5px;
+          font-weight: 600;
           cursor: pointer;
           transition: color 0.2s;
         }
 
         .show-btn:hover {
-          color: #e4e4e7;
+          color: #18181b;
         }
 
         .options-row {
@@ -175,40 +177,43 @@ const Login = () => {
           align-items: center;
           gap: 8px;
           cursor: pointer;
-          font-size: 13px;
-          color: #a1a1aa;
+          font-size: 13.5px;
+          color: #3f3f46;
+          font-weight: 500;
         }
 
         .custom-checkbox {
           appearance: none;
           width: 18px;
           height: 18px;
-          border-radius: 4px;
-          background-color: #212226;
-          border: 1px solid #3f3f46;
+          border-radius: 5px;
+          background-color: #ffffff;
+          border: 1px solid #d4d4d8;
           cursor: pointer;
           position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
+          transition: all 0.2s;
         }
 
         .custom-checkbox:checked {
-          background-color: #a7f3d0;
-          border-color: #a7f3d0;
+          background-color: #10b981;
+          border-color: #10b981;
         }
 
         .custom-checkbox:checked::after {
           content: '✓';
-          color: #17181a;
+          color: #ffffff;
           font-size: 12px;
           font-weight: bold;
         }
 
         .forgot-link {
-          font-size: 13px;
-          color: #a7f3d0;
+          font-size: 13.5px;
+          color: #059669;
           text-decoration: none;
+          font-weight: 600;
           transition: opacity 0.2s;
         }
 
@@ -218,8 +223,8 @@ const Login = () => {
 
         .submit-btn {
           width: 100%;
-          background-color: #a7f3d0;
-          color: #121212;
+          background-color: #10b981; /* Bright green */
+          color: #ffffff;
           border: none;
           padding: 16px;
           border-radius: 12px;
@@ -230,38 +235,43 @@ const Login = () => {
           justify-content: center;
           align-items: center;
           gap: 8px;
-          transition: background-color 0.2s;
+          transition: all 0.2s;
           margin-bottom: 25px;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
         .submit-btn:hover {
-          background-color: #6ee7b7;
+          background-color: #059669; /* Darker green on hover */
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
         }
 
         .submit-btn:disabled {
           opacity: 0.7;
           cursor: not-allowed;
+          transform: none;
         }
 
         .register-text {
           text-align: center;
-          font-size: 13px;
-          color: #71717a;
+          font-size: 14px;
+          color: #52525b;
         }
 
         .register-text a {
-          color: #a7f3d0;
-          font-weight: 600;
+          color: #059669;
+          font-weight: 700;
           text-decoration: none;
         }
 
         .error-message {
-          background-color: rgba(239, 68, 68, 0.1);
-          border: 1px solid rgba(239, 68, 68, 0.2);
-          color: #fca5a5;
+          background-color: #fee2e2;
+          border-left: 4px solid #ef4444;
+          color: #b91c1c;
           padding: 12px 16px;
-          border-radius: 12px;
+          border-radius: 6px;
           font-size: 13px;
+          font-weight: 500;
           margin-bottom: 20px;
         }
 
@@ -298,7 +308,7 @@ const Login = () => {
             padding: 40px 30px;
           }
           .login-right {
-            display: none; /* Hide illustration on mobile to save space, keeping it sleek */
+            display: none; /* Hide illustration on mobile */
           }
           .brand-header {
             margin-bottom: 30px;
@@ -312,7 +322,7 @@ const Login = () => {
 
       <div className="login-container">
         
-        {/* Left Form Area */}
+        {/* Left Form Area (Light Mode) */}
         <div className="login-left">
           <div className="brand-header">
             <img src="/logo.png" alt="Logo" className="brand-logo" />
@@ -328,7 +338,7 @@ const Login = () => {
             <div className="input-group">
               <input
                 type="text"
-                className="dark-input"
+                className="light-input"
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -339,7 +349,7 @@ const Login = () => {
             <div className="input-group">
               <input
                 type={showPassword ? "text" : "password"}
-                className="dark-input"
+                className="light-input"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
