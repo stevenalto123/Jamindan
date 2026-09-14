@@ -327,6 +327,32 @@ const Register = () => {
           border-color: var(--primary-color);
           color: white;
         }
+        
+        .step-actions {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 25px;
+          gap: 15px;
+        }
+        
+        .step-actions-right {
+          display: flex;
+          gap: 10px;
+        }
+        
+        @media (max-width: 480px) {
+          .step-actions {
+            flex-direction: column-reverse;
+          }
+          .step-actions button {
+            width: 100%;
+            justify-content: center;
+          }
+          .step-actions-right {
+            flex-direction: column;
+            width: 100%;
+          }
+        }
       `}</style>
 
       <div className="auth-card" style={{ maxWidth: '600px', padding: '30px', margin: '0 auto' }}>
@@ -497,11 +523,11 @@ const Register = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '25px' }}>
+              <div className="step-actions">
                 <button type="button" className="btn btn-secondary" onClick={handlePrev} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <ArrowLeft size={18} /> Back
                 </button>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="step-actions-right">
                   <button type="button" className="btn" style={{ backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)' }} onClick={handleSkip}>
                     Skip
                   </button>
@@ -572,7 +598,7 @@ const Register = () => {
                 </label>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '25px' }}>
+              <div className="step-actions">
                 <button type="button" className="btn btn-secondary" onClick={handlePrev} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <ArrowLeft size={18} /> Back
                 </button>
