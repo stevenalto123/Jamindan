@@ -60,8 +60,8 @@ router.post('/register', authLimiter, upload.fields([
       return res.status(400).json({ message: 'Please provide a valid email address' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password)) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters long and contain at least one uppercase letter and one number.' });
     }
 
     if (parseInt(age) < 18) {
@@ -271,6 +271,10 @@ router.put('/change-password', authRequired, async (req, res) => {
 
   if (!currentPassword || !newPassword) {
     return res.status(400).json({ message: 'Current password and new password are required' });
+  }
+
+  if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(newPassword)) {
+    return res.status(400).json({ message: 'New password must be at least 8 characters long and contain at least one uppercase letter and one number.' });
   }
 
   try {
@@ -534,8 +538,8 @@ router.post('/reset-password', async (req, res) => {
     return res.status(400).json({ message: 'Token and new password are required.' });
   }
 
-  if (newPassword.length < 6) {
-    return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+  if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(newPassword)) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters long and contain at least one uppercase letter and one number.' });
   }
 
   try {
