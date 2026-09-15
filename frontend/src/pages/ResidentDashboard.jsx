@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Bell } from 'lucide-react';
+import { Bell, Phone, Shield, Flame, HeartPulse } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import SosPanicButton from '../components/SosPanicButton';
 
@@ -50,6 +50,34 @@ const ResidentDashboard = () => {
   return (
     <div className="content-body" style={{ padding: '20px', margin: '0 auto', paddingBottom: '80px' }}>
       
+      {/* Premium Quick-Dial Action Bar */}
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+        <a href="tel:911" style={{ flex: 1, textDecoration: 'none' }}>
+          <div className="glass-card" style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(52, 152, 219, 0.1)' }}>
+            <div style={{ padding: '8px', backgroundColor: '#3498db', borderRadius: '50%', color: 'white' }}>
+              <Shield size={20} />
+            </div>
+            <span style={{ fontSize: '12px', fontWeight: '600', color: '#2980b9' }}>Police</span>
+          </div>
+        </a>
+        <a href="tel:911" style={{ flex: 1, textDecoration: 'none' }}>
+          <div className="glass-card" style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(230, 126, 34, 0.1)' }}>
+            <div style={{ padding: '8px', backgroundColor: '#e67e22', borderRadius: '50%', color: 'white' }}>
+              <Flame size={20} />
+            </div>
+            <span style={{ fontSize: '12px', fontWeight: '600', color: '#d35400' }}>Fire</span>
+          </div>
+        </a>
+        <a href="tel:911" style={{ flex: 1, textDecoration: 'none' }}>
+          <div className="glass-card" style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(46, 204, 113, 0.1)' }}>
+            <div style={{ padding: '8px', backgroundColor: '#2ecc71', borderRadius: '50%', color: 'white' }}>
+              <HeartPulse size={20} />
+            </div>
+            <span style={{ fontSize: '12px', fontWeight: '600', color: '#27ae60' }}>Medical</span>
+          </div>
+        </a>
+      </div>
+
       {/* Official SOS Panic Button Component */}
       <SosPanicButton />
 
@@ -59,7 +87,7 @@ const ResidentDashboard = () => {
         
         {/* My Reports */}
         <Link to="/incidents" style={{ textDecoration: 'none' }}>
-          <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-main)', lineHeight: '1' }}>{stats?.metrics?.totalReported || 0}</span>
             <span style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: '500' }}>{t('myReports')}</span>
           </div>
@@ -67,7 +95,7 @@ const ResidentDashboard = () => {
 
         {/* In Progress */}
         <Link to="/incidents" style={{ textDecoration: 'none' }}>
-          <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-main)', lineHeight: '1' }}>{stats?.metrics?.activeReported || 0}</span>
             <span style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: '500' }}>{t('inProgress')}</span>
           </div>
@@ -75,7 +103,7 @@ const ResidentDashboard = () => {
 
         {/* Resolved */}
         <Link to="/incidents" style={{ textDecoration: 'none' }}>
-          <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-main)', lineHeight: '1' }}>{stats?.metrics?.resolvedReported || 0}</span>
             <span style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: '500' }}>{t('resolved')}</span>
           </div>
@@ -83,7 +111,7 @@ const ResidentDashboard = () => {
 
         {/* Active Alerts */}
         <Link to="/news" style={{ textDecoration: 'none' }}>
-          <div style={{ backgroundColor: '#fdf2f2', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px', border: '1px solid #fadbd8' }}>
+          <div className="glass-card" style={{ backgroundColor: 'rgba(253, 242, 242, 0.7)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '5px', border: '1px solid #fadbd8' }}>
             <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--danger-color)', lineHeight: '1' }}>{activeAlertsCount}</span>
             <span style={{ fontSize: '14px', color: 'var(--danger-color)', fontWeight: '500' }}>{t('activeAlerts')}</span>
           </div>
@@ -92,7 +120,7 @@ const ResidentDashboard = () => {
       </div>
 
       {/* Announcements */}
-      <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
           <span style={{ fontWeight: 'bold', fontSize: '16px', color: 'var(--text-main)' }}>{t('announcements')}</span>
           <Link to="/news" style={{ color: 'var(--info-color)', fontSize: '14px', textDecoration: 'none', fontWeight: '500' }}>{t('viewAll')}</Link>

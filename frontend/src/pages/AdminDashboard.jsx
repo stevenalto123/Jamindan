@@ -16,6 +16,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import GeofenceModal from '../components/GeofenceModal';
+import CommandMap from './CommandMap';
 
 const AdminDashboard = () => {
   const { t } = useLanguage();
@@ -173,31 +174,9 @@ const AdminDashboard = () => {
         )}
       </div>
 
-      {/* Command Map Button */}
-      <div style={{ marginBottom: '24px' }}>
-        <button
-          onClick={() => navigate('/command-map')}
-          style={{
-            width: '100%',
-            padding: '16px',
-            borderRadius: '12px',
-            border: 'none',
-            backgroundColor: '#2c3e50', // Dark premium look
-            color: 'white',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px',
-            cursor: 'pointer',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-          }}
-        >
-          <MapPin size={24} color="#3498db" />
-          🗺️ OPEN COMMAND MAP
-        </button>
-      </div>
+      {/* Command Map Widget */}
+      <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: 'var(--text-main)' }}>Live Operations Map</h3>
+      <CommandMap isWidget={true} />
 
       {/* Fleet Management Button (Admins Only) */}
       {user?.role === 'Admin' && (

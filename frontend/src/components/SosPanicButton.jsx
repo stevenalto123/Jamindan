@@ -293,6 +293,7 @@ const SosPanicButton = () => {
               fontSize: isHolding ? '24px' : '20px',
               border: '3px solid #ffffff',
               boxShadow: '0 4px 15px rgba(231, 76, 60, 0.4)',
+              animation: !isHolding ? 'sos-idle-pulse 2s infinite' : 'none',
               cursor: 'pointer',
               zIndex: 5,
               transition: 'all 0.1s ease',
@@ -314,7 +315,7 @@ const SosPanicButton = () => {
           0% { transform: scale(0.9); opacity: 0.8; }
           100% { transform: scale(1.3); opacity: 0; }
         }
-      `}</style>
+      `} @keyframes sos-idle-pulse { 0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }</style>
     </div>
   );
 };

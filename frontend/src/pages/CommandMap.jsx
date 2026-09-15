@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { ShieldAlert, AlertCircle, ArrowLeft, RefreshCw, Layers } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-const CommandMap = () => {
+const CommandMap = ({ isWidget = false }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -145,9 +145,11 @@ const CommandMap = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#111' }}>
+    <div className={isWidget ? 'glass-card' : ''} style={{ display: 'flex', flexDirection: 'column', height: isWidget ? '450px' : '100vh', backgroundColor: '#111', borderRadius: isWidget ? '16px' : '0', overflow: 'hidden', marginBottom: isWidget ? '24px' : '0' }}>
       
-      {/* Header */}
+      {!isWidget && (
+        <>
+        {/* Header */}
       <div style={{ 
         height: '60px', 
         backgroundColor: '#1a1a1a', 
