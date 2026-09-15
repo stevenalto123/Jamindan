@@ -56,6 +56,7 @@ const Register = () => {
   const [selfiePhoto, setSelfiePhoto] = useState(null); // Will hold Base64 from webcam
   const [cameraActive, setCameraActive] = useState(false);
   const webcamRef = useRef(null);
+  const formRef = useRef(null);
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -139,6 +140,11 @@ const Register = () => {
 
   const handleNext = () => {
     if (currentStep === 1) {
+      // Trigger HTML5 validation to automatically highlight and scroll to missing required fields
+      if (formRef.current && !formRef.current.reportValidity()) {
+        return;
+      }
+      
       const missing = [];
       if (!formData.fullName) missing.push('Full Name');
       if (!formData.date_of_birth) missing.push('Date of Birth');
@@ -379,7 +385,7 @@ const Register = () => {
         {error && <div className="alert alert-danger" style={{ marginBottom: '20px' }}>{error}</div>}
         {success && <div className="alert alert-success" style={{ marginBottom: '20px' }}>{success}</div>}
 
-        <form onSubmit={handleSubmit} encType="multipart/form-data">
+        <form ref={formRef} onSubmit={handleSubmit} encType="multipart/form-data">
           
           {/* STEP 1: PERSONAL & ACCOUNT INFO */}
           {currentStep === 1 && (
