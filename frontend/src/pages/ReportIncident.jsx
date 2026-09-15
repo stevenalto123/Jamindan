@@ -245,7 +245,7 @@ const ReportIncident = () => {
 
           {/* Visual Incident Type Selector */}
           <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label" style={{ marginBottom: '10px', display: 'block' }}>{t('incidentType')} <span style={{ color: 'var(--danger-color)' }}>*</span></label>
+            <label className="form-label" style={{ marginBottom: '10px', display: 'block' }}>{t('incidentType')}</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
               {INCIDENT_TYPES.map(({ value, label, icon: Icon, color, bg }) => (
                 <button
@@ -281,7 +281,7 @@ const ReportIncident = () => {
 
           {/* Location */}
           <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label" htmlFor="locationText">{t('locationLabel')} <span style={{ color: 'var(--danger-color)' }}>*</span></label>
+            <label className="form-label" htmlFor="locationText">{t('locationLabel')}</label>
             <div className="input-icon-wrapper" style={{ marginBottom: '12px' }}>
               <input
                 type="text"
@@ -303,7 +303,7 @@ const ReportIncident = () => {
 
           {/* Description */}
           <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label" htmlFor="description">{t('descriptionLabel')} <span style={{ color: 'var(--danger-color)' }}>*</span></label>
+            <label className="form-label" htmlFor="description">{t('descriptionLabel')}</label>
             <textarea
               id="description"
               className="form-textarea"
@@ -316,7 +316,7 @@ const ReportIncident = () => {
 
           {/* Photo Upload with Preview */}
           <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label">{t('uploadPhoto')} <span style={{ fontSize: '12px', fontWeight: '400', color: 'var(--text-muted)' }}>(Optional)</span></label>
+            <label className="form-label">{t('uploadPhoto')}</label>
             {photoPreview ? (
               <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--success-color)' }}>
                 <img src={photoPreview} alt="Preview" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', display: 'block' }} />
