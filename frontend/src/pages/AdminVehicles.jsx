@@ -244,7 +244,6 @@ const AdminVehicles = () => {
                 >
                   <option value="Medical">Medical / Health Center</option>
                   <option value="Fire">BFP (Fire)</option>
-                  <option value="Police">PNP (Police)</option>
                   <option value="MDRRMO">MDRRMO</option>
                   <option value="General">General / Municipal</option>
                 </select>
