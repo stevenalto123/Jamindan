@@ -81,44 +81,6 @@ const ResidentDashboard = () => {
       {/* Official SOS Panic Button Component */}
       <SosPanicButton />
 
-
-      {/* 2x2 Status Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-        
-        {/* My Reports */}
-        <Link to="/incidents" style={{ textDecoration: 'none' }}>
-          <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-main)', lineHeight: '1' }}>{stats?.metrics?.totalReported || 0}</span>
-            <span style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: '500' }}>{t('myReports')}</span>
-          </div>
-        </Link>
-
-        {/* In Progress */}
-        <Link to="/incidents" style={{ textDecoration: 'none' }}>
-          <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-main)', lineHeight: '1' }}>{stats?.metrics?.activeReported || 0}</span>
-            <span style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: '500' }}>{t('inProgress')}</span>
-          </div>
-        </Link>
-
-        {/* Resolved */}
-        <Link to="/incidents" style={{ textDecoration: 'none' }}>
-          <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-main)', lineHeight: '1' }}>{stats?.metrics?.resolvedReported || 0}</span>
-            <span style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: '500' }}>{t('resolved')}</span>
-          </div>
-        </Link>
-
-        {/* Active Alerts */}
-        <Link to="/news" style={{ textDecoration: 'none' }}>
-          <div className="glass-card" style={{ backgroundColor: 'rgba(253, 242, 242, 0.7)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '5px', border: '1px solid #fadbd8' }}>
-            <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--danger-color)', lineHeight: '1' }}>{activeAlertsCount}</span>
-            <span style={{ fontSize: '14px', color: 'var(--danger-color)', fontWeight: '500' }}>{t('activeAlerts')}</span>
-          </div>
-        </Link>
-        
-      </div>
-
       {/* Announcements */}
       <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
