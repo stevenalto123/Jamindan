@@ -432,7 +432,7 @@ async function sendEmail({ to, subject, html, text }) {
       body: JSON.stringify({
         sender: {
           name: 'Jamindan Emergency IT',
-          email: 'jamindan.emergency@gmail.com'
+          email: process.env.SENDER_EMAIL || process.env.SMTP_USER || 'steven.alto05@gmail.com'
         },
         to: [{ email: to }],
         subject: subject,
@@ -460,7 +460,7 @@ async function sendEmail({ to, subject, html, text }) {
       }
     });
     const info = await transporter.sendMail({
-      from: '"Jamindan Emergency IT" <jamindan.emergency@gmail.com>',
+      from: `"Jamindan Emergency IT" <${process.env.SENDER_EMAIL || process.env.SMTP_USER || 'steven.alto05@gmail.com'}>`,
       to: to,
       subject: subject,
       text: text,
