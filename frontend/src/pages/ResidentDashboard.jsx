@@ -50,8 +50,11 @@ const ResidentDashboard = () => {
   return (
     <div className="content-body" style={{ padding: '20px', margin: '0 auto', paddingBottom: '80px' }}>
       
+      {/* Official SOS Panic Button Component */}
+      <SosPanicButton />
+      
       {/* Premium Quick-Dial Action Bar */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', marginTop: '20px' }}>
         <a href="tel:911" style={{ flex: 1, textDecoration: 'none' }}>
           <div className="glass-card" style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(52, 152, 219, 0.1)' }}>
             <div style={{ padding: '8px', backgroundColor: '#3498db', borderRadius: '50%', color: 'white' }}>
@@ -77,9 +80,6 @@ const ResidentDashboard = () => {
           </div>
         </a>
       </div>
-
-      {/* Official SOS Panic Button Component */}
-      <SosPanicButton />
 
       {/* Announcements */}
       <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
