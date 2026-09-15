@@ -12,16 +12,6 @@ const Settings = () => {
   const [pushEnabled, setPushEnabled] = useState(
     'Notification' in window && Notification.permission === 'granted'
   );
-  const [emailEnabled, setEmailEnabled] = useState(localStorage.getItem('emailAlerts') !== 'false');
-  const [smsEnabled, setSmsEnabled] = useState(localStorage.getItem('smsAlerts') !== 'false');
-  const [darkMode, setDarkMode] = useState(document.documentElement.getAttribute('data-theme') === 'dark');
-
-  const toggleDarkMode = () => {
-    const newMode = !darkMode;
-    setDarkMode(newMode);
-    document.documentElement.setAttribute('data-theme', newMode ? 'dark' : 'light');
-    localStorage.setItem('theme', newMode ? 'dark' : 'light');
-  };
 
   const handlePushToggle = async () => {
     if (!pushEnabled) {
@@ -40,17 +30,7 @@ const Settings = () => {
     }
   };
 
-  const toggleEmail = () => {
-    const val = !emailEnabled;
-    setEmailEnabled(val);
-    localStorage.setItem('emailAlerts', val.toString());
-  };
 
-  const toggleSms = () => {
-    const val = !smsEnabled;
-    setSmsEnabled(val);
-    localStorage.setItem('smsAlerts', val.toString());
-  };
 
   return (
     <div className="content-body" style={{ paddingBottom: '80px', margin: '0 auto' }}>
@@ -93,64 +73,7 @@ const Settings = () => {
           </div>
         </div>
 
-        {/* Email Advisories Setting */}
-        <div 
-          onClick={toggleEmail}
-          style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee', cursor: 'pointer' }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ padding: '8px', backgroundColor: '#f3e5f5', borderRadius: '8px' }}>
-              <Mail size={20} color="#8e44ad" />
-            </div>
-            <div>
-              <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>{t('emailAdvisories')}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '200px' }}>{t('emailAdvisoriesDesc')}</div>
-            </div>
-          </div>
-          <div style={{ width: '40px', height: '22px', backgroundColor: emailEnabled ? 'var(--primary-color)' : '#ccc', borderRadius: '11px', position: 'relative', transition: '0.3s' }}>
-            <div style={{ width: '18px', height: '18px', backgroundColor: 'white', borderRadius: '50%', position: 'absolute', top: '2px', left: emailEnabled ? '20px' : '2px', transition: '0.3s' }}></div>
-          </div>
-        </div>
-
-        {/* SMS Advisories Setting */}
-        <div 
-          onClick={toggleSms}
-          style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee', cursor: 'pointer' }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ padding: '8px', backgroundColor: '#e8f4f8', borderRadius: '8px' }}>
-              <MessageSquare size={20} color="#2980b9" />
-            </div>
-            <div>
-              <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>{t('smsAdvisories')}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '200px' }}>{t('smsAdvisoriesDesc')}</div>
-            </div>
-          </div>
-          <div style={{ width: '40px', height: '22px', backgroundColor: smsEnabled ? 'var(--primary-color)' : '#ccc', borderRadius: '11px', position: 'relative', transition: '0.3s' }}>
-            <div style={{ width: '18px', height: '18px', backgroundColor: 'white', borderRadius: '50%', position: 'absolute', top: '2px', left: smsEnabled ? '20px' : '2px', transition: '0.3s' }}></div>
-          </div>
-        </div>
-
-        {/* Dark Mode Setting */}
-        <div 
-          onClick={toggleDarkMode}
-          style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee', cursor: 'pointer' }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ padding: '8px', backgroundColor: '#fff3e0', borderRadius: '8px' }}>
-              <Moon size={20} color="#f57c00" />
-            </div>
-            <div>
-              <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>{t('darkMode')}</div>
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{darkMode ? t('currentlyOn') : t('currentlyOff')}</div>
-            </div>
-          </div>
-          <div style={{ width: '40px', height: '22px', backgroundColor: darkMode ? 'var(--primary-color)' : '#ccc', borderRadius: '11px', position: 'relative', transition: '0.3s' }}>
-            <div style={{ width: '18px', height: '18px', backgroundColor: 'white', borderRadius: '50%', position: 'absolute', top: '2px', left: darkMode ? '20px' : '2px', transition: '0.3s' }}></div>
-          </div>
-        </div>
-
-
+      </div>
 
       <button 
         onClick={logout}
