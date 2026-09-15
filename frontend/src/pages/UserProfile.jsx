@@ -103,29 +103,29 @@ const UserProfile = () => {
             {t('profileDetails')}
           </h3>
           <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-            <div className="form-group" style={{ margin: 0 }}>
+            <div className="form-group" style={{ margin: 0, flex: 1 }}>
               <label className="form-label">{t('usernameLabel')}</label>
               <input type="text" className="form-input" value={user?.username || ''} disabled style={{ backgroundColor: '#f0f2f0', cursor: 'not-allowed' }} />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }} className="responsive-grid-col">
-              <div className="form-group" style={{ margin: 0 }}>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <div className="form-group" style={{ margin: 0, flex: 1 }}>
                 <label className="form-label">{t('fullNameLabel')}</label>
                 <input type="text" className="form-input" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
               </div>
 
-              <div className="form-group" style={{ margin: 0 }}>
+              <div className="form-group" style={{ margin: 0, flex: 1 }}>
                 <label className="form-label">{t('phoneNumberLabel')}</label>
                 <input type="text" className="form-input" value={phone} onChange={(e) => setPhone(e.target.value)} required />
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 0.5fr', gap: '12px' }} className="responsive-grid-col">
-              <div className="form-group" style={{ margin: 0 }}>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <div className="form-group" style={{ margin: 0, flex: 1 }}>
                 <label className="form-label">Email Address</label>
                 <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email (optional)" />
               </div>
-              <div className="form-group" style={{ margin: 0 }}>
+              <div className="form-group" style={{ margin: 0, flex: 1 }}>
                 <label className="form-label">Date of Birth</label>
                 <input 
                   type="date" 
@@ -147,7 +147,7 @@ const UserProfile = () => {
                   required 
                 />
               </div>
-              <div className="form-group" style={{ margin: 0 }}>
+              <div className="form-group" style={{ margin: 0, flex: 1 }}>
                 <label className="form-label">Age</label>
                 <input type="number" className="form-input" value={age} readOnly style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-muted)' }} />
               </div>
@@ -155,8 +155,8 @@ const UserProfile = () => {
 
             {user?.role === 'Resident' && (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }} className="responsive-grid-col">
-                  <div className="form-group" style={{ margin: 0 }}>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <div className="form-group" style={{ margin: 0, flex: 1 }}>
                     <label className="form-label">{t('barangayLabel')}</label>
                     <select className="form-select" value={barangay} onChange={(e) => setBarangay(e.target.value)} required>
                       {BARANGAYS.map((brg) => (
@@ -165,7 +165,7 @@ const UserProfile = () => {
                     </select>
                   </div>
 
-                  <div className="form-group" style={{ margin: 0 }}>
+                  <div className="form-group" style={{ margin: 0, flex: 1 }}>
                     <label className="form-label">{t('purokSitioLabel')}</label>
                     <input type="text" className="form-input" placeholder={t('purokSitioPlaceholder')} value={purokSitio} onChange={(e) => setPurokSitio(e.target.value)} />
                   </div>
@@ -205,13 +205,13 @@ const UserProfile = () => {
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '8px' }}>
                   <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '12px' }}>📞 {t('emergencyContactHeading')}</h4>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }} className="responsive-grid-col">
-                    <div className="form-group" style={{ margin: 0 }}>
+                  <div style={{ display: "flex", gap: "12px" }}>
+                    <div className="form-group" style={{ margin: 0, flex: 1 }}>
                       <label className="form-label">{t('contactNameLabel')}</label>
                       <input type="text" className="form-input" placeholder={t('contactNamePlaceholder')} value={emergencyContactName} onChange={(e) => setEmergencyContactName(e.target.value)} />
                     </div>
 
-                    <div className="form-group" style={{ margin: 0 }}>
+                    <div className="form-group" style={{ margin: 0, flex: 1 }}>
                       <label className="form-label">{t('contactPhoneLabel')}</label>
                       <input type="text" className="form-input" placeholder={t('contactPhonePlaceholder')} value={emergencyContactPhone} onChange={(e) => setEmergencyContactPhone(e.target.value)} />
                     </div>
