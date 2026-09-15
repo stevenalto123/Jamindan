@@ -150,24 +150,7 @@ const Settings = () => {
           </div>
         </div>
 
-        {/* Account Settings */}
-        <div 
-          onClick={() => navigate('/profile')}
-          style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ padding: '8px', backgroundColor: '#fce4ec', borderRadius: '8px' }}>
-              <Shield size={20} color="#c2185b" />
-            </div>
-            <div>
-              <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>{t('accountSecurity')}</div>
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{t('accountSecurityDesc')}</div>
-            </div>
-          </div>
-          <ChevronRight size={20} color="#ccc" />
-        </div>
 
-      </div>
 
       <button 
         onClick={logout}
