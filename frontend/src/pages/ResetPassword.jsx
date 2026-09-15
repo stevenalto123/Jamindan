@@ -3,11 +3,13 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { logout } = useAuth();
   
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -42,6 +44,14 @@ const ResetPassword = () => {
       });
       
       setMessage(res.data.message);
+      
+      // Force clear any old tokens so they are forced to log in with the new password
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
+      if (logout) {
+        await logout().catch(e => console.log(e)); // gracefully logout from state
+      }
+      
       setTimeout(() => {
         navigate('/login');
       }, 3000);
