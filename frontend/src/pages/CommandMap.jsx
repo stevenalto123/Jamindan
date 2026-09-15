@@ -234,15 +234,39 @@ const CommandMap = ({ isWidget = false }) => {
             )}
           </div>
           
-          <div style={{ padding: '15px', borderTop: '1px solid #333' }}>
-            <h3 style={{ color: '#fff', margin: 0, fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ padding: '15px', borderTop: '1px solid #333', display: 'flex', flexDirection: 'column', maxHeight: '40%' }}>
+            <h3 style={{ color: '#fff', margin: '0 0 10px 0', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <AlertCircle size={16} color="var(--primary-color)" />
               Available Responders ({responders.length})
             </h3>
-            <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#aaa' }}><div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3498db' }}></div> PNP</div>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#aaa' }}><div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e67e22' }}></div> BFP</div>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#aaa' }}><div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2ecc71' }}></div> MED</div>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              {responders.length === 0 ? (
+                <div style={{ color: '#666', fontSize: '13px', textAlign: 'center', padding: '10px 0' }}>No responders on duty</div>
+              ) : (
+                responders.map(resp => (
+                  <div 
+                    key={resp.id}
+                    onClick={() => panToIncident(resp.current_lat, resp.current_lng)}
+                    style={{
+                      backgroundColor: '#252525',
+                      borderRadius: '8px',
+                      padding: '10px',
+                      marginBottom: '8px',
+                      cursor: 'pointer',
+                      borderLeft: `4px solid ${resp.agency_type === 'PNP' ? '#3498db' : resp.agency_type === 'BFP' ? '#e67e22' : resp.agency_type === 'MED' ? '#2ecc71' : 'var(--primary-color)'}`,
+                      transition: 'background 0.2s'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#252525'}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}>{resp.full_name}</div>
+                      <div style={{ color: '#aaa', fontSize: '11px', fontWeight: 'bold' }}>{resp.agency_type || 'Responder'}</div>
+                    </div>
+                    <div style={{ color: '#aaa', fontSize: '11px', marginTop: '4px' }}>{resp.phone || 'No phone'}</div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
