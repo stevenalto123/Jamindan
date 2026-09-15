@@ -6,6 +6,7 @@ import '../../node_modules/leaflet.fullscreen/dist/Control.FullScreen.css';
 import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 import axios from 'axios';
+import { Navigation, AlertTriangle } from 'lucide-react';
 
 const MapPicker = ({ lat, lng, onChange }) => {
   const mapContainerRef = useRef(null);
@@ -203,9 +204,9 @@ const MapPicker = ({ lat, lng, onChange }) => {
         type="button" 
         className="btn btn-secondary btn-full" 
         onClick={handleGPSDetect}
-        style={{ fontSize: '13px', padding: '8px' }}
+        style={{ fontSize: '13px', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
       >
-        🎯 Detect Current GPS Location
+        <Navigation size={16} /> Detect Current GPS Location
       </button>
     </div>
   );
