@@ -120,11 +120,12 @@ const UserProfile = () => {
               </div>
             </div>
 
+            <div className="form-group" style={{ margin: 0, flex: 1 }}>
+              <label className="form-label">Email Address</label>
+              <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
+            </div>
+
             <div style={{ display: "flex", gap: "12px" }}>
-              <div className="form-group" style={{ margin: 0, flex: 1 }}>
-                <label className="form-label">Email Address</label>
-                <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email (optional)" />
-              </div>
               <div className="form-group" style={{ margin: 0, flex: 1 }}>
                 <label className="form-label">Date of Birth</label>
                 <input 
