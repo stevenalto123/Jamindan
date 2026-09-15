@@ -25,7 +25,7 @@ const MoreMenu = () => {
 
   const menuItems = [
     { title: t('myProfile'), icon: <User size={20} />, link: '/profile', color: '#3498db' },
-    { title: t('householdList'), icon: <Users size={20} />, link: '/household', color: '#9b59b6' },
+    ...(user?.role === 'Resident' ? [{ title: t('householdList'), icon: <Users size={20} />, link: '/household', color: '#9b59b6' }] : []),
     { title: t('emergencyHotlines'), icon: <PhoneCall size={20} />, link: '/hotlines', color: '#e74c3c' },
     { title: t('newsUpdates'), icon: <Radio size={20} />, link: '/news', color: '#f39c12' },
     { title: t('emergencyTips'), icon: <BookOpen size={20} />, link: '/tips', color: '#2ecc71' },
