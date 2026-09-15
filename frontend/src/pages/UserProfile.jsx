@@ -108,7 +108,7 @@ const UserProfile = () => {
               <input type="text" className="form-input" value={user?.username || ''} disabled style={{ backgroundColor: '#f0f2f0', cursor: 'not-allowed' }} />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }} className="responsive-grid-col">
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">{t('fullNameLabel')}</label>
                 <input type="text" className="form-input" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
@@ -120,7 +120,7 @@ const UserProfile = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 0.5fr', gap: '12px' }} className="responsive-grid-col">
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Email Address</label>
                 <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email (optional)" />
@@ -155,7 +155,7 @@ const UserProfile = () => {
 
             {user?.role === 'Resident' && (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }} className="responsive-grid-col">
                   <div className="form-group" style={{ margin: 0 }}>
                     <label className="form-label">{t('barangayLabel')}</label>
                     <select className="form-select" value={barangay} onChange={(e) => setBarangay(e.target.value)} required>
@@ -205,7 +205,7 @@ const UserProfile = () => {
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '8px' }}>
                   <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '12px' }}>📞 {t('emergencyContactHeading')}</h4>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }} className="responsive-grid-col">
                     <div className="form-group" style={{ margin: 0 }}>
                       <label className="form-label">{t('contactNameLabel')}</label>
                       <input type="text" className="form-input" placeholder={t('contactNamePlaceholder')} value={emergencyContactName} onChange={(e) => setEmergencyContactName(e.target.value)} />
