@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import MapPicker from '../components/MapPicker';
-import { AlertTriangle, Upload, Check, MapPin } from 'lucide-react';
+import { AlertTriangle, Upload, Check, MapPin, Flame, HeartPulse, Droplets, WifiOff } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const INCIDENT_TYPES = ['Fire', 'Medical', 'Flood', 'Crime', 'Accident', 'Other'];
@@ -114,7 +114,11 @@ const ReportIncident = () => {
         timestamp: new Date().getTime()
       };
       localStorage.setItem('offline_incident_draft', JSON.stringify(draft));
-      setSuccess('⚠️ NO INTERNET CONNECTION. Your report has been saved as an Offline Draft! It will automatically submit in the background the moment you reconnect to Wi-Fi or Cellular Data.');
+      setSuccess(
+        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <WifiOff size={16} /> NO INTERNET CONNECTION. Your report has been saved as an Offline Draft! It will automatically submit in the background the moment you reconnect to Wi-Fi or Cellular Data.
+        </span>
+      );
       setLoading(false);
       return;
     }
@@ -163,7 +167,9 @@ const ReportIncident = () => {
       case 'Fire':
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', backgroundColor: 'var(--card-alt)', padding: '15px', borderRadius: '10px' }}>
-            <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--danger-color)' }}>🔥 Fire Details</h4>
+            <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--danger-color)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Flame size={16} /> Fire Details
+            </h4>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Structures Affected</label>
               <input type="number" className="form-input" placeholder="e.g. 2" onChange={(e) => handleDetailChange('structures_affected', e.target.value)} />
@@ -191,7 +197,9 @@ const ReportIncident = () => {
       case 'Medical':
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', backgroundColor: 'var(--card-alt)', padding: '15px', borderRadius: '10px' }}>
-            <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--danger-color)' }}>🚑 Medical/Accident Details</h4>
+            <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--danger-color)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <HeartPulse size={16} /> Medical/Accident Details
+            </h4>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Number of Victims/Patients</label>
               <input type="number" className="form-input" placeholder="e.g. 2" onChange={(e) => handleDetailChange('victims', e.target.value)} />
@@ -221,7 +229,9 @@ const ReportIncident = () => {
       case 'Flood':
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', backgroundColor: 'var(--card-alt)', padding: '15px', borderRadius: '10px' }}>
-            <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--info-color)' }}>🌊 Flood Details</h4>
+            <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--info-color)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Droplets size={16} /> Flood Details
+            </h4>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Approximate Water Level</label>
               <select className="form-select" onChange={(e) => handleDetailChange('water_level', e.target.value)}>
@@ -249,7 +259,7 @@ const ReportIncident = () => {
 
   return (
     <div className="content-body" style={{ maxWidth: '800px' }}>
-      <div className="card">
+      <div className="glass-card" style={{ padding: '24px' }}>
         {error && <div className="alert alert-danger" style={{ fontSize: '13px', padding: '10px 14px' }}>{error}</div>}
         {success && <div className="alert alert-success" style={{ fontSize: '13px', padding: '10px 14px' }}>{success}</div>}
 
