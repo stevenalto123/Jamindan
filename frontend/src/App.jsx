@@ -183,8 +183,8 @@ const AppLayout = ({ children }) => {
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
 
     socket.on('new-broadcast', (data) => {
-      // Don't trigger the alarm on the Admin's own screen
-      if (user?.role === 'Admin') return;
+      // Don't trigger the alarm for Admin or Responder accounts
+      if (user?.role === 'Admin' || user?.role === 'Responder') return;
 
       if (data.type === 'evacuation') {
         setActiveEvacuation(data);
