@@ -404,7 +404,7 @@ const UserManagement = () => {
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleSaveSubmit}>
+            <form onSubmit={handleSaveSubmit} autoComplete="off">
               <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 
                 {editingUser && editingUser.role === 'Resident' && (editingUser.id_photo_path || editingUser.selfie_photo_path) && (
@@ -444,6 +444,7 @@ const UserManagement = () => {
                         type="text"
                         id="m-username"
                         className="form-input"
+                        autoComplete="off"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         placeholder="Choose username"
@@ -457,6 +458,7 @@ const UserManagement = () => {
                         type="password"
                         id="m-password"
                         className="form-input"
+                        autoComplete="new-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Choose password"
