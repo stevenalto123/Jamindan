@@ -238,15 +238,16 @@ const Household = () => {
                 {submitting ? t('addingLabel') : t('addMemberBtn')}
               </button>
             </form>
-          </div>
 
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', backgroundColor: '#fdf9eb', border: '1px solid #faebcc', borderRadius: '12px', padding: '16px', marginTop: '16px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', backgroundColor: '#fdf9eb', border: '1px solid #faebcc', borderRadius: '12px', padding: '16px', marginTop: '24px' }}>
             <ShieldAlert size={20} style={{ color: '#d4ac0d', flexShrink: 0 }} />
             <p style={{ fontSize: '12px', color: '#8a6d3b', margin: 0 }} dangerouslySetInnerHTML={{
               __html: t('disasterTip').replace('Disaster Preparedness Tip:', '<strong>' + t('disasterTip').split(':')[0] + ':</strong>')
             }}>
             </p>
           </div>
+          </div>
+
         </div>
 
       </div>
