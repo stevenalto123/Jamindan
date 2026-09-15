@@ -115,12 +115,10 @@ const AdminDashboard = () => {
     <div className="content-body" style={{ padding: '20px', margin: '0 auto', paddingBottom: '80px' }}>
       
       {/* Main Action Card (Dynamic based on latest incident) */}
-      <div style={{ 
-        backgroundColor: 'var(--card-alt)', 
+      <div className="glass-card" style={{ 
         borderRadius: '20px', 
         padding: '25px 20px', 
         marginBottom: '20px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
         border: '1px solid var(--border-color)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px', color: 'var(--text-main)' }}>
@@ -129,7 +127,7 @@ const AdminDashboard = () => {
         </div>
         
         {urgentIncident ? (
-          <div style={{ backgroundColor: 'var(--bg-color)', padding: '15px', borderRadius: '12px', marginBottom: '15px' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '15px', borderRadius: '12px', marginBottom: '15px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '5px' }}>
               <span style={{ fontWeight: 'bold', color: 'var(--primary-color)', fontSize: '16px' }}>{urgentIncident.type}</span>
               <span style={{ fontSize: '12px', background: 'var(--primary-light)', color: 'var(--primary-color)', padding: '2px 8px', borderRadius: '4px' }}>{urgentIncident.status}</span>
@@ -139,7 +137,7 @@ const AdminDashboard = () => {
             </div>
           </div>
         ) : (
-          <div style={{ backgroundColor: 'var(--bg-color)', padding: '20px', borderRadius: '12px', marginBottom: '15px', textAlign: 'center', color: 'var(--text-muted)' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '20px', borderRadius: '12px', marginBottom: '15px', textAlign: 'center', color: 'var(--text-muted)' }}>
             {t('noActiveEmergencies')}
           </div>
         )}
@@ -183,11 +181,11 @@ const AdminDashboard = () => {
         <div style={{ marginBottom: '24px' }}>
           <button
             onClick={() => navigate('/admin-vehicles')}
+            className="glass-card"
             style={{
               width: '100%',
               padding: '16px',
               borderRadius: '12px',
-              backgroundColor: 'var(--card-alt)',
               color: 'var(--text-main)',
               fontSize: '18px',
               fontWeight: 'bold',
@@ -196,21 +194,20 @@ const AdminDashboard = () => {
               justifyContent: 'center',
               gap: '12px',
               cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
               border: '1px solid var(--border-color)',
               marginBottom: '15px'
             }}
           >
             <Truck size={24} color="var(--primary-color)" />
-            🚑 FLEET MANAGEMENT
+            FLEET MANAGEMENT
           </button>
           <button
             onClick={() => navigate('/admin-analytics')}
+            className="glass-card"
             style={{
               width: '100%',
               padding: '16px',
               borderRadius: '12px',
-              backgroundColor: 'var(--card-alt)',
               color: 'var(--text-main)',
               fontSize: '18px',
               fontWeight: 'bold',
@@ -219,12 +216,11 @@ const AdminDashboard = () => {
               justifyContent: 'center',
               gap: '12px',
               cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
               border: '1px solid var(--border-color)'
             }}
           >
             <BarChart3 size={24} color="#e74c3c" />
-            📊 INCIDENT ANALYTICS
+            INCIDENT ANALYTICS
           </button>
         </div>
       )}
@@ -253,7 +249,7 @@ const AdminDashboard = () => {
             }}
           >
             <Power size={24} />
-            {togglingDuty ? 'UPDATING...' : (user.is_on_duty === 1 ? '🟢 ON DUTY - Receiving Alerts' : '⚪ OFF DUTY - Notifications Paused')}
+            {togglingDuty ? 'UPDATING...' : (user.is_on_duty === 1 ? 'ON DUTY - Receiving Alerts' : 'OFF DUTY - Notifications Paused')}
           </button>
         </div>
       )}
@@ -263,7 +259,7 @@ const AdminDashboard = () => {
         
         {/* Pending */}
         <Link to="/incidents" style={{ textDecoration: 'none' }}>
-          <div style={{ backgroundColor: '#fdf2f2', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px', border: '1px solid #fadbd8' }}>
+          <div className="glass-card" style={{ padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px', border: '1px solid rgba(231, 76, 60, 0.3)' }}>
             <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--danger-color)', lineHeight: '1' }}>{data?.metrics?.pendingReports || 0}</span>
             <span style={{ fontSize: '14px', color: 'var(--danger-color)', fontWeight: '500' }}>{t('pendingStatus')}</span>
           </div>
@@ -271,7 +267,7 @@ const AdminDashboard = () => {
 
         {/* En Route / Progress */}
         <Link to="/incidents" style={{ textDecoration: 'none' }}>
-          <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div className="glass-card" style={{ padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--info-color)', lineHeight: '1' }}>{data?.metrics?.activeIncidents || 0}</span>
             <span style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: '500' }}>{t('enRoute')}</span>
           </div>
@@ -279,7 +275,7 @@ const AdminDashboard = () => {
 
         {/* Resolved */}
         <Link to="/incidents" style={{ textDecoration: 'none' }}>
-          <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div className="glass-card" style={{ padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--success-color)', lineHeight: '1' }}>{data?.metrics?.resolvedReports || 0}</span>
             <span style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: '500' }}>{t('resolvedToday')}</span>
           </div>
@@ -287,7 +283,7 @@ const AdminDashboard = () => {
 
         {/* Active Responders */}
         <Link to="/responders" style={{ textDecoration: 'none' }}>
-          <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div className="glass-card" style={{ padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-main)', lineHeight: '1' }}>{data?.metrics?.respondersOnDuty || 0}</span>
             <span style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: '500' }}>{t('respondersCount')}</span>
           </div>
@@ -296,10 +292,10 @@ const AdminDashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+      <div className="glass-card" style={{ padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
         <div style={{ fontWeight: 'bold', fontSize: '16px', color: 'var(--text-main)' }}>{t('systemOverview')}</div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'var(--bg-color)', borderRadius: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px' }}>
           <div style={{ padding: '8px', background: 'var(--primary-light)', borderRadius: '8px', color: 'var(--primary-color)' }}>
             <AlertTriangle size={18} />
           </div>
@@ -332,14 +328,14 @@ const AdminDashboard = () => {
 
       {/* Call Logs */}
       {user?.role === 'Admin' && data?.recentCallLogs && data.recentCallLogs.length > 0 && (
-        <div style={{ backgroundColor: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+        <div className="glass-card" style={{ padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '16px', color: 'var(--text-main)' }}>
             <PhoneCall size={18} color="var(--primary-color)" /> {t('recentHotlineCalls') || 'Recent Hotline Calls'}
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {data.recentCallLogs.slice(0, 5).map((log) => (
-              <div key={log.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '12px', background: 'var(--bg-color)', borderRadius: '10px', borderLeft: '3px solid var(--primary-color)' }}>
+              <div key={log.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '12px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px', borderLeft: '3px solid var(--primary-color)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-main)' }}>{log.hotline_name}</span>
                   <span style={{ fontSize: '12px', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -357,8 +353,8 @@ const AdminDashboard = () => {
 
       {/* Broadcast Modal */}
       {showBroadcastModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="card" style={{ width: '90%', maxWidth: '400px', padding: '20px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(5px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass-card" style={{ width: '90%', maxWidth: '400px', padding: '25px', borderRadius: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--danger-color)' }}>
                 <Radio size={20} /> Mass Broadcast
