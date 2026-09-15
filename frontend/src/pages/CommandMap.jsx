@@ -148,38 +148,37 @@ const CommandMap = ({ isWidget = false }) => {
     <div className={isWidget ? 'glass-card' : ''} style={{ display: 'flex', flexDirection: 'column', height: isWidget ? '450px' : '100vh', backgroundColor: '#111', borderRadius: isWidget ? '16px' : '0', overflow: 'hidden', marginBottom: isWidget ? '24px' : '0' }}>
       
       {!isWidget && (
-        <>
-        {/* Header */}
-      <div style={{ 
-        height: '60px', 
-        backgroundColor: '#1a1a1a', 
-        borderBottom: '1px solid #333',
-        display: 'flex', 
-        alignItems: 'center', 
-        padding: '0 20px',
-        justifyContent: 'space-between',
-        zIndex: 1000
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <button 
-            onClick={() => navigate('/admin')}
-            style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-          >
-            <ArrowLeft size={24} />
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Layers size={22} color="#3498db" />
-            <h1 style={{ color: '#fff', fontSize: '18px', margin: 0, fontWeight: 'bold' }}>COMMAND CENTER LIVE MAP</h1>
+        <div style={{ 
+          height: '60px', 
+          backgroundColor: '#1a1a1a', 
+          borderBottom: '1px solid #333',
+          display: 'flex', 
+          alignItems: 'center', 
+          padding: '0 20px',
+          justifyContent: 'space-between',
+          zIndex: 1000
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <button 
+              onClick={() => navigate('/admin')}
+              style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Layers size={22} color="#3498db" />
+              <h1 style={{ color: '#fff', fontSize: '18px', margin: 0, fontWeight: 'bold' }}>COMMAND CENTER LIVE MAP</h1>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <span style={{ color: '#aaa', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <RefreshCw size={14} className={loading ? 'spinning' : ''} />
+              Live Sync: {lastRefreshed.toLocaleTimeString()}
+            </span>
           </div>
         </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <span style={{ color: '#aaa', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <RefreshCw size={14} className={loading ? 'spinning' : ''} />
-            Live Sync: {lastRefreshed.toLocaleTimeString()}
-          </span>
-        </div>
-      </div>
+      )}
 
       <div className="command-map-wrapper" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         
