@@ -7,7 +7,6 @@ import '../../node_modules/leaflet.fullscreen/dist/Control.FullScreen.css';
 import { useAuth } from '../context/AuthContext';
 import { ShieldAlert, AlertCircle, ArrowLeft, RefreshCw, Layers } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import WalkieTalkie from '../components/WalkieTalkie';
 
 const CommandMap = () => {
   const { user } = useAuth();
@@ -254,7 +253,6 @@ const CommandMap = () => {
       </div>
       
       {/* Global Walkie-Talkie */}
-      <WalkieTalkie />
     </div>
   );
 };
