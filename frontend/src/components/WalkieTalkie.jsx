@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, BACKEND_URL } from '../context/AuthContext';
 import { Mic, MicOff, Radio, Volume2 } from 'lucide-react';
 
 const WalkieTalkie = () => {
@@ -25,8 +25,8 @@ const WalkieTalkie = () => {
   useEffect(() => {
     if (!isStaff) return;
 
-    // Connect to Socket
-    const socketUrl = axios.defaults.baseURL || '';
+    // Connect to Socket using explicitly exported BACKEND_URL
+    const socketUrl = BACKEND_URL || '';
     socketRef.current = io(socketUrl, { transports: ['websocket', 'polling'] });
     
     socketRef.current.emit('join-global-radio');
