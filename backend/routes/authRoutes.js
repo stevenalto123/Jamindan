@@ -552,13 +552,13 @@ router.post('/reset-password', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    // 3. Update User
-    // (The email passed in was actually the username they used to register)
-    const [updateResult] = await db.execute('UPDATE users SET password_hash = ? WHERE username = ?', [hashedPassword, email]);
-
-    if (updateResult.affectedRows === 0) {
-      return res.status(404).json({ message: 'User not found to update.' });
-    }
+      // 3. Update User
+      // (The email passed in was either the username or the actual email they used to request the reset)
+      const [updateResult] = await db.execute('UPDATE users SET password_hash = ? WHERE username = ? OR email = ?', [hashedPassword, email, email]);
+  
+      if (updateResult.affectedRows === 0) {
+        return res.status(404).json({ message: 'User not found to update.' });
+      }
 
     // 4. Delete the used token
     await db.execute('DELETE FROM password_resets WHERE email = ?', [email]);
