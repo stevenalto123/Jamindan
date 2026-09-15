@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Configure Axios defaults to support both browser (relative proxy) and native mobile app (absolute IP)
 // Update this with the current dynamic Localtunnel URL when building for mobile
-export const BACKEND_URL = window.Capacitor ? 'http://159.223.110.159:29052' : 'https://jamindan.onrender.com';
+export const BACKEND_URL = 'https://jamindan.onrender.com';
 
 if (window.Capacitor) {
   axios.defaults.baseURL = BACKEND_URL;
