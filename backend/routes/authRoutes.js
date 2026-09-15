@@ -353,10 +353,7 @@ router.put('/verify-user/:userId', authRequired, requireRole('Admin'), async (re
       // Send Approval Email
       if (targetUser.email) {
         try {
-          const transporter = await getTransporter();
-          const senderEmail = process.env.SMTP_USER || 'no-reply@jamindan.gov.ph';
-          await transporter.sendMail({
-            from: `"Jamindan Emergency IT" <${senderEmail}>`,
+          await sendEmail({
             to: targetUser.email,
             subject: 'Account Approved - Jamindan Emergency Response',
             html: `
@@ -383,10 +380,7 @@ router.put('/verify-user/:userId', authRequired, requireRole('Admin'), async (re
       // Send Rejection Email
       if (targetUser.email) {
         try {
-          const transporter = await getTransporter();
-          const senderEmail = process.env.SMTP_USER || 'no-reply@jamindan.gov.ph';
-          await transporter.sendMail({
-            from: `"Jamindan Emergency IT" <${senderEmail}>`,
+          await sendEmail({
             to: targetUser.email,
             subject: 'Registration Update - Jamindan Emergency Response',
             html: `
@@ -425,47 +419,61 @@ router.put('/verify-user/:userId', authRequired, requireRole('Admin'), async (re
 // PASSWORD RESET ROUTES
 // ==========================================
 
-// Create reusable transporter (Ethereal Email for testing)
-async function getTransporter() {
-  // Try to use a real SMTP if provided in .env
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    let hostToUse = process.env.SMTP_HOST;
-    try {
-      // Force IPv4 resolution to prevent Render ENETUNREACH IPv6 errors
-      const dns = require('dns');
-      const lookup = await dns.promises.lookup(process.env.SMTP_HOST, { family: 4 });
-      hostToUse = lookup.address;
-    } catch (err) {
-      console.warn('DNS lookup for SMTP host failed, falling back to original string.');
-    }
-
-    return nodemailer.createTransport({
-      host: hostToUse,
-      port: process.env.SMTP_PORT || 587,
-      secure: process.env.SMTP_PORT == 465,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
+// Send Email (Uses Brevo API if available, otherwise Ethereal)
+async function sendEmail({ to, subject, html, text }) {
+  if (process.env.BREVO_API_KEY) {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json'
       },
-      tls: {
-        rejectUnauthorized: false,
-        servername: process.env.SMTP_HOST // Ensure TLS cert matches original host, not the raw IP
+      body: JSON.stringify({
+        sender: {
+          name: 'Jamindan Emergency IT',
+          email: 'jamindan.emergency@gmail.com'
+        },
+        to: [{ email: to }],
+        subject: subject,
+        htmlContent: html,
+        textContent: text
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Brevo API Error: ${response.status} - ${errorText}`);
+    }
+    return { messageId: 'brevo' };
+  } else {
+    // Fallback to Ethereal Email (fake testing inbox)
+    const testAccount = await nodemailer.createTestAccount();
+    console.log('Created Ethereal Email test account for testing Password Reset!');
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass
       }
     });
-  }
-  
-  // Fallback to Ethereal Email (fake testing inbox)
-  const testAccount = await nodemailer.createTestAccount();
-  console.log('Created Ethereal Email test account for testing Password Reset!');
-  return nodemailer.createTransport({
-    host: 'smtp.ethereal.email',
-    port: 587,
-    secure: false,
-    auth: {
-      user: testAccount.user,
-      pass: testAccount.pass
+    const info = await transporter.sendMail({
+      from: '"Jamindan Emergency IT" <jamindan.emergency@gmail.com>',
+      to: to,
+      subject: subject,
+      text: text,
+      html: html
+    });
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log('-------------------------------------------');
+      console.log('PREVIEW FAKE EMAIL HERE: %s', previewUrl);
+      console.log('-------------------------------------------');
     }
-  });
+    return info;
+  }
 };
 
 router.post('/forgot-password', async (req, res) => {
@@ -494,9 +502,7 @@ router.post('/forgot-password', async (req, res) => {
     const clientUrl = req.headers.origin || process.env.CLIENT_ORIGIN || 'http://localhost:5173';
     const resetLink = `${clientUrl}/reset-password/${token}`;
 
-    const transporter = await getTransporter();
-    const info = await transporter.sendMail({
-      from: '"Jamindan Emergency IT" <jamindan.emergency@gmail.com>',
+    const info = await sendEmail({
       to: user.email,
       subject: 'Password Reset Request',
       text: `Hello ${user.full_name},\n\nYou requested a password reset. Click the link below to reset it:\n\n${resetLink}\n\nThis link is valid for 1 hour.\n\nIf you did not request this, please ignore this email.`,
@@ -513,14 +519,6 @@ router.post('/forgot-password', async (req, res) => {
     });
 
     console.log('Password Reset Email sent: %s', info.messageId);
-    
-    // IMPORTANT: If using Ethereal, print the link so the dev can click and view the fake email
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      console.log('-------------------------------------------');
-      console.log('PREVIEW FAKE EMAIL HERE: %s', previewUrl);
-      console.log('-------------------------------------------');
-    }
 
     res.json({ message: 'If that email exists in our system, a reset link has been sent.' });
   } catch (error) {
