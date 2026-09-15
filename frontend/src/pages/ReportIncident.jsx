@@ -224,17 +224,6 @@ const ReportIncident = () => {
   return (
     <div className="content-body" style={{ maxWidth: '800px', paddingBottom: '80px' }}>
 
-      {/* Page Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-        <div style={{ padding: '10px', backgroundColor: 'rgba(var(--primary-rgb, 220,53,69), 0.12)', borderRadius: '12px' }}>
-          <AlertTriangle size={24} color="var(--primary-color)" />
-        </div>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: 'var(--text-main)' }}>Report an Incident</h2>
-          <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-light)' }}>Provide accurate details to help responders arrive quickly.</p>
-        </div>
-      </div>
-
       <div className="glass-card" style={{ padding: '24px' }}>
         {error && (
           <div className="alert alert-danger" style={{ fontSize: '13px', padding: '10px 14px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
