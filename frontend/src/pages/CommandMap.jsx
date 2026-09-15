@@ -239,7 +239,7 @@ const CommandMap = ({ isWidget = false }) => {
               <AlertCircle size={16} color="var(--primary-color)" />
               Available Responders ({responders.length})
             </h3>
-            <div style={{ flex: 1, overflowY: 'auto' }}>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'flex-start' }}>
               {responders.length === 0 ? (
                 <div style={{ color: '#666', fontSize: '13px', textAlign: 'center', padding: '10px 0' }}>No responders on duty</div>
               ) : (
@@ -250,20 +250,20 @@ const CommandMap = ({ isWidget = false }) => {
                     style={{
                       backgroundColor: '#252525',
                       borderRadius: '8px',
-                      padding: '10px',
-                      marginBottom: '8px',
+                      padding: '8px 12px',
                       cursor: 'pointer',
                       borderLeft: `4px solid ${resp.agency_type === 'PNP' ? '#3498db' : resp.agency_type === 'BFP' ? '#e67e22' : resp.agency_type === 'MED' ? '#2ecc71' : 'var(--primary-color)'}`,
-                      transition: 'background 0.2s'
+                      transition: 'background 0.2s',
+                      flexShrink: 0
                     }}
                     onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#252525'}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}>{resp.full_name}</div>
                       <div style={{ color: '#aaa', fontSize: '11px', fontWeight: 'bold' }}>{resp.agency_type || 'Responder'}</div>
                     </div>
-                    <div style={{ color: '#aaa', fontSize: '11px', marginTop: '4px' }}>{resp.phone || 'No phone'}</div>
+                    <div style={{ color: '#aaa', fontSize: '11px', marginTop: '2px' }}>{resp.phone || 'No phone'}</div>
                   </div>
                 ))
               )}
