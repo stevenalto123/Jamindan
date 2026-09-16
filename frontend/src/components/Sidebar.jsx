@@ -106,12 +106,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 <span>{t('notifications')}</span>
               </NavLink>
             </li>
-            <li className="sidebar-item">
-              <NavLink to="/profile" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
-                <User size={18} />
-                <span>{t('profile')}</span>
-              </NavLink>
-            </li>
           </>
         )}
 
@@ -198,7 +192,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         <li className="sidebar-item">
           <NavLink to="/profile" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
             <User size={18} />
-            <span>Profile</span>
+            <span>{t('profile') || 'Profile'}</span>
           </NavLink>
         </li>
 
