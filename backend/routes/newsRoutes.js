@@ -113,6 +113,21 @@ router.post('/', authRequired, requireRole(['Admin']), upload.single('image'), a
       }
     }
 
+    // Emit real-time event to refresh news feed
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('new-news');
+      
+      // If it's a critical advisory, also trigger the global popup
+      if (category === 'Advisories') {
+        io.emit('new-broadcast', {
+          title: 'CRITICAL ADVISORY',
+          message: title,
+          type: 'advisory'
+        });
+      }
+    }
+
     await db.logAudit(`Advisory announcement published: "${title.trim().substring(0, 40)}${title.trim().length > 40 ? '...' : ''}"`, req.user.username, req.ip);
     return res.status(201).json({
       message: 'Announcement published successfully!',
@@ -153,6 +168,11 @@ router.put('/:id', authRequired, requireRole(['Admin']), upload.single('image'),
     `, [title.trim(), content.trim(), category, image_path, id]);
 
     await db.logAudit(`Announcement updated: "${title.trim().substring(0, 40)}${title.trim().length > 40 ? '...' : ''}"`, req.user.username, req.ip);
+    
+    // Refresh clients
+    const io = req.app.get('io');
+    if (io) io.emit('new-news');
+
     return res.json({ message: 'Announcement updated successfully' });
 
   } catch (error) {
@@ -175,6 +195,11 @@ router.delete('/:id', authRequired, requireRole(['Admin']), async (req, res) => 
     // No local deletion since images are on Cloudinary
     await db.execute('DELETE FROM news WHERE id = ?', [id]);
     await db.logAudit(`Announcement deleted (ID: ${id})`, req.user.username, req.ip);
+    
+    // Refresh clients
+    const io = req.app.get('io');
+    if (io) io.emit('new-news');
+
     return res.json({ message: 'Announcement deleted successfully' });
 
   } catch (error) {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import { useAuth, BACKEND_URL } from '../context/AuthContext';
 import { Radio, PlusCircle, Trash2, Edit2, X, Upload, AlertTriangle, Megaphone, Newspaper, Layers, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -83,6 +84,16 @@ const NewsUpdates = () => {
 
   useEffect(() => {
     fetchFeed();
+
+    // Listen for real-time news updates
+    const socketUrl = axios.defaults.baseURL || '';
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    
+    socket.on('new-news', () => {
+      fetchFeed();
+    });
+
+    return () => socket.disconnect();
   }, [categoryFilter]);
 
   const handleOpenCreateModal = () => {
