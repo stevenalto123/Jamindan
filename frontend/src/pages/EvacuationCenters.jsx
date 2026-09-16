@@ -7,7 +7,7 @@ import 'leaflet-routing-machine';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import 'leaflet.fullscreen';
 import 'leaflet.fullscreen/dist/Control.FullScreen.css';
-import { MapPin, ShieldAlert, Plus, Edit2, Trash2, X, Info, Maximize, Minimize } from 'lucide-react';
+import { MapPin, ShieldAlert, Plus, Edit2, Trash2, X, Info, Maximize, Minimize, Navigation, Tent, Users, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 // Fix Leaflet icons in Vite
@@ -131,9 +131,9 @@ const EvacuationCenters = () => {
 
       // Map click handler for coordinate selection when form is open
       mapInstance.current.on('click', (e) => {
-        const { lat, lng } = e.latlng;
+        if (!isAdmin || !showForm) return; // Only update form coordinates if form is open and user is admin
         
-        // Use a functional state update to access the latest state without putting it in dependency array
+        const { lat, lng } = e.latlng;
         setFormData(prev => ({
           ...prev,
           latitude: lat.toFixed(6),
@@ -153,26 +153,26 @@ const EvacuationCenters = () => {
         
         let markerColor = '#27ae60'; // Green
         if (center.status === 'Closed') markerColor = '#7f8c8d'; // Gray
-        else if (occupancyRate >= 85) markerColor = '#c0392b'; // Red
-        else if (occupancyRate >= 50) markerColor = '#f39c12'; // Yellow
+        else if (center.status === 'Full' || occupancyRate >= 100) markerColor = '#c0392b'; // Red
+        else if (occupancyRate >= 80) markerColor = '#f39c12'; // Yellow
 
         // Custom SVG Marker to allow coloring dynamically
         const customIcon = L.divIcon({
-          html: `<div style="background-color: ${markerColor}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 9px;">⛺</div>`,
+          html: `<div style="background-color: ${markerColor}; width: 28px; height: 28px; border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 14px;">⛺</div>`,
           className: 'custom-leaflet-icon',
-          iconSize: [24, 24],
-          iconAnchor: [12, 12]
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
         });
 
         const popupContent = `
-          <div style="font-family: var(--font-sans); min-width: 160px; padding: 4px;">
-            <h4 style="margin: 0 0 4px 0; font-weight: 700; color: var(--text-main); font-size: 13px;">${center.name}</h4>
-            <p style="margin: 0 0 6px 0; font-size: 11px; color: var(--text-light);">${center.location}</p>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
-              <span>${t('status')}: <strong>${t('status' + center.status)}</strong></span>
+          <div style="font-family: var(--font-sans); min-width: 180px; padding: 4px;">
+            <h4 style="margin: 0 0 6px 0; font-weight: 800; color: var(--text-main); font-size: 14px;">${center.name}</h4>
+            <p style="margin: 0 0 8px 0; font-size: 12px; color: var(--text-light); line-height: 1.4;">📍 ${center.location}</p>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #eee;">
+              <span>${t('status')}: <strong>${t('status' + center.status) || center.status}</strong></span>
               <span>${t('occupancy')}: <strong>${occupancyRate}%</strong></span>
             </div>
-            <div style="font-size: 10px; color: var(--text-muted);">${t('capacity')}: ${center.current_headcount} / ${center.capacity}</div>
+            <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">${t('capacity')}: ${center.current_headcount} / ${center.capacity}</div>
           </div>
         `;
 
@@ -201,14 +201,16 @@ const EvacuationCenters = () => {
       userMarkerRef.current = L.marker(userLocation, { icon: userIcon, zIndexOffset: 1000 })
         .addTo(mapInstance.current)
         .bindPopup(`<div style="font-family: var(--font-sans); font-weight: bold;">${t('youAreHere')}</div>`);
-      
-      // Optionally center map on user on first load
-      // mapInstance.current.setView(userLocation, 14);
     }
 
   }, [centers, loading, showForm, userLocation]);
 
   const handleCenterSelect = async (center) => {
+    if (center.status === 'Closed') {
+      alert("This evacuation center is currently closed.");
+      return;
+    }
+
     if (center.latitude && center.longitude && mapInstance.current) {
       const destLat = parseFloat(center.latitude);
       const destLng = parseFloat(center.longitude);
@@ -221,7 +223,7 @@ const EvacuationCenters = () => {
 
       // Draw route if user location is known
       if (!userLocation) {
-        alert(t('noRoute') || "Cannot draw route: Your location is unavailable. Please click anywhere on the map to set your starting point.");
+        alert(t('noRoute') || "Cannot draw route: Your location is unavailable. Please check your GPS settings.");
         return;
       }
       
@@ -281,6 +283,8 @@ const EvacuationCenters = () => {
       longitude: ''
     });
     setShowForm(true);
+    // Scroll to top to see map/form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenEdit = (center) => {
@@ -296,7 +300,10 @@ const EvacuationCenters = () => {
       longitude: center.longitude ? center.longitude.toString() : ''
     });
     setShowForm(true);
-    handleCenterSelect(center);
+    if (center.latitude && center.longitude && mapInstance.current) {
+       mapInstance.current.setView([parseFloat(center.latitude), parseFloat(center.longitude)], 14);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = async (e) => {
@@ -331,6 +338,7 @@ const EvacuationCenters = () => {
       }
       setShowForm(false);
       fetchCenters();
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error(err);
       setError('Failed to save evacuation center details.');
@@ -345,16 +353,23 @@ const EvacuationCenters = () => {
       await axios.delete(`/api/emergency/evacuation-centers/${id}`);
       setSuccess('Evacuation center deleted successfully.');
       fetchCenters();
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error(err);
       setError('Failed to delete evacuation center.');
     }
   };
 
-  const getOccupancyColor = (rate) => {
-    if (rate >= 85) return '#e74c3c'; // Red
-    if (rate >= 50) return '#f39c12'; // Orange/Yellow
-    return '#2ecc71'; // Green
+  // Helper styles and stats
+  const totalCenters = centers.length;
+  const openCenters = centers.filter(c => c.status === 'Open').length;
+  const fullCenters = centers.filter(c => c.status === 'Full').length;
+  
+  const getCardStyle = (status, occupancyRate) => {
+    if (status === 'Closed') return { borderLeft: '4px solid #95a5a6', opacity: 0.7, color: '#95a5a6', bg: '#f2f4f4' };
+    if (status === 'Full' || occupancyRate >= 100) return { borderLeft: '4px solid #e74c3c', color: '#c0392b', bg: '#fdf2f2' };
+    if (occupancyRate >= 80) return { borderLeft: '4px solid #f39c12', color: '#d68910', bg: '#fef9e7' };
+    return { borderLeft: '4px solid #2ecc71', color: '#27ae60', bg: '#eafaf1' };
   };
 
   if (loading) {
@@ -362,9 +377,9 @@ const EvacuationCenters = () => {
   }
 
   return (
-    <div className="content-body" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="content-body" style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '60px' }}>
       
-      {/* Header Panel */}
+      {/* Header Actions */}
       <div className="header-actions" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
         {isAdmin && (
           <button onClick={handleOpenAdd} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -373,14 +388,30 @@ const EvacuationCenters = () => {
         )}
       </div>
 
-      {success && <div className="alert alert-success" style={{ fontSize: '13px', padding: '8px 12px', margin: 0 }}>{success}</div>}
-      {error && <div className="alert alert-danger" style={{ fontSize: '13px', padding: '8px 12px', margin: 0 }}>{error}</div>}
-      {locationError && <div className="alert alert-warning" style={{ backgroundColor: '#fef5e7', color: '#d35400', border: '1px solid #fad7a1', fontSize: '13px', padding: '8px 12px', margin: 0, borderRadius: '4px' }}>📍 {locationError}</div>}
+      {success && <div className="alert alert-success" style={{ fontSize: '13px', padding: '12px 16px', margin: 0, borderRadius: '8px' }}>{success}</div>}
+      {error && <div className="alert alert-danger" style={{ fontSize: '13px', padding: '12px 16px', margin: 0, borderRadius: '8px' }}>{error}</div>}
+      {locationError && <div className="alert alert-warning" style={{ backgroundColor: '#fef5e7', color: '#d35400', border: '1px solid #fad7a1', fontSize: '13px', padding: '12px 16px', margin: 0, borderRadius: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}><AlertTriangle size={16} /> {locationError}</div>}
 
-      {/* Map & list display (Stacked layout) */}
+      {/* Summary Banner */}
+      <div className="glass-card" style={{ padding: '16px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+         <div style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid var(--border-color)' }}>
+           <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-main)' }}>{totalCenters}</div>
+           <div style={{ fontSize: '11px', color: 'var(--text-light)', fontWeight: '600', textTransform: 'uppercase' }}>Total</div>
+         </div>
+         <div style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid var(--border-color)' }}>
+           <div style={{ fontSize: '20px', fontWeight: '800', color: '#27ae60' }}>{openCenters}</div>
+           <div style={{ fontSize: '11px', color: '#27ae60', fontWeight: '600', textTransform: 'uppercase' }}>Open</div>
+         </div>
+         <div style={{ textAlign: 'center', padding: '8px' }}>
+           <div style={{ fontSize: '20px', fontWeight: '800', color: '#e74c3c' }}>{fullCenters}</div>
+           <div style={{ fontSize: '11px', color: '#c0392b', fontWeight: '600', textTransform: 'uppercase' }}>Full</div>
+         </div>
+      </div>
+
+      {/* Main Content Layout */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         
-        {/* Interactive Map */}
+        {/* Interactive Map Wrapper */}
         <div style={{
           ...(isFullScreen ? {
             position: 'fixed',
@@ -392,10 +423,10 @@ const EvacuationCenters = () => {
             borderRadius: 0,
             border: 'none',
           } : {
-            height: '50vh',
-            minHeight: '400px',
+            height: '400px', // More reasonable fixed height for map
             border: '1px solid var(--border-color)',
             borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
           }),
           display: 'flex', 
           flexDirection: 'column', 
@@ -411,45 +442,48 @@ const EvacuationCenters = () => {
               right: '10px', 
               zIndex: 1000, 
               backgroundColor: 'white', 
-              border: '2px solid rgba(0,0,0,0.2)', 
-              borderRadius: '4px', 
-              width: '34px', 
-              height: '34px', 
+              border: '2px solid rgba(0,0,0,0.1)', 
+              borderRadius: '8px', 
+              width: '36px', 
+              height: '36px', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
               cursor: 'pointer', 
-              boxShadow: '0 1px 5px rgba(0,0,0,0.65)',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
               padding: 0
             }}
             title={isFullScreen ? "Exit Full Screen" : "Full Screen"}
           >
-            {isFullScreen ? <Minimize size={18} color="#333" /> : <Maximize size={18} color="#333" />}
+            {isFullScreen ? <Minimize size={18} color="#555" /> : <Maximize size={18} color="#555" />}
           </button>
 
           <div ref={mapRef} style={{ width: '100%', flex: 1, zIndex: 10 }} />
-          {showForm && (
-            <div style={{ backgroundColor: '#fcfcfc', borderTop: '1px solid var(--border-color)', padding: '10px 16px', fontSize: '11px', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Info size={14} style={{ color: 'var(--primary-color)' }} />
+          {showForm && isAdmin && (
+            <div style={{ backgroundColor: '#fcfcfc', borderTop: '1px solid var(--border-color)', padding: '12px 16px', fontSize: '12px', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Info size={16} style={{ color: 'var(--primary-color)' }} />
               <span><strong>{t('adminTip').split(':')[0]}:</strong>{t('adminTip').split(':')[1]}</span>
             </div>
           )}
         </div>
 
-        {/* List details & forms */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Details & List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          {showForm ? (
+          {showForm && isAdmin ? (
             /* Admin Add/Edit Form */
-            <div className="card" style={{ border: '1px solid var(--primary-color)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 className="card-title" style={{ margin: 0 }}>{isEditing ? t('editShelter') : t('registerShelter')}</h3>
-                <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)' }}>
-                  <X size={18} />
+            <div className="glass-card" style={{ border: '2px solid var(--primary-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Tent size={20} color="var(--primary-color)" />
+                  {isEditing ? t('editShelter') : t('registerShelter')}
+                </h3>
+                <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)', padding: '4px' }}>
+                  <X size={20} />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">{t('centerName')}</label>
                   <input type="text" name="name" className="form-input" value={formData.name} onChange={handleFormChange} required placeholder="e.g. Jamindan Civic Gym" />
@@ -483,104 +517,129 @@ const EvacuationCenters = () => {
                   </div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '12px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label">{t('latitude')}</label>
+                    <label className="form-label" style={{ fontSize: '11px' }}>{t('latitude')} (Tap Map)</label>
                     <input type="text" name="latitude" className="form-input" value={formData.latitude} onChange={handleFormChange} placeholder="e.g. 11.4294" />
                   </div>
 
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label">{t('longitude')}</label>
+                    <label className="form-label" style={{ fontSize: '11px' }}>{t('longitude')} (Tap Map)</label>
                     <input type="text" name="longitude" className="form-input" value={formData.longitude} onChange={handleFormChange} placeholder="e.g. 122.4828" />
                   </div>
                 </div>
 
-                <button type="submit" className="btn btn-primary" style={{ height: '40px', marginTop: '6px' }}>
+                <button type="submit" className="btn btn-primary" style={{ height: '48px', marginTop: '10px', fontSize: '15px', fontWeight: '700' }}>
                   {isEditing ? t('saveUpdates') : t('addShelter')}
                 </button>
               </form>
             </div>
           ) : (
             /* Shelter Capacity Cards List */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {centers.map(center => {
-                const occupancyRate = center.capacity > 0 ? ((center.current_headcount / center.capacity) * 100).toFixed(0) : 0;
-                
-                return (
-                  <div 
-                    key={center.id} 
-                    className="card"
-                    onClick={() => handleCenterSelect(center)}
-                    style={{ 
-                      padding: '16px', 
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-color)',
-                      boxShadow: 'var(--shadow-sm)',
-                      transition: 'transform 0.2s',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                      <div>
-                        <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: '700', color: 'var(--text-main)' }}>{center.name}</h4>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-light)' }}>
-                          <MapPin size={12} />
-                          <span>{center.location}</span>
+            <>
+              {centers.length === 0 ? (
+                 <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px', textAlign: 'center', border: '1px dashed var(--border-color)' }}>
+                   <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'rgba(var(--primary-rgb, 46,204,113), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)', marginBottom: '16px' }}>
+                     <Tent size={28} />
+                   </div>
+                   <h4 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '6px' }}>No Evacuation Centers</h4>
+                   <p style={{ fontSize: '13px', color: 'var(--text-light)', maxWidth: '320px', margin: 0, lineHeight: '1.5' }}>There are currently no evacuation centers registered in the system.</p>
+                 </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {centers.map(center => {
+                    const occupancyRate = center.capacity > 0 ? ((center.current_headcount / center.capacity) * 100).toFixed(0) : 0;
+                    const styleMeta = getCardStyle(center.status, occupancyRate);
+                    const isClosed = center.status === 'Closed';
+                    
+                    return (
+                      <div 
+                        key={center.id} 
+                        className="glass-card"
+                        onClick={() => handleCenterSelect(center)}
+                        style={{ 
+                          padding: '16px', 
+                          cursor: isClosed ? 'not-allowed' : 'pointer',
+                          borderLeft: styleMeta.borderLeft,
+                          opacity: styleMeta.opacity || 1,
+                          transition: 'transform 0.15s',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px',
+                          position: 'relative'
+                        }}
+                        onMouseEnter={(e) => !isClosed && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                        onMouseLeave={(e) => !isClosed && (e.currentTarget.style.transform = 'translateY(0)')}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ paddingRight: '20px' }}>
+                            <h4 style={{ margin: '0 0 6px 0', fontSize: '16px', fontWeight: '800', color: 'var(--text-main)' }}>{center.name}</h4>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-light)' }}>
+                              <MapPin size={14} style={{ color: 'var(--text-muted)' }} />
+                              <span>{center.location}</span>
+                            </div>
+                          </div>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                            {center.status === 'Open' && <span className="badge badge-resolved" style={{ fontSize: '11px', padding: '3px 8px' }}>{t('statusOpen')}</span>}
+                            {center.status === 'Full' && <span className="badge badge-pending" style={{ fontSize: '11px', padding: '3px 8px' }}>{t('statusFull')}</span>}
+                            {center.status === 'Closed' && <span className="badge badge-review" style={{ fontSize: '11px', padding: '3px 8px' }}>{t('statusClosed')}</span>}
+                            
+                            {isAdmin && (
+                              <div style={{ display: 'flex', gap: '4px' }} onClick={e => e.stopPropagation()}>
+                                <button onClick={() => handleOpenEdit(center)} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '4px' }}>
+                                  <Edit2 size={16} />
+                                </button>
+                                <button onClick={() => handleDelete(center.id)} style={{ background: 'none', border: 'none', color: '#c0392b', cursor: 'pointer', padding: '4px' }}>
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {center.status === 'Open' && <span className="badge badge-resolved">{t('statusOpen')}</span>}
-                        {center.status === 'Full' && <span className="badge badge-pending">{t('statusFull')}</span>}
-                        {center.status === 'Closed' && <span className="badge badge-review">{t('statusClosed')}</span>}
 
-                        {isAdmin && (
-                          <div style={{ display: 'flex', gap: '4px' }} onClick={e => e.stopPropagation()}>
-                            <button onClick={() => handleOpenEdit(center)} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '4px' }}>
-                              <Edit2 size={14} />
-                            </button>
-                            <button onClick={() => handleDelete(center.id)} style={{ background: 'none', border: 'none', color: '#c0392b', cursor: 'pointer', padding: '4px' }}>
-                              <Trash2 size={14} />
-                            </button>
+                        {/* Progress occupancy bar */}
+                        {!isClosed && (
+                          <div style={{ backgroundColor: '#f9f9f9', padding: '12px', borderRadius: '8px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-light)', marginBottom: '8px' }}>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Users size={14} /> {t('capacityOccupancy')}</span>
+                              <span style={{ fontWeight: '800', color: styleMeta.color }}>{center.current_headcount} / {center.capacity} ({occupancyRate}%)</span>
+                            </div>
+                            <div style={{ width: '100%', height: '8px', backgroundColor: '#eef1ee', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div 
+                                style={{ 
+                                  width: `${Math.min(occupancyRate, 100)}%`, 
+                                  height: '100%', 
+                                  backgroundColor: styleMeta.color,
+                                  transition: 'width 0.5s ease-in-out'
+                                }} 
+                              />
+                            </div>
                           </div>
                         )}
-                      </div>
-                    </div>
 
-                    {/* Progress occupancy bar */}
-                    {center.status !== 'Closed' && (
-                      <div style={{ marginTop: '4px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px' }}>
-                          <span>{t('capacityOccupancy')}</span>
-                          <span style={{ fontWeight: '700' }}>{center.current_headcount} / {center.capacity} ({occupancyRate}%)</span>
-                        </div>
-                        <div style={{ width: '100%', height: '8px', backgroundColor: '#eef1ee', borderRadius: '4px', overflow: 'hidden' }}>
-                          <div 
-                            style={{ 
-                              width: `${Math.min(occupancyRate, 100)}%`, 
-                              height: '100%', 
-                              backgroundColor: getOccupancyColor(occupancyRate),
-                              transition: 'width 0.5s ease-in-out'
-                            }} 
-                          />
-                        </div>
+                        {/* Visual Hint for Directions */}
+                        {!isClosed && (
+                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary-color)', fontSize: '12px', fontWeight: '600' }}>
+                              <Navigation size={14} /> Click card to draw map route
+                           </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
 
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', backgroundColor: '#ebf5fb', border: '1px solid #d4e6f1', borderRadius: '12px', padding: '14px', marginTop: 'auto' }}>
-            <ShieldAlert size={18} style={{ color: '#2980b9', flexShrink: 0 }} />
-            <p style={{ fontSize: '11px', color: '#1b4f72', margin: 0 }} dangerouslySetInnerHTML={{
-              __html: t('lguAdvisory').replace('LGU Advisory:', '<strong>' + t('lguAdvisory').split(':')[0] + ':</strong>').replace('Full', '<strong>' + t('statusFull') + '</strong>')
-            }}>
-            </p>
+          {/* Safer LGU Advisory Box */}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', backgroundColor: '#ebf5fb', border: '1px solid #d4e6f1', borderRadius: '12px', padding: '16px' }}>
+            <ShieldAlert size={20} style={{ color: '#2980b9', flexShrink: 0, marginTop: '2px' }} />
+            <div style={{ fontSize: '12px', color: '#1b4f72', lineHeight: '1.5' }}>
+              <strong>{t('lguAdvisory').split(':')[0]}:</strong> 
+              {t('lguAdvisory').substring(t('lguAdvisory').indexOf(':') + 1).replace('Full', '')}
+              <strong>{t('statusFull')}</strong>.
+            </div>
           </div>
         </div>
 
