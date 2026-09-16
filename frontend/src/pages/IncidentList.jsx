@@ -109,10 +109,23 @@ const IncidentList = () => {
   // ─── RESIDENT CARD VIEW ────────────────────────────────────────────────────
   if (isResident) {
     return (
-      <div className="content-body" style={{ paddingBottom: '80px' }}>
-        {/* Submit Button - prominent CTA */}
-        <Link to="/report" className="btn btn-accent" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '14px', fontSize: '15px', fontWeight: '700', borderRadius: '12px', marginBottom: '20px', textDecoration: 'none' }}>
-          <PlusCircle size={20} /> {t('submitNewReport')}
+      <div className="content-body" style={{ paddingBottom: '80px', position: 'relative', minHeight: '100vh' }}>
+        {/* Floating Action Button for New Report */}
+        <Link to="/report" className="btn btn-accent" style={{
+          position: 'fixed',
+          bottom: '80px', // Above mobile bottom nav
+          right: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          boxShadow: '0 4px 12px rgba(var(--accent-rgb, 231, 76, 60), 0.4)',
+          zIndex: 1000,
+          padding: 0
+        }}>
+          <PlusCircle size={28} color="white" />
         </Link>
 
         {/* Filters */}

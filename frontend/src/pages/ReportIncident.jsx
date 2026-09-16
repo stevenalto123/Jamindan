@@ -222,7 +222,7 @@ const ReportIncident = () => {
   const selectedTypeInfo = INCIDENT_TYPES.find(it => it.value === type);
 
   return (
-    <div className="content-body" style={{ maxWidth: '800px', paddingBottom: '80px' }}>
+    <div className="content-body" style={{ maxWidth: '800px', paddingBottom: '120px' }}>
 
       <div className="glass-card" style={{ padding: '24px' }}>
         {error && (
@@ -349,8 +349,23 @@ const ReportIncident = () => {
             )}
           </div>
 
-          {/* Submit Actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
+          {/* Submit Actions - Sticky Bottom */}
+          <div style={{ 
+            position: 'fixed', 
+            bottom: 0, 
+            left: 0, 
+            right: 0, 
+            backgroundColor: 'var(--bg-color)', 
+            padding: '16px 20px', 
+            borderTop: '1px solid var(--border-color)', 
+            boxShadow: '0 -4px 15px rgba(0,0,0,0.06)', 
+            zIndex: 1000, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '10px',
+            maxWidth: '800px',
+            margin: '0 auto'
+          }}>
             <button
               type="submit"
               className="btn btn-primary"
