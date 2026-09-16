@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, 
@@ -25,6 +26,22 @@ import { useLanguage } from '../context/LanguageContext';
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const { user, logout } = useAuth();
   const { t } = useLanguage();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchNotifs = async () => {
+      try {
+        const res = await axios.get('/api/notifications');
+        setUnreadCount(res.data.filter(n => !n.is_read).length);
+      } catch (err) {
+        console.error('Failed to fetch sidebar notifications', err);
+      }
+    };
+    fetchNotifs();
+    const interval = setInterval(fetchNotifs, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   if (!user) return null;
 
@@ -44,14 +61,27 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         <div className="sidebar-logo-wrapper">
           <img src="/logo.png" alt="Jamindan Seal" className="sidebar-seal" />
         </div>
-        <h2 className="sidebar-appname">Emergency Response</h2>
-        <span className="sidebar-subtitle">Capiz, Philippines</span>
+        <div>
+          <h2 className="sidebar-appname">Emergency<br/>Response</h2>
+          <span className="sidebar-subtitle">Capiz, Philippines</span>
+        </div>
+      </div>
+
+      <div className="sidebar-user-card">
+        <div className="sidebar-user-avatar">
+          {user.first_name ? user.first_name[0].toUpperCase() : <User size={20} />}
+        </div>
+        <div className="sidebar-user-info">
+          <span className="sidebar-user-name">{user.first_name} {user.last_name}</span>
+          <span className="sidebar-user-role">{user.role}</span>
+        </div>
       </div>
 
       <nav className="sidebar-menu">
         {/* Resident Sidebar Items */}
         {isResident && (
           <>
+            <div className="sidebar-section-header">Main Menu</div>
             <li className="sidebar-item">
               <NavLink to="/dashboard" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <LayoutDashboard size={18} />
@@ -76,6 +106,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                  <span>{t('household')}</span>
                </NavLink>
              </li>
+
+             <div className="sidebar-section-header">Resources</div>
              <li className="sidebar-item">
                <NavLink to="/evacuation" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                  <Map size={18} />
@@ -100,10 +132,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 <span>Emergency Tips</span>
               </NavLink>
             </li>
+
+            <div className="sidebar-section-header">Account</div>
             <li className="sidebar-item">
               <NavLink to="/notifications" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <Bell size={18} />
                 <span>{t('notifications')}</span>
+                {unreadCount > 0 && <span className="notif-badge-sidebar">{unreadCount}</span>}
               </NavLink>
             </li>
           </>
@@ -112,6 +147,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         {/* Admin / Responder Sidebar Items */}
         {(isAdmin || isResponder) && (
           <>
+            <div className="sidebar-section-header">Operations</div>
             <li className="sidebar-item">
               <NavLink to="/admin" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <LayoutDashboard size={18} />
@@ -124,6 +160,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                  <span>Incidents</span>
                </NavLink>
              </li>
+
+             <div className="sidebar-section-header">Command Center</div>
              <li className="sidebar-item">
                <NavLink to="/evacuation" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                  <Map size={18} />
@@ -147,6 +185,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
         {isAdmin && (
           <>
+            <div className="sidebar-section-header">Administration</div>
             <li className="sidebar-item">
               <NavLink to="/verifications" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <UserCheck size={18} />
@@ -181,12 +220,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         )}
 
         {(isAdmin || isResponder) && (
-          <li className="sidebar-item">
-            <NavLink to="/settings" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
-              <Settings size={18} />
-              <span>Settings</span>
-            </NavLink>
-          </li>
+          <>
+            <div className="sidebar-section-header">Account</div>
+            <li className="sidebar-item">
+              <NavLink to="/settings" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
+                <Settings size={18} />
+                <span>Settings</span>
+              </NavLink>
+            </li>
+          </>
         )}
 
         <li className="sidebar-item">
