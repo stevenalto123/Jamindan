@@ -5,10 +5,9 @@ import {
   UserCheck, 
   UserX, 
   CheckCircle, 
-  XCircle, 
+  RotateCw,
   Phone, 
   MapPin, 
-  Calendar, 
   User, 
   ImageIcon 
 } from 'lucide-react';
@@ -19,6 +18,7 @@ const AdminVerifyUsers = () => {
   const [error, setError] = useState(null);
   const [processingId, setProcessingId] = useState(null);
   const [viewImage, setViewImage] = useState(null);
+  const [imageRotation, setImageRotation] = useState(0);
 
   const fetchPendingUsers = async () => {
     try {
@@ -55,6 +55,11 @@ const AdminVerifyUsers = () => {
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const openImageViewer = (url) => {
+    setViewImage(url);
+    setImageRotation(0);
   };
 
   if (loading) {
@@ -101,7 +106,7 @@ const AdminVerifyUsers = () => {
           <p style={{ fontSize: '14px', color: 'var(--text-light)', margin: 0 }}>There are no pending registrations waiting for your approval.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
           {pendingUsers.map(user => (
             <div key={user.id} style={{ 
               background: 'var(--card-bg)', 
@@ -147,15 +152,15 @@ const AdminVerifyUsers = () => {
               </div>
 
               <div style={{ padding: '20px', background: '#f8fafc', flex: 1 }}>
-                <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                   
                   {/* ID Document */}
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: '120px' }}>
                     <p style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       Valid ID <span style={{ color: 'var(--primary-color)' }}>({user.id_type || 'N/A'})</span>
                     </p>
                     <div 
-                      onClick={() => user.id_photo_path && setViewImage(user.id_photo_path.startsWith('http') ? user.id_photo_path : `https://jamindan.onrender.com${user.id_photo_path}`)}
+                      onClick={() => user.id_photo_path && openImageViewer(user.id_photo_path.startsWith('http') ? user.id_photo_path : `https://jamindan.onrender.com${user.id_photo_path}`)}
                       style={{ 
                         width: '100%', 
                         height: '130px', 
@@ -189,12 +194,12 @@ const AdminVerifyUsers = () => {
                   </div>
                   
                   {/* Live Selfie */}
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: '120px' }}>
                     <p style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       Live Selfie
                     </p>
                     <div 
-                      onClick={() => user.selfie_photo_path && setViewImage(user.selfie_photo_path.startsWith('http') ? user.selfie_photo_path : `https://jamindan.onrender.com${user.selfie_photo_path}`)}
+                      onClick={() => user.selfie_photo_path && openImageViewer(user.selfie_photo_path.startsWith('http') ? user.selfie_photo_path : `https://jamindan.onrender.com${user.selfie_photo_path}`)}
                       style={{ 
                         width: '100%', 
                         height: '130px', 
@@ -306,6 +311,7 @@ const AdminVerifyUsers = () => {
           display: 'flex', justifyContent: 'center', alignItems: 'center',
           backdropFilter: 'blur(4px)'
         }} onClick={() => setViewImage(null)}>
+          
           <button style={{ 
             position: 'absolute', top: '24px', right: '24px', 
             background: 'white', border: 'none', borderRadius: '50%', 
@@ -320,7 +326,37 @@ const AdminVerifyUsers = () => {
           onClick={(e) => { e.stopPropagation(); setViewImage(null); }}>
             <X size={24} color="#0f172a" />
           </button>
-          <img src={viewImage} style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }} alt="Full screen view" />
+
+          <button style={{ 
+            position: 'absolute', bottom: '40px', 
+            background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '30px', 
+            padding: '12px 24px', cursor: 'pointer', 
+            display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
+            zIndex: 10001, fontWeight: '700', fontSize: '15px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            transition: 'transform 0.2s'
+          }} 
+          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onClick={(e) => { e.stopPropagation(); setImageRotation(prev => prev + 90); }}>
+            <RotateCw size={20} />
+            Rotate Image
+          </button>
+
+          <img 
+            src={viewImage} 
+            style={{ 
+              maxWidth: '90%', 
+              maxHeight: '80%', 
+              objectFit: 'contain', 
+              borderRadius: '8px', 
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              transform: `rotate(${imageRotation}deg)`,
+              transition: 'transform 0.3s ease-in-out'
+            }} 
+            alt="Full screen view" 
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>
