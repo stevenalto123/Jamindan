@@ -520,12 +520,15 @@ const AppLayout = ({ children }) => {
         {children}
       </div>
       {installPrompt && (
-        <div style={{ padding: '15px', backgroundColor: '#eaf5ee', borderTop: '1px solid var(--primary-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 90, position: 'relative' }}>
+        <div style={{ position: 'fixed', bottom: '80px', right: '20px', left: 'auto', width: 'calc(100% - 40px)', maxWidth: '350px', padding: '16px', backgroundColor: '#eaf5ee', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', border: '1px solid #a9dfbf', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 9999 }}>
           <div>
-            <div style={{ fontWeight: 'bold', color: 'var(--primary-color)', fontSize: '14px' }}>Install App</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-light)' }}>Add to home screen for offline access</div>
+            <div style={{ fontWeight: '800', color: 'var(--primary-color)', fontSize: '15px', marginBottom: '4px' }}>Install App</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-light)', lineHeight: '1.4' }}>Add to home screen for offline emergency access.</div>
           </div>
-          <button onClick={handleInstallClick} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>Install</button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => setInstallPrompt(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '12px', cursor: 'pointer', padding: '8px' }}>Dismiss</button>
+            <button onClick={handleInstallClick} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '13px', fontWeight: '700' }}>Install</button>
+          </div>
         </div>
       )}
             <MobileBottomNav />
