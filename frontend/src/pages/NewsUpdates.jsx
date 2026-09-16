@@ -71,10 +71,39 @@ const NewsUpdates = () => {
   const fetchFeed = async () => {
     setLoading(true);
     try {
+      // 1. Fetch Local Feed
       const res = await axios.get('/api/news', {
         params: { category: categoryFilter }
       });
-      setFeed(res.data);
+      let localFeed = res.data;
+
+      // 2. Fetch External Automated News
+      let autoFeed = [];
+      if (categoryFilter === 'All' || categoryFilter === 'News') {
+        try {
+          const rssUrl = 'https://news.google.com/rss/search?q=Capiz+OR+Panay+OR+Jamindan+AND+(typhoon+OR+earthquake+OR+disaster+OR+flood+OR+weather)&hl=en-PH&gl=PH&ceid=PH:en';
+          const rssRes = await axios.get(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
+          if (rssRes.data && rssRes.data.items) {
+            autoFeed = rssRes.data.items.map(item => ({
+              id: `auto-${item.guid || item.link}`,
+              title: item.title,
+              content: item.description.replace(/<[^>]+>/g, ''), // Basic HTML strip
+              category: 'News', // Automated news falls under News
+              image_path: item.thumbnail || null,
+              author_name: item.source || 'Auto News Feed',
+              created_at: item.pubDate,
+              is_auto: true,
+              link: item.link
+            }));
+          }
+        } catch (rssErr) {
+          console.error('Failed to fetch automated news', rssErr);
+        }
+      }
+
+      // 3. Merge and Sort by Date
+      const combined = [...localFeed, ...autoFeed].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setFeed(combined);
     } catch (err) {
       console.error('Error fetching news feed', err);
     } finally {
@@ -249,7 +278,7 @@ const NewsUpdates = () => {
                 {/* Image Section */}
                 {article.image_path ? (
                   <img 
-                    src={article.image_path.startsWith('http') ? article.image_path : `${BACKEND_URL}${article.image_path}`} 
+                    src={(article.is_auto || article.image_path.startsWith('http')) ? article.image_path : `${BACKEND_URL}${article.image_path}`} 
                     alt={article.title} 
                     style={{ 
                       width: isHero ? '100%' : (window.innerWidth > 600 ? '200px' : '100%'), 
@@ -266,7 +295,11 @@ const NewsUpdates = () => {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0, borderRight: isHero ? 'none' : '1px solid var(--border-color)', borderBottom: isHero ? '1px solid var(--border-color)' : 'none'
                   }}>
-                    <Radio size={isHero ? 48 : 32} style={{ opacity: 0.2, color: 'var(--primary-color)' }} />
+                    {article.is_auto ? (
+                      <Newspaper size={isHero ? 48 : 32} style={{ opacity: 0.2, color: 'var(--primary-color)' }} />
+                    ) : (
+                      <Radio size={isHero ? 48 : 32} style={{ opacity: 0.2, color: 'var(--primary-color)' }} />
+                    )}
                   </div>
                 )}
 
@@ -306,8 +339,18 @@ const NewsUpdates = () => {
                   </div>
 
                   {/* Footer */}
-                  <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--border-color)', fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>
-                    {t('by') || 'Posted by'} {article.author_name}
+                  <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>
+                      {article.is_auto ? (
+                        <span style={{ backgroundColor: '#e2e8f0', color: '#475569', padding: '2px 6px', borderRadius: '4px', marginRight: '6px' }}>AUTO</span>
+                      ) : null}
+                      {t('by') || 'Posted by'} {article.author_name}
+                    </div>
+                    {article.is_auto && article.link && (
+                      <a href={article.link} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', fontWeight: '700', color: 'var(--primary-color)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        Read Source <ChevronDown size={14} style={{ transform: 'rotate(-90deg)' }} />
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
