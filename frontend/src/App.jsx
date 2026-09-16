@@ -580,9 +580,11 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/report" element={
+                <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
                   <AppLayout>
                     <ReportIncident />
                   </AppLayout>
+                </ProtectedRoute>
               } />
 
               {/* Shared / Multi-role Status Tracking Routes */}
@@ -612,9 +614,11 @@ function App() {
 
               {/* Subpages for Resident */}
               <Route path="/tips" element={
+                <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
                   <AppLayout>
                     <EmergencyTips />
                   </AppLayout>
+                </ProtectedRoute>
               } />
               
               <Route path="/more" element={
@@ -631,15 +635,14 @@ function App() {
                   </AppLayout>
                 </ProtectedRoute>
               } />
-              {/* Offline Accessible Hotlines */}
+              
+              {/* Other App Sections */}
               <Route path="/hotlines" element={
-                <AppLayout>
-                  <Hotlines />
-                </AppLayout>
-              } />
-
-              <Route path="/hotlines" element={
-                <ProtectedRoute><AppLayout><Hotlines /></AppLayout></ProtectedRoute>
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Hotlines />
+                  </AppLayout>
+                </ProtectedRoute>
               } />
               <Route path="/evacuation" element={
                 <ProtectedRoute><AppLayout><EvacuationCenters /></AppLayout></ProtectedRoute>
@@ -658,13 +661,6 @@ function App() {
                 <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
                   <AppLayout>
                     <UserProfile />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/tips" element={
-                <ProtectedRoute allowedRoles={['Resident', 'Admin', 'Responder']}>
-                  <AppLayout>
-                    <EmergencyTips />
                   </AppLayout>
                 </ProtectedRoute>
               } />
