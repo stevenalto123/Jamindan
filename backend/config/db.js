@@ -371,28 +371,26 @@ const initializeDatabase = async () => {
           `);
         }
   
-        // Clean up any existing duplicates for hotlines
+        // Always replace hotlines with the official Jamindan data
+        console.log('Replacing hotlines with official Jamindan MDRRMO data...');
+        await pool.query('DELETE FROM hotlines');
         await pool.query(`
-          DELETE t1 FROM hotlines t1
-          INNER JOIN hotlines t2 
-          WHERE t1.id > t2.id AND t1.agency_name = t2.agency_name
+          INSERT INTO hotlines (agency_name, contact_number, barangay)
+          VALUES
+          ('Jamindan Response Unit (MDRRMO)', '09485224345 / 09088773092 / (036) 651-8227', NULL),
+          ('Jamindan Municipal Police Station', '09086415589 / (036) 651-8218', NULL),
+          ('Municipal Health Office', '09304562011 / (036) 651-8204', NULL),
+          ('Jamindan Bureau of Fire Protection (BFP)', '09106964585 / (036) 651-8228', NULL),
+          ('CAPELCO Jamindan-Mambusao', '09630438339 / (036) 620-4930', NULL),
+          ('Mambusao District Hospital', '09688796022 / (036) 647-0220', NULL),
+          ('SGMRMH (DAO) Hospital', '09171195972 / (036) 658-0037', NULL),
+          ('Roxas Memorial Provincial Hospital', '(036) 621-0823 / (036) 621-0030', NULL),
+          ('Capiz Doctors Hospital', '(036) 621-5675', NULL),
+          ('St. Anthony Hospital', '(036) 621-0431', NULL),
+          ('Capiz Emmanuel Hospital', '(036) 621-0443', NULL),
+          ('Health Centrum Hospital', '(033) 621-09088', NULL),
+          ('Western Visayas Medical Center', '09695106129 / (033) 339-7070', NULL)
         `);
-
-        // Seed Hotlines only if empty
-        const [hotlineRows] = await pool.query('SELECT COUNT(*) as count FROM hotlines');
-        if (hotlineRows[0].count === 0) {
-          console.log('Seeding local hotlines to MySQL...');
-          await pool.query(`
-            INSERT INTO hotlines (agency_name, contact_number, barangay)
-            VALUES
-            ('Jamindan MDRRMO Rescue Hotline', '0912-345-6789 / 0917-987-6543', NULL),
-            ('Jamindan Bureau of Fire Protection (BFP)', '0998-765-4321', NULL),
-            ('Jamindan Municipal Police (PNP)', '0987-654-3210', NULL),
-            ('Jamindan Rural Health Unit (RHU)', '(036) 658-1234', NULL),
-            ('Barangay Poblacion Tanod Desk', '0919-111-2222', 'Poblacion'),
-            ('Barangay Lucero Tanod Desk', '0919-333-4444', 'Lucero')
-          `);
-        }
 
       // Seed News
       const [newsRows] = await pool.query('SELECT COUNT(*) as count FROM news');
