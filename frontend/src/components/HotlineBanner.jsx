@@ -12,11 +12,11 @@ const HotlineBanner = () => {
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-        <div className="hotline-numbers">911</div>
-        <div style={{ fontSize: '12px', opacity: 0.95, textAlign: 'right' }}>
-          MDRRMO: 0917-807-6799 <br />
-          BFP (Fire): 0930-077-8328 <br />
-          PNP (Police): 0998-598-6161
+        <div className="hotline-numbers">HOTLINES</div>
+        <div style={{ fontSize: '12px', opacity: 0.95, textAlign: 'right', whiteSpace: 'nowrap' }}>
+          <strong>MDRRMO:</strong> 0948-522-4345 <br />
+          <strong>BFP (Fire):</strong> 0910-696-4585 <br />
+          <strong>PNP (Police):</strong> 0908-641-5589
         </div>
       </div>
     </div>

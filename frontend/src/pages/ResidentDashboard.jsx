@@ -55,7 +55,7 @@ const ResidentDashboard = () => {
       
       {/* Premium Quick-Dial Action Bar */}
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', marginTop: '20px' }}>
-        <a href="tel:911" style={{ flex: 1, textDecoration: 'none' }}>
+        <a href="tel:09086415589" style={{ flex: 1, textDecoration: 'none' }}>
           <div className="glass-card" style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(52, 152, 219, 0.1)' }}>
             <div style={{ padding: '8px', backgroundColor: '#3498db', borderRadius: '50%', color: 'white' }}>
               <Shield size={20} />
@@ -63,7 +63,7 @@ const ResidentDashboard = () => {
             <span style={{ fontSize: '12px', fontWeight: '600', color: '#2980b9' }}>Police</span>
           </div>
         </a>
-        <a href="tel:911" style={{ flex: 1, textDecoration: 'none' }}>
+        <a href="tel:09106964585" style={{ flex: 1, textDecoration: 'none' }}>
           <div className="glass-card" style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(230, 126, 34, 0.1)' }}>
             <div style={{ padding: '8px', backgroundColor: '#e67e22', borderRadius: '50%', color: 'white' }}>
               <Flame size={20} />
@@ -71,7 +71,7 @@ const ResidentDashboard = () => {
             <span style={{ fontSize: '12px', fontWeight: '600', color: '#d35400' }}>Fire</span>
           </div>
         </a>
-        <a href="tel:911" style={{ flex: 1, textDecoration: 'none' }}>
+        <a href="tel:09304562011" style={{ flex: 1, textDecoration: 'none' }}>
           <div className="glass-card" style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(46, 204, 113, 0.1)' }}>
             <div style={{ padding: '8px', backgroundColor: '#2ecc71', borderRadius: '50%', color: 'white' }}>
               <HeartPulse size={20} />
