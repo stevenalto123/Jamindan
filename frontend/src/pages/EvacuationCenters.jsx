@@ -34,6 +34,7 @@ const EvacuationCenters = () => {
   const mapInstance = useRef(null);
   const markersRef = useRef({});
   const userMarkerRef = useRef(null);
+  const draftMarkerRef = useRef(null);
   const routeLayerRef = useRef(null);
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState('');
@@ -215,6 +216,33 @@ const EvacuationCenters = () => {
       mapInstance.current.off('click', handleMapClick);
     };
   }, [isAdmin, showForm]);
+
+  // Visual feedback for draft coordinates
+  useEffect(() => {
+    if (!mapInstance.current) return;
+    
+    if (showForm && formData.latitude && formData.longitude) {
+      const lat = parseFloat(formData.latitude);
+      const lng = parseFloat(formData.longitude);
+      
+      if (!draftMarkerRef.current) {
+        const draftIcon = L.divIcon({
+          html: `<div style="background-color: #e74c3c; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px rgba(231, 76, 60, 0.8); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 14px;">+</div>`,
+          className: 'custom-leaflet-icon',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+        draftMarkerRef.current = L.marker([lat, lng], { icon: draftIcon, zIndexOffset: 2000 }).addTo(mapInstance.current);
+      } else {
+        draftMarkerRef.current.setLatLng([lat, lng]);
+      }
+    } else {
+      if (draftMarkerRef.current) {
+        draftMarkerRef.current.remove();
+        draftMarkerRef.current = null;
+      }
+    }
+  }, [showForm, formData.latitude, formData.longitude]);
 
   const handleCenterSelect = async (center) => {
     if (center.status === 'Closed') {
