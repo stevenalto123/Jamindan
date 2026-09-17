@@ -160,8 +160,8 @@ const UserManagement = () => {
         alert('Username must be 3-20 characters long and contain only letters, numbers, or underscores.');
         return;
       }
-      if (password.length < 6) {
-        alert('Password must be at least 6 characters long.');
+      if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password)) {
+        alert('Password must be at least 8 characters long and contain at least one uppercase letter and one number.');
         return;
       }
     }

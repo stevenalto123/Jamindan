@@ -26,8 +26,8 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ message: 'Username must be 3-20 characters long and contain only letters, numbers, or underscores' });
   }
 
-  if (password.length < 6) {
-    return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+  if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password)) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters long and contain at least one uppercase letter and one number.' });
   }
 
   const phoneRegex = /^09\d{9}$/;
