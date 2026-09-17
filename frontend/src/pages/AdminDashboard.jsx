@@ -395,51 +395,40 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Responder Quick-Action Grid */}
+      {/* Responder Live Dispatches */}
       {user?.role === 'Responder' && (
         <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
           <div style={{ fontWeight: '800', fontSize: '18px', color: 'var(--text-main)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Activity size={20} color="var(--primary-color)" /> Field Operations
+            <AlertTriangle size={20} color="#ef4444" /> Live Emergencies
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-            <button
-              onClick={() => navigate('/command-map')}
-              style={{ padding: '24px', borderRadius: '16px', border: '1px solid #cbd5e1', background: 'linear-gradient(to bottom, #f8fafc, #f1f5f9)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'all 0.2s ease', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
-            >
-              <div style={{ background: '#3b82f6', color: 'white', padding: '16px', borderRadius: '14px' }}>
-                <Map size={32} />
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {data?.recentIncidents?.filter(inc => inc.status !== 'Resolved').length > 0 ? (
+              data.recentIncidents.filter(inc => inc.status !== 'Resolved').map(inc => (
+                <button
+                  key={inc.id}
+                  onClick={() => navigate('/incidents/' + inc.id)}
+                  style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid #cbd5e1', background: 'linear-gradient(to bottom, #f8fafc, #f1f5f9)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.2s ease', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+                >
+                  <div style={{ textAlign: 'left', flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: '800', backgroundColor: '#ef4444', color: 'white', padding: '2px 8px', borderRadius: '12px' }}>{inc.type}</span>
+                      <span style={{ fontSize: '12px', fontWeight: '800', color: '#3b82f6' }}>{inc.code}</span>
+                    </div>
+                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', marginBottom: '2px' }}>{inc.location_address || 'GPS Location Attached'}</div>
+                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>{inc.status} • {new Date(inc.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                  </div>
+                  <div style={{ padding: '10px', background: 'white', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                    <MapPin size={20} color="#3b82f6" />
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div style={{ textAlign: 'center', padding: '32px 0', color: '#64748b', fontSize: '15px', fontWeight: '600', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <ShieldAlert size={32} color="#cbd5e1" style={{ marginBottom: '8px' }} />
+                <div>No active emergencies right now.</div>
               </div>
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a' }}>Command Map</div>
-                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', marginTop: '4px' }}>Locate live emergencies on map</div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => navigate('/incidents')}
-              style={{ padding: '24px', borderRadius: '16px', border: '1px solid #cbd5e1', background: 'linear-gradient(to bottom, #f8fafc, #f1f5f9)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'all 0.2s ease', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
-            >
-              <div style={{ background: '#ef4444', color: 'white', padding: '16px', borderRadius: '14px' }}>
-                <ClipboardList size={32} />
-              </div>
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a' }}>Active Dispatches</div>
-                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', marginTop: '4px' }}>Update rescue operation status</div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => navigate('/responders')}
-              style={{ padding: '24px', borderRadius: '16px', border: '1px solid #cbd5e1', background: 'linear-gradient(to bottom, #f8fafc, #f1f5f9)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'all 0.2s ease', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
-            >
-              <div style={{ background: '#f59e0b', color: 'white', padding: '16px', borderRadius: '14px' }}>
-                <Users size={32} />
-              </div>
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a' }}>Responder Directory</div>
-                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', marginTop: '4px' }}>Contact backup & partner units</div>
-              </div>
-            </button>
+            )}
           </div>
         </div>
       )}
