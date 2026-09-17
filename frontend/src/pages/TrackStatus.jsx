@@ -261,13 +261,13 @@ const TrackStatus = () => {
 
       {/* Progress Stepper */}
       {currentIndex >= 0 && incident.status !== 'False Alarm' && (
-        <div className="card no-print" style={{ marginBottom: '24px', padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '50%', left: '40px', right: '40px', height: '4px', backgroundColor: '#e2e8f0', zIndex: 1, transform: 'translateY(-50%)' }}>
+        <div className="card no-print" style={{ marginBottom: '24px', padding: '20px 10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: '16px', left: '10%', right: '10%', height: '4px', backgroundColor: '#e2e8f0', zIndex: 1, transform: 'translateY(-50%)' }}>
               <div style={{ width: `${(currentIndex / (statusFlow.length - 1)) * 100}%`, height: '100%', backgroundColor: 'var(--primary-color)', transition: 'width 0.5s ease' }}></div>
             </div>
             {statusFlow.map((step, idx) => (
-              <div key={step} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', zIndex: 2, position: 'relative', width: '80px' }}>
+              <div key={step} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', zIndex: 2, position: 'relative', width: '20%', minWidth: '60px' }}>
                 <div style={{ 
                   width: '32px', height: '32px', borderRadius: '50%', 
                   backgroundColor: idx <= currentIndex ? 'var(--primary-color)' : '#fff',
@@ -278,7 +278,7 @@ const TrackStatus = () => {
                 }}>
                   {idx < currentIndex ? <CheckCircle2 size={18} /> : (idx + 1)}
                 </div>
-                <div style={{ fontSize: '11px', fontWeight: idx === currentIndex ? 'bold' : 'normal', color: idx <= currentIndex ? 'var(--text-main)' : 'var(--text-muted)', textAlign: 'center' }}>
+                <div style={{ fontSize: '11px', lineHeight: '1.2', fontWeight: idx === currentIndex ? 'bold' : 'normal', color: idx <= currentIndex ? 'var(--text-main)' : 'var(--text-muted)', textAlign: 'center', wordBreak: 'break-word' }}>
                   {step}
                 </div>
               </div>
