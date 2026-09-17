@@ -12,7 +12,9 @@ import {
   Power,
   Truck,
   BarChart3,
-  Users
+  Users,
+  Activity,
+  X
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
