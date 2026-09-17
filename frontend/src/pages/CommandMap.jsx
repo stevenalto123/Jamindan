@@ -171,7 +171,7 @@ const CommandMap = ({ isWidget = false }) => {
         position: 'relative',
         display: 'flex', 
         flexDirection: 'column', 
-        height: isWidget ? '500px' : (isFullscreen ? '100vh' : 'calc(100vh - 80px)'), 
+        height: isWidget ? '750px' : (isFullscreen ? '100vh' : 'calc(100vh - 80px)'), 
         backgroundColor: '#0f172a', 
         borderRadius: isWidget || !isFullscreen ? '20px' : '0', 
         overflow: 'hidden', 
@@ -285,6 +285,21 @@ const CommandMap = ({ isWidget = false }) => {
         .popup-btn:hover {
           background: #dc2626;
         }
+
+        /* Custom Premium Scrollbar for Sidebar */
+        .glass-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .glass-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .glass-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.15);
+          border-radius: 10px;
+        }
+        .glass-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.25);
+        }
       `}</style>
 
       {/* Top Header */}
@@ -348,11 +363,12 @@ const CommandMap = ({ isWidget = false }) => {
           top: '20px',
           left: '20px',
           bottom: '20px',
-          width: '320px', 
-          backgroundColor: 'rgba(15, 23, 42, 0.75)', 
-          backdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '20px',
+          width: '360px', 
+          background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.7) 100%)', 
+          backdropFilter: 'blur(30px)',
+          WebkitBackdropFilter: 'blur(30px)',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          borderRadius: '24px',
           display: 'flex',
           flexDirection: 'column',
           zIndex: 1000,
@@ -368,7 +384,7 @@ const CommandMap = ({ isWidget = false }) => {
             </h3>
           </div>
           
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="glass-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {incidents.length === 0 ? (
               <div style={{ color: '#64748b', textAlign: 'center', padding: '40px 0', fontSize: '13px', fontWeight: '600' }}>
                 All clear. No active emergencies.
@@ -379,17 +395,17 @@ const CommandMap = ({ isWidget = false }) => {
                   key={inc.id}
                   onClick={() => panToIncident(inc.location_lat, inc.location_lng)}
                   style={{
-                    backgroundColor: 'rgba(255,255,255,0.03)',
-                    borderRadius: '12px',
+                    background: 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%)',
+                    borderRadius: '16px',
                     padding: '16px',
                     cursor: 'pointer',
+                    border: '1px solid rgba(255,255,255,0.08)',
                     borderLeft: '4px solid #ef4444',
-                    border: '1px solid rgba(255,255,255,0.05)',
-                    borderLeftColor: '#ef4444',
-                    transition: 'all 0.2s'
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                   }}
-                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                  onMouseOver={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%)'; e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(239,68,68,0.15)'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%)'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)'; }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', alignItems: 'center' }}>
                     <span style={{ color: '#ef4444', fontWeight: '800', fontSize: '15px' }}>{inc.type}</span>
@@ -406,13 +422,13 @@ const CommandMap = ({ isWidget = false }) => {
           </div>
           
           {/* Responders Section */}
-          <div style={{ padding: '20px', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', maxHeight: '45%' }}>
+          <div style={{ padding: '20px', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', maxHeight: '45%' }}>
             <h3 style={{ color: '#fff', margin: '0 0 16px 0', fontSize: '14px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
               <AlertCircle size={18} color="#38bdf8" />
               On-Duty Responders <span style={{ background: '#38bdf8', color: '#0f172a', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }}>{responders.length}</span>
             </h3>
             
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
+            <div className="glass-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
               {responders.length === 0 ? (
                 <div style={{ color: '#64748b', fontSize: '13px', textAlign: 'center', padding: '20px 0', fontWeight: '600' }}>No responders currently active</div>
               ) : (
@@ -426,18 +442,19 @@ const CommandMap = ({ isWidget = false }) => {
                       key={resp.id}
                       onClick={() => panToIncident(resp.current_lat, resp.current_lng)}
                       style={{
-                        backgroundColor: 'rgba(255,255,255,0.03)',
-                        borderRadius: '10px',
+                        background: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+                        borderRadius: '12px',
                         padding: '12px',
                         cursor: 'pointer',
                         borderLeft: `4px solid ${agencyColor}`,
-                        border: '1px solid rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.08)',
                         borderLeftColor: agencyColor,
-                        transition: 'background 0.2s',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                         flexShrink: 0
                       }}
-                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
-                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
+                      onMouseOver={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%)'; e.currentTarget.style.transform = 'translateY(-1px) scale(1.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
