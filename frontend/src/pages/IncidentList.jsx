@@ -40,6 +40,13 @@ const IncidentList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const fetchIncidents = async (isPolling = false) => {
     if (!isPolling) setLoading(true);
     try {
@@ -120,18 +127,21 @@ const IncidentList = () => {
   };
 
   const isResident = user?.role === 'Resident';
+  const useCardView = isResident || (isMobile && user?.role === 'Responder');
 
-  // ─── RESIDENT CARD VIEW ────────────────────────────────────────────────────
-  if (isResident) {
+  // 🔹🔹🔹 MOBILE / RESIDENT CARD VIEW 🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹🔹
+  if (useCardView) {
     return (
       <div className="content-body" style={{ paddingBottom: '80px', maxWidth: '800px', margin: '0 auto' }}>
         
-        {/* Header & Submit Button */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-          <Link to="/report" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 20px', fontSize: '15px', fontWeight: '800', borderRadius: '12px', background: 'var(--danger-color)', color: 'white', textDecoration: 'none', boxShadow: '0 4px 16px rgba(231, 76, 60, 0.3)' }}>
-            <PlusCircle size={20} /> {t('submitNewReport')}
-          </Link>
-        </div>
+        {/* Header & Submit Button (Residents Only) */}
+        {isResident && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+            <Link to="/report" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 20px', fontSize: '15px', fontWeight: '800', borderRadius: '12px', background: 'var(--danger-color)', color: 'white', textDecoration: 'none', boxShadow: '0 4px 16px rgba(231, 76, 60, 0.3)' }}>
+              <PlusCircle size={20} /> {t('submitNewReport')}
+            </Link>
+          </div>
+        )}
 
         {/* Filters Container */}
         <div style={{ background: 'var(--card-bg)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.04)', display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
