@@ -527,8 +527,8 @@ const CommandMap = ({ isWidget = false }) => {
         }}>
           
           {/* Incidents Section */}
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', flex: 1, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', borderRight: isMobile ? '1px solid rgba(255,255,255,0.07)' : 'none', borderBottom: !isMobile ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden', borderRight: isMobile ? '1px solid rgba(255,255,255,0.07)' : 'none', borderBottom: !isMobile ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
             <div style={{ padding: isMobile ? '10px 12px' : '20px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
               <h3 style={{ color: '#fff', margin: 0, fontSize: isMobile ? '11px' : '14px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>
                 <ShieldAlert size={isMobile ? 14 : 18} color="#ef4444" />
@@ -536,7 +536,7 @@ const CommandMap = ({ isWidget = false }) => {
               </h3>
             </div>
           
-          <div className="glass-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '10px 12px' : '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="glass-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: isMobile ? '10px 12px' : '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {incidents.length === 0 ? (
               <div style={{ color: '#64748b', textAlign: 'center', padding: '40px 0', fontSize: '13px', fontWeight: '600' }}>
                 All clear. No active emergencies.
@@ -554,7 +554,8 @@ const CommandMap = ({ isWidget = false }) => {
                     border: '1px solid rgba(255,255,255,0.08)',
                     borderLeft: '4px solid #ef4444',
                     boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    flexShrink: 0
                   }}
                   onMouseOver={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%)'; e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(239,68,68,0.15)'; }}
                   onMouseOut={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%)'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)'; }}
@@ -575,7 +576,7 @@ const CommandMap = ({ isWidget = false }) => {
           </div>
           
           {/* Responders Section */}
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', background: 'rgba(0,0,0,0.3)', borderTop: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden', background: 'rgba(0,0,0,0.3)', borderTop: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
             <div style={{ padding: isMobile ? '10px 12px' : '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
               <h3 style={{ color: '#fff', margin: 0, fontSize: isMobile ? '11px' : '14px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>
                 <AlertCircle size={isMobile ? 14 : 18} color="#38bdf8" />
@@ -583,7 +584,7 @@ const CommandMap = ({ isWidget = false }) => {
               </h3>
             </div>
             
-            <div className="glass-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
+            <div className="glass-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
               {responders.length === 0 ? (
                 <div style={{ color: '#64748b', fontSize: '13px', textAlign: 'center', padding: '20px 0', fontWeight: '600' }}>No responders currently active</div>
               ) : (
