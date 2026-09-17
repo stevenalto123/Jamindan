@@ -107,71 +107,8 @@ const AdminDashboard = () => {
     );
   }
 
-  // Find the most critical pending incident
-  const urgentIncident = data?.recentIncidents?.find(i => i.status === 'Pending') || data?.recentIncidents?.[0];
-
   return (
     <div className="content-body" style={{ padding: '24px', margin: '0 auto', maxWidth: '1200px', paddingBottom: '80px' }}>
-      
-      {/* Main Action Card */}
-      <div style={{ 
-        background: 'var(--card-bg)',
-        borderRadius: '20px', 
-        padding: '24px', 
-        marginBottom: '24px',
-        border: '1px solid var(--border-color)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.06)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: 'var(--text-main)' }}>
-          <ShieldAlert size={22} color="var(--primary-color)" />
-          <h2 style={{ fontSize: '18px', fontWeight: '800', margin: 0 }}>{t('activeDispatch')}</h2>
-        </div>
-        
-        {urgentIncident ? (
-          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-              <span style={{ fontWeight: '800', color: 'var(--primary-color)', fontSize: '18px' }}>{urgentIncident.type}</span>
-              {urgentIncident.status === 'Pending' ? (
-                <span style={{ fontSize: '13px', background: '#fef2f2', color: '#dc2626', padding: '4px 12px', borderRadius: '8px', fontWeight: '700' }}>URGENT: {urgentIncident.status}</span>
-              ) : (
-                <span style={{ fontSize: '13px', background: '#eff6ff', color: '#2563eb', padding: '4px 12px', borderRadius: '8px', fontWeight: '700' }}>{urgentIncident.status}</span>
-              )}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '14px', fontWeight: '500' }}>
-              <MapPin size={16} color="var(--text-muted)" /> {urgentIncident.location_address || t('gpsLocationOnly') || 'Coordinates Only (Map)'}
-            </div>
-          </div>
-        ) : (
-          <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '12px', marginBottom: '16px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: '600', border: '1px dashed #cbd5e1' }}>
-            {t('noActiveEmergencies')}
-          </div>
-        )}
-
-        <button 
-          onClick={() => navigate(urgentIncident ? `/incidents/${urgentIncident.id}` : '/incidents')}
-          style={{
-            width: '100%',
-            padding: '16px',
-            borderRadius: '12px',
-            background: urgentIncident?.status === 'Pending' ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'var(--card-bg)',
-            color: urgentIncident?.status === 'Pending' ? 'white' : 'var(--primary-color)',
-            border: urgentIncident?.status === 'Pending' ? 'none' : '2px solid var(--primary-color)',
-            fontSize: '16px',
-            fontWeight: '800',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            boxShadow: urgentIncident?.status === 'Pending' ? '0 8px 24px rgba(239, 68, 68, 0.3)' : 'none',
-            transition: 'transform 0.2s',
-          }}
-          onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-          {urgentIncident?.status === 'Pending' ? t('respondToAlert') : t('viewAllIncidents')}
-        </button>
-      </div>
 
       {/* 2x2 Vibrant Status Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '24px' }}>
