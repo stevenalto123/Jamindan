@@ -12,12 +12,6 @@ const NotificationBell = () => {
   const prevUnreadCount = useRef(0);
   const navigate = useNavigate();
 
-  // References for looping audio siren and haptic intervals
-  const alarmIntervalRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const oscillatorRef = useRef(null);
-  const gainNodeRef = useRef(null);
-
   const fetchNotifications = async () => {
     try {
       const res = await axios.get('/api/notifications');
@@ -31,116 +25,13 @@ const NotificationBell = () => {
     fetchNotifications();
     // Poll notifications every 3 seconds
     const interval = setInterval(fetchNotifications, 3000);
-    return () => {
-      clearInterval(interval);
-      stopLoopingAlarm();
-    };
+    return () => clearInterval(interval);
   }, []);
-
-  const startLoopingAlarm = () => {
-    if (alarmIntervalRef.current) return; // Alarm is already running
-
-    // 1. Play continuous alternating siren sound using Web Audio API
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) {
-        const ctx = new AudioContextClass();
-        audioContextRef.current = ctx;
-
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        
-        osc.type = 'sawtooth';
-        oscillatorRef.current = osc;
-        gainNodeRef.current = gain;
-
-        osc.start(0);
-
-        // Modulate frequency to alternate like an emergency siren
-        let high = false;
-        const fmInterval = setInterval(() => {
-          if (!oscillatorRef.current) {
-            clearInterval(fmInterval);
-            return;
-          }
-          osc.frequency.setValueAtTime(high ? 1100.00 : 750.00, ctx.currentTime);
-          gain.gain.setValueAtTime(high ? 0.12 : 0.08, ctx.currentTime);
-          high = !high;
-        }, 350); // Alternate every 350ms
-        
-        osc.fmInterval = fmInterval;
-      }
-    } catch (e) {
-      console.warn('Audio autoplay blocked or context forbidden:', e);
-    }
-
-    // 2. Loop haptic phone vibration
-    const runVibe = () => {
-      if (navigator.vibrate) {
-        navigator.vibrate([1000, 300]); // 1s vibrate, 0.3s silence
-      }
-    };
-    runVibe();
-
-    alarmIntervalRef.current = setInterval(runVibe, 1300);
-  };
-
-  const stopLoopingAlarm = () => {
-    if (alarmIntervalRef.current) {
-      clearInterval(alarmIntervalRef.current);
-      alarmIntervalRef.current = null;
-    }
-
-    if (navigator.vibrate) {
-      navigator.vibrate(0); // Cancel all active vibrations immediately
-    }
-
-    try {
-      if (oscillatorRef.current) {
-        if (oscillatorRef.current.fmInterval) {
-          clearInterval(oscillatorRef.current.fmInterval);
-        }
-        try {
-          oscillatorRef.current.stop();
-        } catch (err) {
-          // Ignore error if it was never started
-        }
-        try {
-          oscillatorRef.current.disconnect();
-        } catch (err) {}
-        oscillatorRef.current = null;
-      }
-      if (audioContextRef.current) {
-        try {
-          audioContextRef.current.close();
-        } catch (err) {}
-        audioContextRef.current = null;
-      }
-    } catch (e) {
-      console.warn('Error releasing audio resources:', e);
-    }
-  };
 
   // Monitor notifications unread counts
   useEffect(() => {
     const unreadNotifications = notifications.filter(n => !n.is_read);
     const unread = unreadNotifications.length;
-
-    // Detect if there is any unread SOS alarm
-    const unreadSOS = unreadNotifications.filter(n => 
-      (n.title && n.title.toLowerCase().includes('emergency')) || 
-      (n.message && n.message.toLowerCase().includes('sos'))
-    );
-
-    const isResponderOrAdmin = user && (user.role === 'Responder' || user.role === 'Admin');
-
-    if (unreadSOS.length > 0 && isResponderOrAdmin) {
-      startLoopingAlarm();
-    } else {
-      stopLoopingAlarm();
-    }
 
     // Normal non-looping chime for regular notification additions
     if (unread > prevUnreadCount.current) {
@@ -150,7 +41,10 @@ const NotificationBell = () => {
         (n.message && n.message.toLowerCase().includes('sos'))
       );
 
-      // Play normal chime if it's not an SOS, OR if they are a resident (since residents don't get the looping alarm)
+      const isResponderOrAdmin = user && (user.role === 'Responder' || user.role === 'Admin');
+
+      // Play normal chime if it's not an SOS, OR if they are a resident 
+      // (Because Admins/Responders already get a global SOS siren from App.jsx)
       if (!hasPanicSOS || !isResponderOrAdmin) {
         try {
           const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -192,10 +86,7 @@ const NotificationBell = () => {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      stopLoopingAlarm();
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -253,7 +144,7 @@ const NotificationBell = () => {
               notifications.map((notif) => (
                 <div
                   key={notif.id}
-                  className={`notif-item ${!notif.is_read ? 'unread' : ''}`}
+                  className={"notif-item " + (!notif.is_read ? 'unread' : '')}
                   onClick={() => handleMarkAsRead(notif.id, notif.reference_type, notif.reference_id)}
                 >
                   <div className="notif-item-title">{notif.title}</div>
