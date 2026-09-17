@@ -85,10 +85,15 @@ const CommandMap = ({ isWidget = false }) => {
 
   useEffect(() => {
     if (!mapRef.current && mapContainerRef.current) {
+      // Fix for React StrictMode re-mounting
+      if (mapContainerRef.current._leaflet_id) {
+        mapContainerRef.current._leaflet_id = null;
+      }
+      
       mapRef.current = L.map(mapContainerRef.current, {
         center: [11.3969, 122.3995],
         zoom: 13,
-        zoomControl: false // We will move it to the bottom right
+        zoomControl: false
       });
 
       L.control.zoom({ position: 'bottomright' }).addTo(mapRef.current);
@@ -101,6 +106,11 @@ const CommandMap = ({ isWidget = false }) => {
       
       incidentLayerRef.current = L.layerGroup().addTo(mapRef.current);
       responderLayerRef.current = L.layerGroup().addTo(mapRef.current);
+
+      // Force a resize check in case flex layout delayed the container dimensions
+      setTimeout(() => {
+        if (mapRef.current) mapRef.current.invalidateSize();
+      }, 250);
     }
     
     fetchData();
@@ -111,6 +121,9 @@ const CommandMap = ({ isWidget = false }) => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
+      }
+      if (mapContainerRef.current) {
+        mapContainerRef.current._leaflet_id = null;
       }
     };
   }, []);
