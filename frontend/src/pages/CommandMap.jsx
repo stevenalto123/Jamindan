@@ -24,8 +24,8 @@ const CommandMap = ({ isWidget = false }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // CartoDB Dark Matter tiles for premium War Room aesthetic
-  const tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-  const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   const fetchData = async () => {
     try {
