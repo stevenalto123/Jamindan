@@ -314,9 +314,6 @@ const TrackStatus = () => {
                   {new Date(incident.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
-              <div>
-                {getStatusBadge(incident.status)}
-              </div>
             </div>
 
             <div style={{ marginBottom: '20px' }}>
