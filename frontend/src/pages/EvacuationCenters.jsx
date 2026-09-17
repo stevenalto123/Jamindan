@@ -413,6 +413,7 @@ const EvacuationCenters = () => {
         
         {/* Interactive Map Wrapper */}
         <div style={{
+          order: showForm ? 2 : 1,
           ...(isFullScreen ? {
             position: 'fixed',
             top: 0,
@@ -468,7 +469,7 @@ const EvacuationCenters = () => {
         </div>
 
         {/* Details & List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', order: showForm ? 1 : 2 }}>
           
           {showForm && isAdmin ? (
             /* Admin Add/Edit Form */
