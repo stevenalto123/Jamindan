@@ -58,7 +58,7 @@ const TrackStatus = () => {
 
   const fetchIncidentDetail = async () => {
     try {
-      const res = await axios.get(`/api/incidents/${id}`);
+      const res = await axios.get(`/api/incidents/${id}?_t=${Date.now()}`);
       setIncident(res.data.incident);
       setHistory(res.data.history);
       setHousehold(res.data.reporterHousehold || []);
