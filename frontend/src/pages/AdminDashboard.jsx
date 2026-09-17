@@ -166,7 +166,7 @@ const AdminDashboard = () => {
       <div style={{ display: 'flex', gap: '24px', marginBottom: '24px', flexWrap: 'wrap' }}>
         {/* Left: Command Map */}
         <div style={{ flex: '3', minWidth: '60%' }}>
-          <div className="tac-panel" style={{ padding: '0', overflow: 'hidden', height: '600px' }}>
+          <div className="tac-panel" style={{ padding: '0', overflow: 'hidden', height: '450px' }}>
              <CommandMap isWidget={true} />
           </div>
         </div>
