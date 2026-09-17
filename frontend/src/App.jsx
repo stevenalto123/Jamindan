@@ -102,6 +102,17 @@ let globalAudioCtx = null;
 const AppLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(() => {
+    return localStorage.getItem('sidebar_collapsed') === 'true';
+  });
+  
+  const toggleDesktopSidebar = () => {
+    setDesktopCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('sidebar_collapsed', String(next));
+      return next;
+    });
+  };
   const { user } = useAuth();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
@@ -464,9 +475,14 @@ const AppLayout = ({ children }) => {
   }
 
   return (
-    <div className="app-container">
-      <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-      <div className="main-content">
+    <div className={`app-container ${desktopCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        toggleSidebar={toggleSidebar} 
+        isDesktopCollapsed={desktopCollapsed}
+        toggleDesktopSidebar={toggleDesktopSidebar}
+      />
+      <div className={`main-content ${desktopCollapsed ? 'desktop-collapsed' : ''}`}>
         {showEmergencyAlert && (
           <div 
             onClick={() => {

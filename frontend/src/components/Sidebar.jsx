@@ -19,11 +19,13 @@ import {
   Map,
   PhoneCall,
   UserCheck,
-  HeartPulse
+  HeartPulse,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-const Sidebar = ({ isOpen, toggleSidebar }) => {
+const Sidebar = ({ isOpen, toggleSidebar, isDesktopCollapsed, toggleDesktopSidebar }) => {
   const { user, logout } = useAuth();
   const { t } = useLanguage();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -56,7 +58,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   };
 
   return (
-    <aside className={`sidebar ${isOpen ? 'active' : ''}`}>
+    <aside className={`sidebar ${isOpen ? 'active' : ''} ${isDesktopCollapsed ? 'desktop-collapsed' : ''}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo-wrapper">
           <img src="/logo.png" alt="Jamindan Seal" className="sidebar-seal" />
@@ -244,6 +246,28 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             <span>{t('logout')}</span>
           </button>
         </li>
+
+        {/* Collapse Toggle for Desktop */}
+        <button 
+          onClick={toggleDesktopSidebar}
+          className="desktop-collapse-btn"
+          style={{
+            background: 'rgba(0,0,0,0.2)',
+            border: 'none',
+            color: 'white',
+            padding: '10px',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: isDesktopCollapsed ? '100%' : 'auto',
+            marginLeft: isDesktopCollapsed ? '0' : 'auto'
+          }}
+          title={isDesktopCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {isDesktopCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
       </nav>
     </aside>
   );
