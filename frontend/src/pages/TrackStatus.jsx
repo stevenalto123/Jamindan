@@ -248,10 +248,12 @@ const TrackStatus = () => {
           <ArrowLeft size={16} /> Back to list
         </Link>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={copyLink} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '13px', height: '36px' }}>
-            <Copy size={16} /> Copy Link
-          </button>
-          {isStaff && (
+          {user?.role !== 'Responder' && (
+            <button onClick={copyLink} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '13px', height: '36px' }}>
+              <Copy size={16} /> Copy Link
+            </button>
+          )}
+          {user?.role === 'Admin' && (
             <button onClick={handlePrint} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '13px', height: '36px' }}>
               <Printer size={16} /> Download Official PDF
             </button>
