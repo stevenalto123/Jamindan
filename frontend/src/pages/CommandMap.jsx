@@ -375,43 +375,50 @@ const CommandMap = ({ isWidget = false }) => {
         borderBottom: '1px solid rgba(255,255,255,0.05)',
         display: 'flex', 
         alignItems: 'center', 
-        padding: '0 24px',
+        padding: isMobile ? '0 12px' : '0 24px',
         justifyContent: 'space-between',
         zIndex: 1000,
         position: 'absolute',
         top: 0, left: 0, right: 0
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '16px' }}>
           {!isWidget && !isFullscreen && (
             <button 
               onClick={() => navigate('/admin')}
-              style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '8px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'background 0.2s' }}
+              style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: isMobile ? '6px' : '8px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'background 0.2s', flexShrink: 0 }}
               onMouseOver={e => e.currentTarget.style.background = '#334155'}
               onMouseOut={e => e.currentTarget.style.background = '#1e293b'}
             >
-              <ArrowLeft size={18} />
+              <ArrowLeft size={isMobile ? 16 : 18} />
             </button>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '8px', borderRadius: '10px' }}>
-              <Layers size={20} color="#38bdf8" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '12px' }}>
+            <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: isMobile ? '6px' : '8px', borderRadius: '10px', flexShrink: 0 }}>
+              <Layers size={isMobile ? 16 : 20} color="#38bdf8" />
             </div>
-            <h1 style={{ color: '#fff', fontSize: '18px', margin: 0, fontWeight: '800', letterSpacing: '0.5px' }}>LIVE COMMAND MAP</h1>
+            <h1 style={{ color: '#fff', fontSize: isMobile ? '13px' : '18px', margin: 0, fontWeight: '800', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
+              {isMobile ? 'COMMAND MAP' : 'LIVE COMMAND MAP'}
+            </h1>
           </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <span style={{ color: '#94a3b8', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
-            <RefreshCw size={14} className={loading ? 'spinning' : ''} color="#38bdf8" />
-            LIVE SYNC: {lastRefreshed.toLocaleTimeString()}
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '20px' }}>
+          {!isMobile && (
+            <span style={{ color: '#94a3b8', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', whiteSpace: 'nowrap' }}>
+              <RefreshCw size={14} className={loading ? 'spinning' : ''} color="#38bdf8" />
+              LIVE SYNC: {lastRefreshed.toLocaleTimeString()}
+            </span>
+          )}
+          {isMobile && (
+            <RefreshCw size={16} className={loading ? 'spinning' : ''} color="#38bdf8" style={{ flexShrink: 0 }} />
+          )}
           <button 
             onClick={toggleFullscreen}
-            style={{ background: '#38bdf8', border: 'none', borderRadius: '8px', padding: '6px 12px', color: '#0f172a', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800', fontSize: '12px', transition: 'background 0.2s' }}
+            style={{ background: '#38bdf8', border: 'none', borderRadius: '8px', padding: isMobile ? '6px 8px' : '6px 12px', color: '#0f172a', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800', fontSize: isMobile ? '10px' : '12px', transition: 'background 0.2s', whiteSpace: 'nowrap', flexShrink: 0 }}
             onMouseOver={e => e.currentTarget.style.background = '#7dd3fc'}
             onMouseOut={e => e.currentTarget.style.background = '#38bdf8'}
           >
-            {isFullscreen ? <><Minimize size={14} /> EXIT</> : <><Maximize size={14} /> FULLSCREEN</>}
+            {isFullscreen ? <><Minimize size={isMobile ? 12 : 14} /> EXIT</> : <><Maximize size={isMobile ? 12 : 14} /> FULLSCREEN</>}
           </button>
         </div>
       </div>
