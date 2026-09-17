@@ -102,12 +102,20 @@ const NotificationBell = () => {
         if (oscillatorRef.current.fmInterval) {
           clearInterval(oscillatorRef.current.fmInterval);
         }
-        oscillatorRef.current.stop();
-        oscillatorRef.current.disconnect();
+        try {
+          oscillatorRef.current.stop();
+        } catch (err) {
+          // Ignore error if it was never started
+        }
+        try {
+          oscillatorRef.current.disconnect();
+        } catch (err) {}
         oscillatorRef.current = null;
       }
       if (audioContextRef.current) {
-        audioContextRef.current.close();
+        try {
+          audioContextRef.current.close();
+        } catch (err) {}
         audioContextRef.current = null;
       }
     } catch (e) {
