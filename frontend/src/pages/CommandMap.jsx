@@ -576,7 +576,7 @@ const CommandMap = ({ isWidget = false }) => {
           </div>
           
           {/* Responders Section */}
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden', background: 'rgba(0,0,0,0.3)', borderTop: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: isMobile ? 1 : (responders.length > 2 ? 1 : '0 0 auto'), maxHeight: isMobile ? 'none' : '50%', minHeight: 0, overflow: 'hidden', background: 'rgba(0,0,0,0.3)', borderTop: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
             <div style={{ padding: isMobile ? '10px 12px' : '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
               <h3 style={{ color: '#fff', margin: 0, fontSize: isMobile ? '11px' : '14px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>
                 <AlertCircle size={isMobile ? 14 : 18} color="#38bdf8" />
