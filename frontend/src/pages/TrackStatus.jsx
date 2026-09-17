@@ -19,7 +19,10 @@ import {
   Navigation,
   Activity,
   AlertTriangle,
-  Video
+  Video,
+  Copy,
+  CheckCircle2,
+  Users
 } from 'lucide-react';
 import { STATUSES } from './IncidentList';
 
@@ -30,6 +33,7 @@ const TrackStatus = () => {
   
   const [incident, setIncident] = useState(null);
   const [history, setHistory] = useState([]);
+  const [household, setHousehold] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -57,6 +61,7 @@ const TrackStatus = () => {
       const res = await axios.get(`/api/incidents/${id}`);
       setIncident(res.data.incident);
       setHistory(res.data.history);
+      setHousehold(res.data.reporterHousehold || []);
       // Wait to ensure the status isn't incorrectly mapped if it's an old one
       const oldStatus = res.data.incident.status;
       setNewStatus(STATUSES.includes(oldStatus) ? oldStatus : 'Acknowledged');
@@ -97,40 +102,15 @@ const TrackStatus = () => {
   useEffect(() => {
     if (user?.role === 'Responder' || user?.role === 'Admin') {
       const getLoc = () => {
-        const fallbackToIP = () => {
-          axios.get('https://ipapi.co/json/')
-            .then(res => {
-              if (res.data && res.data.latitude && res.data.longitude) {
-                setResponderLat(res.data.latitude);
-                setResponderLng(res.data.longitude);
-              } else {
-                throw new Error("ipapi failed");
-              }
-            })
-            .catch(() => {
-              axios.get('https://ipinfo.io/json')
-                .then(res2 => {
-                  if (res2.data && res2.data.loc) {
-                    const [lat, lng] = res2.data.loc.split(',').map(Number);
-                    setResponderLat(lat);
-                    setResponderLng(lng);
-                  }
-                })
-                .catch(() => {});
-            });
-        };
-
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               setResponderLat(pos.coords.latitude);
               setResponderLng(pos.coords.longitude);
             },
-            (err) => fallbackToIP(),
+            (err) => console.warn("GPS location unavailable", err),
             { enableHighAccuracy: true, timeout: 5000 }
           );
-        } else {
-          fallbackToIP();
         }
       };
       
@@ -162,10 +142,12 @@ const TrackStatus = () => {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'Pending': return <span className="badge badge-pending">Pending</span>;
-      case 'Under Review': return <span className="badge badge-review">Under Review</span>;
-      case 'In Progress': return <span className="badge badge-progress">In Progress</span>;
-      case 'Resolved': return <span className="badge badge-resolved">Resolved</span>;
+      case 'Pending': return <span className="badge" style={{ backgroundColor: '#f59e0b', color: 'white' }}>Pending</span>;
+      case 'Acknowledged': return <span className="badge" style={{ backgroundColor: '#3b82f6', color: 'white' }}>Acknowledged</span>;
+      case 'Responding': return <span className="badge" style={{ backgroundColor: '#8b5cf6', color: 'white' }}>Responding</span>;
+      case 'On Scene': return <span className="badge" style={{ backgroundColor: '#10b981', color: 'white' }}>On Scene</span>;
+      case 'Resolved': return <span className="badge" style={{ backgroundColor: '#059669', color: 'white' }}>Resolved</span>;
+      case 'False Alarm': return <span className="badge" style={{ backgroundColor: '#ef4444', color: 'white' }}>False Alarm</span>;
       default: return <span className="badge">{status}</span>;
     }
   };
@@ -243,18 +225,79 @@ const TrackStatus = () => {
     return resources;
   };
 
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    alert('Link copied to clipboard!');
+  };
+
+  // Status index for the stepper
+  const statusFlow = ['Pending', 'Acknowledged', 'Responding', 'On Scene', 'Resolved'];
+  const currentIndex = statusFlow.indexOf(incident.status);
+
+  // Check if we should show live stream to resident
+  const canResidentSeeStream = incident.status !== 'Pending' && incident.status !== 'Resolved' && incident.status !== 'False Alarm';
+
+  // Check if resolved to show closure summary
+  const isResolved = incident.status === 'Resolved';
+  const closureComment = isResolved ? history.findLast(h => h.status === 'Resolved')?.comment : null;
+
   return (
     <div className="content-body" ref={printRef} style={{ padding: '20px', backgroundColor: '#fff', color: '#000' }}>
       <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="no-print">
         <Link to="/incidents" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '13px', height: '36px' }}>
           <ArrowLeft size={16} /> Back to list
         </Link>
-        {isStaff && (
-          <button onClick={handlePrint} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '13px', height: '36px' }}>
-            <Printer size={16} /> Download Official PDF
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={copyLink} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '13px', height: '36px' }}>
+            <Copy size={16} /> Copy Link
           </button>
-        )}
+          {isStaff && (
+            <button onClick={handlePrint} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '13px', height: '36px' }}>
+              <Printer size={16} /> Download Official PDF
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Progress Stepper */}
+      {currentIndex >= 0 && incident.status !== 'False Alarm' && (
+        <div className="card no-print" style={{ marginBottom: '24px', padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: '50%', left: '40px', right: '40px', height: '4px', backgroundColor: '#e2e8f0', zIndex: 1, transform: 'translateY(-50%)' }}>
+              <div style={{ width: `${(currentIndex / (statusFlow.length - 1)) * 100}%`, height: '100%', backgroundColor: 'var(--primary-color)', transition: 'width 0.5s ease' }}></div>
+            </div>
+            {statusFlow.map((step, idx) => (
+              <div key={step} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', zIndex: 2, position: 'relative', width: '80px' }}>
+                <div style={{ 
+                  width: '32px', height: '32px', borderRadius: '50%', 
+                  backgroundColor: idx <= currentIndex ? 'var(--primary-color)' : '#fff',
+                  border: `3px solid ${idx <= currentIndex ? 'var(--primary-color)' : '#e2e8f0'}`,
+                  color: idx <= currentIndex ? '#fff' : '#cbd5e1',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 'bold', fontSize: '14px', transition: 'all 0.3s'
+                }}>
+                  {idx < currentIndex ? <CheckCircle2 size={18} /> : (idx + 1)}
+                </div>
+                <div style={{ fontSize: '11px', fontWeight: idx === currentIndex ? 'bold' : 'normal', color: idx <= currentIndex ? 'var(--text-main)' : 'var(--text-muted)', textAlign: 'center' }}>
+                  {step}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Closure Summary */}
+      {isResolved && closureComment && (
+        <div className="card" style={{ marginBottom: '24px', backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0' }}>
+          <h3 className="card-title" style={{ color: '#065f46', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <CheckCircle2 size={18} /> Closure Summary
+          </h3>
+          <p style={{ margin: 0, fontSize: '14px', color: '#047857' }}>
+            {closureComment}
+          </p>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }} className="responsive-grid-col">
         {/* Left Side: Basic details & History */}
@@ -322,14 +365,16 @@ const TrackStatus = () => {
                       <div className="track-timeline-content">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span className="track-timeline-title">{log.status}</span>
-                          <span className="track-timeline-time">
-                            {new Date(log.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                          <span className="track-timeline-time" style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '12px', fontWeight: 'bold' }}>
+                              {new Date(log.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              {new Date(log.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </div>
                           </span>
                         </div>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                          {new Date(log.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </span>
-                        <p className="track-timeline-desc">{log.comment}</p>
+                        <p className="track-timeline-desc" style={{ marginTop: '4px' }}>{log.comment}</p>
                       </div>
                     </div>
                   );
@@ -343,7 +388,7 @@ const TrackStatus = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
           {/* Live Video Streaming Section */}
-          {user?.role === 'Resident' && incident.status !== 'Resolved' && (
+          {user?.role === 'Resident' && canResidentSeeStream && (
             <div className="card no-print" style={{ borderColor: 'var(--primary-color)' }}>
               <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary-color)' }}>
                 <Video size={18} /> Live Incident Broadcast Active
@@ -355,7 +400,7 @@ const TrackStatus = () => {
             </div>
           )}
 
-          {isStaff && incident.status !== 'Resolved' && (
+          {isStaff && canResidentSeeStream && (
             <div className="card no-print" style={{ backgroundColor: showLiveStream ? '#000' : 'var(--card-bg)' }}>
               {!showLiveStream ? (
                 <button 
@@ -446,7 +491,7 @@ const TrackStatus = () => {
                 href={`https://www.google.com/maps/dir/?api=1&destination=${incident.location_lat},${incident.location_lng}&dir_action=navigate`}
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="btn btn-primary"
+                className="btn btn-primary no-print"
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '15px', padding: '12px' }}
               >
                 <Navigation size={18} /> Navigate to Scene
@@ -515,6 +560,34 @@ const TrackStatus = () => {
                   )}
                 </div>
               </div>
+
+              {/* HOUSEHOLD MEMBERS (For Paramedics context) */}
+              {household && household.length > 0 && (
+                <div className="card" style={{ borderLeft: '4px solid #3498db', backgroundColor: '#f0f8ff' }}>
+                  <h3 className="card-title" style={{ color: '#2980b9', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Users size={18} /> Household Members
+                  </h3>
+                  <div style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '10px' }}>
+                    Context for potential victims at the location
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {household.map(member => (
+                      <div key={member.id} style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #bde0fe', fontSize: '13px' }}>
+                        <div style={{ fontWeight: 'bold', color: '#2c3e50', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>{member.full_name}</span>
+                          <span style={{ color: '#7f8c8d' }}>{member.age} yrs • {member.gender}</span>
+                        </div>
+                        {member.medical_notes && (
+                          <div style={{ marginTop: '4px', color: '#e67e22', fontSize: '12px', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
+                            <AlertTriangle size={12} style={{ marginTop: '2px' }} />
+                            <span>{member.medical_notes}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
