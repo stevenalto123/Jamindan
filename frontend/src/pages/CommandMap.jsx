@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import L from 'leaflet';
-import { ShieldAlert, AlertCircle, ArrowLeft, RefreshCw, Layers, Maximize, Minimize } from 'lucide-react';
+import { ShieldAlert, AlertCircle, ArrowLeft, RefreshCw, Layers, Maximize, Minimize, Map as MapIcon, Globe, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -22,10 +22,37 @@ const CommandMap = ({ isWidget = false }) => {
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [mapStyle, setMapStyle] = useState('street');
+  const [showStyleMenu, setShowStyleMenu] = useState(false);
+  const tileLayerRef = useRef(null);
 
-  // CartoDB Dark Matter tiles for premium War Room aesthetic
-  const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-  const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  const mapStyles = {
+    street: {
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '&copy; OpenStreetMap contributors',
+      icon: Sun,
+      label: 'Street (Light)'
+    },
+    tactical: {
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '&copy; OpenStreetMap contributors',
+      icon: Moon,
+      label: 'Tactical (Dark)'
+    },
+    satellite: {
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      attribution: 'Tiles &copy; Esri',
+      icon: Globe,
+      label: 'Satellite'
+    },
+    topo: {
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      attribution: 'Map data: &copy; OSM, SRTM | Style: &copy; OpenTopoMap',
+      icon: MapIcon,
+      label: 'Topographic'
+    }
+  };
+
 
   const fetchData = async () => {
     try {
@@ -56,7 +83,7 @@ const CommandMap = ({ isWidget = false }) => {
       });
 
       L.control.zoom({ position: 'bottomright' }).addTo(mapRef.current);
-      L.tileLayer(tileUrl, { attribution }).addTo(mapRef.current);
+      tileLayerRef.current = L.tileLayer(mapStyles[mapStyle].url, { attribution: mapStyles[mapStyle].attribution }).addTo(mapRef.current);
       
       incidentLayerRef.current = L.layerGroup().addTo(mapRef.current);
       responderLayerRef.current = L.layerGroup().addTo(mapRef.current);
@@ -73,6 +100,21 @@ const CommandMap = ({ isWidget = false }) => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (mapRef.current && tileLayerRef.current) {
+      tileLayerRef.current.setUrl(mapStyles[mapStyle].url);
+      
+      const pane = mapRef.current.getPane('tilePane');
+      if (pane) {
+        if (mapStyle === 'tactical') {
+          pane.style.filter = 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)';
+        } else {
+          pane.style.filter = 'none';
+        }
+      }
+    }
+  }, [mapStyle]);
 
   // Fullscreen Handler
   const toggleFullscreen = () => {
@@ -356,6 +398,60 @@ const CommandMap = ({ isWidget = false }) => {
         
         {/* Map Container */}
         <div ref={mapContainerRef} style={{ width: '100%', height: '100%', backgroundColor: '#020617' }}></div>
+
+        {/* Map Style Switcher */}
+        <div style={{ position: 'absolute', top: '20px', right: isWidget ? '20px' : '80px', zIndex: 1000 }}>
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setShowStyleMenu(!showStyleMenu)}
+              style={{
+                width: '44px', height: '44px', borderRadius: '12px',
+                background: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,255,255,0.1)', color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+                transition: 'all 0.2s'
+              }}
+              title="Change Map Style"
+            >
+              <Layers size={20} />
+            </button>
+            
+            {showStyleMenu && (
+              <div style={{
+                position: 'absolute', top: '54px', right: '0',
+                background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px',
+                padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px',
+                minWidth: '180px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+              }}>
+                {Object.entries(mapStyles).map(([key, style]) => {
+                  const Icon = style.icon;
+                  const isActive = mapStyle === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => { setMapStyle(key); setShowStyleMenu(false); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        width: '100%', padding: '10px 12px', borderRadius: '8px',
+                        background: isActive ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+                        border: 'none', color: isActive ? '#38bdf8' : '#cbd5e1',
+                        fontSize: '13px', fontWeight: isActive ? '700' : '500',
+                        cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s'
+                      }}
+                      onMouseOver={e => { if(!isActive) { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#fff'; } }}
+                      onMouseOut={e => { if(!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#cbd5e1'; } }}
+                    >
+                      <Icon size={16} />
+                      {style.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Floating Glassmorphic Sidebar */}
         <div style={{ 
