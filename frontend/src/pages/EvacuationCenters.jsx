@@ -128,18 +128,6 @@ const EvacuationCenters = () => {
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(mapInstance.current);
-
-      // Map click handler for coordinate selection when form is open
-      mapInstance.current.on('click', (e) => {
-        if (!isAdmin || !showForm) return; // Only update form coordinates if form is open and user is admin
-        
-        const { lat, lng } = e.latlng;
-        setFormData(prev => ({
-          ...prev,
-          latitude: lat.toFixed(6),
-          longitude: lng.toFixed(6)
-        }));
-      });
     }
 
     // Clear existing markers
@@ -204,6 +192,29 @@ const EvacuationCenters = () => {
     }
 
   }, [centers, loading, showForm, userLocation]);
+
+  // Dynamic Map Click Handler to capture coordinates when the form is open
+  useEffect(() => {
+    if (!mapInstance.current) return;
+
+    const handleMapClick = (e) => {
+      if (!isAdmin || !showForm) return; // Must re-evaluate on every render using latest showForm state
+      
+      const { lat, lng } = e.latlng;
+      setFormData(prev => ({
+        ...prev,
+        latitude: lat.toFixed(6),
+        longitude: lng.toFixed(6)
+      }));
+    };
+
+    mapInstance.current.on('click', handleMapClick);
+
+    // Cleanup to prevent multiple listeners
+    return () => {
+      mapInstance.current.off('click', handleMapClick);
+    };
+  }, [isAdmin, showForm]);
 
   const handleCenterSelect = async (center) => {
     if (center.status === 'Closed') {
