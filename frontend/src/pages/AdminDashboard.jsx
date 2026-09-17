@@ -14,7 +14,9 @@ import {
   BarChart3,
   Users,
   Activity,
-  X
+  X,
+  Map,
+  ClipboardList
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -346,50 +348,101 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Call Logs & Lifetime Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-        
-        <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontWeight: '800', fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Activity size={20} color="var(--primary-color)" /> {t('systemOverview')}
-          </div>
+      {/* Admin Call Logs & Lifetime Stats */}
+      {user?.role === 'Admin' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <div style={{ padding: '12px', background: '#e0e7ff', borderRadius: '12px', color: '#4338ca' }}>
-              <AlertTriangle size={24} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>{t('totalLifetimeReports') || 'Lifetime Reports'}</div>
-              <div style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '600' }}>{t('sinceLaunch') || 'Since launch'}</div>
-            </div>
-            <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--text-main)' }}>{data?.metrics?.totalReports || 0}</div>
-          </div>
-        </div>
-
-        {user?.role === 'Admin' && data?.recentCallLogs && data.recentCallLogs.length > 0 && (
           <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800', fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px' }}>
-              <PhoneCall size={20} color="#2563eb" /> {t('recentHotlineCalls') || 'Recent Hotline Calls'}
+            <div style={{ fontWeight: '800', fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Activity size={20} color="var(--primary-color)" /> {t('systemOverview')}
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {data.recentCallLogs.slice(0, 5).map((log) => (
-                <div key={log.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px 16px', background: '#f8fafc', borderRadius: '12px', borderLeft: '4px solid #2563eb', borderTop: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-main)' }}>{log.hotline_name}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
-                      <Clock size={12} /> {new Date(log.called_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '500' }}>
-                    Dialed <strong style={{ color: 'var(--text-main)' }}>{log.hotline_number}</strong> by <strong style={{ color: 'var(--text-main)' }}>{log.caller_name}</strong>
-                  </div>
-                </div>
-              ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <div style={{ padding: '12px', background: '#e0e7ff', borderRadius: '12px', color: '#4338ca' }}>
+                <AlertTriangle size={24} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>{t('totalLifetimeReports') || 'Lifetime Reports'}</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '600' }}>{t('sinceLaunch') || 'Since launch'}</div>
+              </div>
+              <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--text-main)' }}>{data?.metrics?.totalReports || 0}</div>
             </div>
           </div>
-        )}
-      </div>
+
+          {data?.recentCallLogs && data.recentCallLogs.length > 0 && (
+            <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800', fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px' }}>
+                <PhoneCall size={20} color="#2563eb" /> {t('recentHotlineCalls') || 'Recent Hotline Calls'}
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {data.recentCallLogs.slice(0, 5).map((log) => (
+                  <div key={log.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px 16px', background: '#f8fafc', borderRadius: '12px', borderLeft: '4px solid #2563eb', borderTop: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-main)' }}>{log.hotline_name}</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
+                        <Clock size={12} /> {new Date(log.called_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '500' }}>
+                      Dialed <strong style={{ color: 'var(--text-main)' }}>{log.hotline_number}</strong> by <strong style={{ color: 'var(--text-main)' }}>{log.caller_name}</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Responder Quick-Action Grid */}
+      {user?.role === 'Responder' && (
+        <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontWeight: '800', fontSize: '18px', color: 'var(--text-main)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Activity size={20} color="var(--primary-color)" /> Field Operations
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            <button
+              onClick={() => navigate('/command-map')}
+              style={{ padding: '24px', borderRadius: '16px', border: '1px solid #cbd5e1', background: 'linear-gradient(to bottom, #f8fafc, #f1f5f9)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'all 0.2s ease', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+            >
+              <div style={{ background: '#3b82f6', color: 'white', padding: '16px', borderRadius: '14px' }}>
+                <Map size={32} />
+              </div>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a' }}>Command Map</div>
+                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', marginTop: '4px' }}>Locate live emergencies on map</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/incidents')}
+              style={{ padding: '24px', borderRadius: '16px', border: '1px solid #cbd5e1', background: 'linear-gradient(to bottom, #f8fafc, #f1f5f9)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'all 0.2s ease', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+            >
+              <div style={{ background: '#ef4444', color: 'white', padding: '16px', borderRadius: '14px' }}>
+                <ClipboardList size={32} />
+              </div>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a' }}>Active Dispatches</div>
+                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', marginTop: '4px' }}>Update rescue operation status</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/responders')}
+              style={{ padding: '24px', borderRadius: '16px', border: '1px solid #cbd5e1', background: 'linear-gradient(to bottom, #f8fafc, #f1f5f9)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'all 0.2s ease', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+            >
+              <div style={{ background: '#f59e0b', color: 'white', padding: '16px', borderRadius: '14px' }}>
+                <Users size={32} />
+              </div>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a' }}>Responder Directory</div>
+                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600', marginTop: '4px' }}>Contact backup & partner units</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Premium Glassmorphic Broadcast Modal */}
       {showBroadcastModal && (
