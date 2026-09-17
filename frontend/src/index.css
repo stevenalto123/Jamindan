@@ -1613,3 +1613,154 @@ input[type="password"]::-ms-clear {
 .sidebar {
   transition: transform var(--transition-normal), width var(--transition-normal);
 }
+
+/* ========================================================
+   TACTICAL DARK THEME OVERRIDE (ADMIN DASHBOARD)
+   ======================================================== */
+.tactical-dark-theme {
+  --tac-bg: #0b0f19;
+  --tac-card: #111827;
+  --tac-border: #1f2937;
+  --tac-text-main: #f3f4f6;
+  --tac-text-muted: #9ca3af;
+  
+  --tac-red: #ef4444;
+  --tac-red-glow: rgba(239, 68, 68, 0.2);
+  --tac-blue: #3b82f6;
+  --tac-blue-glow: rgba(59, 130, 246, 0.2);
+  --tac-teal: #14b8a6;
+  --tac-teal-glow: rgba(20, 184, 166, 0.2);
+  --tac-green: #10b981;
+  --tac-green-glow: rgba(16, 185, 129, 0.2);
+  --tac-orange: #f97316;
+  --tac-orange-glow: rgba(249, 115, 22, 0.2);
+
+  background-color: var(--tac-bg);
+  min-height: 100vh;
+  margin: -24px; /* counteract content-body padding */
+  padding: 24px;
+  color: var(--tac-text-main);
+  font-family: 'Inter', sans-serif;
+}
+
+.tac-metric-card {
+  background: var(--tac-card);
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid var(--tac-border);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.tac-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.tac-metric-red::before { background: var(--tac-red); box-shadow: 0 0 10px var(--tac-red-glow); }
+.tac-metric-blue::before { background: var(--tac-blue); box-shadow: 0 0 10px var(--tac-blue-glow); }
+.tac-metric-teal::before { background: var(--tac-teal); box-shadow: 0 0 10px var(--tac-teal-glow); }
+.tac-metric-green::before { background: var(--tac-green); box-shadow: 0 0 10px var(--tac-green-glow); }
+
+.tac-metric-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--tac-text-muted);
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.tac-metric-value {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  color: white;
+}
+
+.tac-metric-sub {
+  font-size: 12px;
+  color: var(--tac-text-muted);
+  margin-top: 8px;
+}
+
+.tac-panel {
+  background: var(--tac-card);
+  border: 1px solid var(--tac-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.tac-panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.tac-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tac-table th {
+  text-align: left;
+  padding: 12px 16px;
+  color: var(--tac-text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--tac-border);
+  font-weight: 700;
+}
+
+.tac-table td {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  color: var(--tac-text-main);
+  vertical-align: middle;
+}
+
+.tac-table tr:hover td {
+  background: rgba(255,255,255,0.02);
+}
+
+.tac-code {
+  color: var(--tac-teal);
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.tac-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-block;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.tac-badge.critical { color: var(--tac-red); border-color: var(--tac-red-glow); background: rgba(239,68,68,0.1); }
+.tac-badge.high { color: var(--tac-orange); border-color: var(--tac-orange-glow); background: rgba(249,115,22,0.1); }
+.tac-badge.medium { color: var(--tac-blue); border-color: var(--tac-blue-glow); background: rgba(59,130,246,0.1); }
+.tac-badge.low { color: var(--tac-green); border-color: var(--tac-green-glow); background: rgba(16,185,129,0.1); }
+
+/* Remove standard content padding inside tactical theme */
+.tactical-dark-theme .content-body {
+  padding: 0 !important;
+  max-width: 100% !important;
+}
+
