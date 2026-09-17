@@ -127,11 +127,7 @@ const IncidentList = () => {
       <div className="content-body" style={{ paddingBottom: '80px', maxWidth: '800px', margin: '0 auto' }}>
         
         {/* Header & Submit Button */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 4px 0' }}>My Reports</h2>
-            <p style={{ color: 'var(--text-light)', margin: 0, fontSize: '14px' }}>Track your submitted emergency incidents</p>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
           <Link to="/report" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 20px', fontSize: '15px', fontWeight: '800', borderRadius: '12px', background: 'var(--danger-color)', color: 'white', textDecoration: 'none', boxShadow: '0 4px 16px rgba(231, 76, 60, 0.3)' }}>
             <PlusCircle size={20} /> {t('submitNewReport')}
           </Link>
@@ -280,16 +276,7 @@ const IncidentList = () => {
         </div>
       </div>
 
-      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShieldAlert size={26} color="var(--primary-color)" />
-            Incident Registry
-          </h2>
-          <p style={{ color: 'var(--text-light)', margin: 0, fontSize: '14px' }}>
-            Manage and monitor all emergency reports
-          </p>
-        </div>
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         
         <div style={{ display: 'flex', gap: '12px' }}>
           <button 

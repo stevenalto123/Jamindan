@@ -147,16 +147,7 @@ const SystemLogs = () => {
     <div className="content-body" style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '40px' }}>
       
       {/* Header Section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <History size={26} color="var(--primary-color)" />
-            System Audit Logs
-          </h2>
-          <p style={{ color: 'var(--text-light)', margin: 0, fontSize: '14px' }}>
-            Track and monitor all administrative and user activity across the platform.
-          </p>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
         <div style={{ display: 'flex', gap: '12px' }}>
           <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', padding: '10px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Activity size={16} color="var(--primary-color)" /> {filteredLogs.length} Events Found

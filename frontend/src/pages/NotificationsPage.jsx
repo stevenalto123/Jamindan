@@ -80,13 +80,7 @@ const NotificationsPage = () => {
 
   return (
     <div className="content-body" style={{ maxWidth: '800px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px', flexWrap: 'wrap', gap: '15px' }}>
-        <div>
-          <h2 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 4px 0' }}>{t('notificationsInbox') || 'Notifications'}</h2>
-          <p style={{ color: 'var(--text-light)', fontSize: '14px', margin: 0 }}>{t('notificationsDesc') || 'Stay updated on emergencies and announcements.'}</p>
-        </div>
-
-        {notifications.filter(n => !n.is_read).length > 0 && (
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px', flexWrap: 'wrap', gap: '15px' }}>        {notifications.filter(n => !n.is_read).length > 0 && (
           <button className="btn btn-secondary" onClick={handleMarkAllRead} style={{ height: '36px', padding: '0 16px', fontSize: '13px', borderRadius: '20px' }}>
             <CheckSquare size={16} /> <span className="hide-on-mobile">{t('markAllRead') || 'Mark all as read'}</span>
           </button>
