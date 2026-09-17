@@ -1793,3 +1793,5 @@ input[type="password"]::-ms-clear {
 .sidebar-menu::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.4);
 }
+i n p u t [ t y p e = " d a t e " ] . f o r m - i n p u t   {   m i n - w i d t h :   0 ;   }  
+ 

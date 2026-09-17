@@ -397,7 +397,7 @@ const Register = () => {
                 <input type="text" id="fullName" name="fullName" className="form-input" value={formData.fullName} onChange={handleChange} placeholder={t('completeName')} required />
               </div>
 
-              <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '15px' }}>
                 <div>
                   <label className="form-label" htmlFor="date_of_birth">Date of Birth</label>
                   <input type="date" id="date_of_birth" name="date_of_birth" className="form-input" value={formData.date_of_birth} onChange={handleChange} required />
