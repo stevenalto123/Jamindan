@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import GeofenceModal from '../components/GeofenceModal';
 import CommandMap from './CommandMap';
 
 const AdminDashboard = () => {
@@ -30,7 +29,6 @@ const AdminDashboard = () => {
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
-  const [showEvacModal, setShowEvacModal] = useState(false);
   const [broadcasting, setBroadcasting] = useState(false);
   const navigate = useNavigate();
 
@@ -69,17 +67,6 @@ const AdminDashboard = () => {
       alert('Failed to send broadcast.');
     } finally {
       setBroadcasting(false);
-    }
-  };
-
-  const handleEvacBroadcast = async (evacData) => {
-    try {
-      const res = await axios.post('/api/notifications/broadcast-evacuation', evacData);
-      alert(`Evacuation alert sent to ${res.data.target_users} users in the area!`);
-      setShowEvacModal(false);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to send evacuation broadcast.');
     }
   };
 
@@ -326,31 +313,6 @@ const AdminDashboard = () => {
             <div style={{ background: '#fef3c7', padding: '10px', borderRadius: '10px' }}><Radio size={20} color="#d97706" /></div>
             MASS BROADCAST
           </button>
-          
-          <button 
-            onClick={() => setShowEvacModal(true)}
-            style={{ 
-              background: 'var(--card-bg)',
-              padding: '20px',
-              borderRadius: '16px',
-              color: 'var(--text-main)',
-              fontSize: '16px',
-              fontWeight: '800',
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              gap: '12px',
-              cursor: 'pointer',
-              border: '1px solid var(--border-color)',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-              transition: 'transform 0.2s',
-            }}
-            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
-          >
-            <div style={{ background: '#fdf4ff', padding: '10px', borderRadius: '10px' }}><Bell size={20} color="#c026d3" /></div>
-            GEOFENCE ALERT
-          </button>
         </div>
       )}
 
@@ -493,14 +455,6 @@ const AdminDashboard = () => {
             </form>
           </div>
         </div>
-      )}
-
-      {/* Geofence Evacuation Modal (Ensure it renders if showEvacModal is true) */}
-      {showEvacModal && (
-        <GeofenceModal 
-          onClose={() => setShowEvacModal(false)} 
-          onSend={handleEvacBroadcast} 
-        />
       )}
 
     </div>
