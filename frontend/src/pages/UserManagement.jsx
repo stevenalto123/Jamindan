@@ -448,15 +448,16 @@ const UserManagement = () => {
         }}>
           <div style={{ 
             background: 'var(--bg-color)', 
-            width: '100%', maxWidth: '500px', 
-            borderRadius: '20px', 
-            boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-            overflow: 'hidden',
+            width: '90%', 
+            maxWidth: '600px', 
+            borderRadius: '24px', 
+            overflow: 'hidden', 
+            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
             display: 'flex',
             flexDirection: 'column',
             maxHeight: '90vh'
           }}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', flexShrink: 0 }}>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>
                 {editingUser ? 'Edit User Details' : 'Add New User'}
               </h3>
@@ -470,7 +471,7 @@ const UserManagement = () => {
               </button>
             </div>
             
-            <div style={{ padding: '24px', overflowY: 'auto' }}>
+            <div style={{ padding: '24px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
               <form onSubmit={handleSaveSubmit} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 
                 {/* Images Preview Section (if any) */}
