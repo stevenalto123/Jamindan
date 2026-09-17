@@ -21,15 +21,17 @@ const Header = ({ title, toggleSidebar }) => {
         </div>
 
         <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          {/* Epic Feature 2: Language Toggle */}
-          <button 
-            onClick={toggleLanguage}
-            className="btn btn-outline"
-            style={{ padding: '4px 8px', fontSize: '12px', fontWeight: 'bold' }}
-            title="Toggle English / Hiligaynon"
-          >
-            {lang === 'en' ? 'EN | hil' : 'en | HIL'}
-          </button>
+          {/* Language Toggle: Residents only */}
+          {user?.role === 'Resident' && (
+            <button 
+              onClick={toggleLanguage}
+              className="btn btn-outline"
+              style={{ padding: '4px 8px', fontSize: '12px', fontWeight: 'bold' }}
+              title="Toggle English / Hiligaynon"
+            >
+              {lang === 'en' ? 'EN | hil' : 'en | HIL'}
+            </button>
+          )}
           
           <NotificationBell />
 
