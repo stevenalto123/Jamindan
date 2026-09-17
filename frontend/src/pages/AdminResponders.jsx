@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Shield, Phone, MapPin, Search } from 'lucide-react';
+import { Shield, Phone, MapPin, Search, UserPlus } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const AdminResponders = () => {
   const [responders, setResponders] = useState([]);
@@ -9,6 +11,8 @@ const AdminResponders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchResponders = async () => {
@@ -43,10 +47,23 @@ const AdminResponders = () => {
   return (
     <div className="content-body" style={{ maxWidth: '800px' }}>
       <div className="card">
-        <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Shield size={18} />
-          {t('activeOfficers')}
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+            <Shield size={18} />
+            {t('activeOfficers')}
+          </h3>
+          
+          {user?.role === 'Admin' && (
+            <button 
+              onClick={() => navigate('/users')}
+              className="btn btn-primary"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', padding: '6px 12px', borderRadius: '16px' }}
+            >
+              <UserPlus size={14} />
+              Manage Responders
+            </button>
+          )}
+        </div>
 
         {/* Search Bar */}
         <div style={{ marginTop: '16px', marginBottom: '24px', position: 'relative' }}>
@@ -106,21 +123,36 @@ const AdminResponders = () => {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   {/* Responder Avatar */}
-                  <div style={{
-                    width: '46px',
-                    height: '46px',
-                    borderRadius: '50%',
-                    backgroundColor: 'var(--primary-color)',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 'bold',
-                    fontSize: '18px',
-                    flexShrink: 0
-                  }}>
-                    {resp.full_name ? resp.full_name.charAt(0).toUpperCase() : 'R'}
-                  </div>
+                  {resp.avatar ? (
+                    <img 
+                      src={resp.avatar} 
+                      alt={resp.full_name} 
+                      style={{
+                        width: '46px',
+                        height: '46px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        flexShrink: 0,
+                        border: '2px solid var(--border-color)'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--primary-color)',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 'bold',
+                      fontSize: '18px',
+                      flexShrink: 0
+                    }}>
+                      {resp.full_name ? resp.full_name.charAt(0).toUpperCase() : 'R'}
+                    </div>
+                  )}
 
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
