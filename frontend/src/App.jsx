@@ -461,6 +461,18 @@ const AppLayout = ({ children }) => {
   } else if (path === '/hotlines') {
     pageTitle = "Emergency Hotlines";
     pageSubtitle = "Direct access to emergency responders";
+  } else if (path === '/analytics') {
+    pageTitle = "Analytics & Reports";
+    pageSubtitle = "System performance and incident metrics";
+  } else if (path === '/vehicles') {
+    pageTitle = "Emergency Vehicles";
+    pageSubtitle = "Fleet status and deployment tracking";
+  } else if (path === '/verify') {
+    pageTitle = "Pending Verifications";
+    pageSubtitle = "Review new user registrations";
+  } else if (path.startsWith('/users/')) {
+    pageTitle = "User Profile";
+    pageSubtitle = "View and edit user details";
   }
 
   return (

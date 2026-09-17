@@ -97,14 +97,12 @@ const AdminVehicles = () => {
 
   return (
     <div className="content-body" style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '24px' }}>
+
+
+      <div style={{ marginBottom: '24px' }}>
         <button onClick={() => navigate('/admin')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-main)', display: 'flex', alignItems: 'center' }}>
           <ArrowLeft size={24} />
         </button>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-main)' }}>
-          <Truck size={28} color="var(--primary-color)" />
-          FLEET MANAGEMENT
-        </h1>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>

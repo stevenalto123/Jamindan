@@ -78,7 +78,7 @@ const AdminViewUser = () => {
     <div className="content-body" style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '40px' }}>
       
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ marginBottom: '24px' }}>
         <button 
           onClick={() => navigate('/admin/users')}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', color: 'var(--text-main)', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'transform 0.2s' }}
@@ -87,10 +87,6 @@ const AdminViewUser = () => {
         >
           <ArrowLeft size={20} />
         </button>
-        <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 4px 0' }}>User Profile</h2>
-          <p style={{ color: 'var(--text-light)', margin: 0, fontSize: '14px' }}>Detailed information and incident history</p>
-        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', alignItems: 'start' }}>

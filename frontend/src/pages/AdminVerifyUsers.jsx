@@ -76,16 +76,7 @@ const AdminVerifyUsers = () => {
   return (
     <div className="content-body" style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '40px' }}>
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <UserCheck size={26} color="var(--primary-color)" />
-            Pending Verifications
-          </h2>
-          <p style={{ color: 'var(--text-light)', margin: 0, fontSize: '14px' }}>
-            Review and approve new resident accounts.
-          </p>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
         <div style={{ background: 'var(--primary-color)', color: 'white', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '700', boxShadow: '0 2px 8px rgba(61,122,80,0.3)' }}>
           {pendingUsers.length} Pending
         </div>
