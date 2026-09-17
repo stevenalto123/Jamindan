@@ -49,7 +49,9 @@ const CommandMap = ({ isWidget = false }) => {
       url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
       attribution: 'Map data: &copy; OSM, SRTM | Style: &copy; OpenTopoMap',
       icon: MapIcon,
-      label: 'Topographic'
+      label: 'Topographic',
+      maxNativeZoom: 17,
+      maxZoom: 19
     }
   };
 
@@ -83,7 +85,12 @@ const CommandMap = ({ isWidget = false }) => {
       });
 
       L.control.zoom({ position: 'bottomright' }).addTo(mapRef.current);
-      tileLayerRef.current = L.tileLayer(mapStyles[mapStyle].url, { attribution: mapStyles[mapStyle].attribution }).addTo(mapRef.current);
+      const initialStyle = mapStyles[mapStyle];
+      tileLayerRef.current = L.tileLayer(initialStyle.url, { 
+        attribution: initialStyle.attribution,
+        maxZoom: initialStyle.maxZoom || 19,
+        maxNativeZoom: initialStyle.maxNativeZoom || 19
+      }).addTo(mapRef.current);
       
       incidentLayerRef.current = L.layerGroup().addTo(mapRef.current);
       responderLayerRef.current = L.layerGroup().addTo(mapRef.current);
@@ -102,8 +109,17 @@ const CommandMap = ({ isWidget = false }) => {
   }, []);
 
   useEffect(() => {
-    if (mapRef.current && tileLayerRef.current) {
-      tileLayerRef.current.setUrl(mapStyles[mapStyle].url);
+    if (mapRef.current) {
+      if (tileLayerRef.current) {
+        mapRef.current.removeLayer(tileLayerRef.current);
+      }
+      
+      const styleConfig = mapStyles[mapStyle];
+      tileLayerRef.current = L.tileLayer(styleConfig.url, { 
+        attribution: styleConfig.attribution,
+        maxZoom: styleConfig.maxZoom || 19,
+        maxNativeZoom: styleConfig.maxNativeZoom || 19
+      }).addTo(mapRef.current);
       
       const pane = mapRef.current.getPane('tilePane');
       if (pane) {
