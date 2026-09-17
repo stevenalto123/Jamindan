@@ -25,6 +25,13 @@ const CommandMap = ({ isWidget = false }) => {
   const [mapStyle, setMapStyle] = useState('street');
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const tileLayerRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const mapStyles = {
     street: {
@@ -229,7 +236,7 @@ const CommandMap = ({ isWidget = false }) => {
         position: 'relative',
         display: 'flex', 
         flexDirection: 'column', 
-        height: isWidget ? '450px' : (isFullscreen ? '100vh' : 'calc(100vh - 80px)'), 
+        height: isWidget ? '450px' : (isFullscreen ? '100vh' : (isMobile ? 'calc(100dvh - 60px)' : 'calc(100vh - 80px)')), 
         backgroundColor: '#0f172a', 
         borderRadius: isWidget || !isFullscreen ? '20px' : '0', 
         overflow: 'hidden', 
@@ -410,10 +417,10 @@ const CommandMap = ({ isWidget = false }) => {
       </div>
 
       {/* Main Map Content Wrapper */}
-      <div style={{ flex: 1, position: 'relative', marginTop: '60px' }}>
+      <div style={{ flex: 1, position: 'relative', marginTop: '60px', display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
         
         {/* Map Container */}
-        <div ref={mapContainerRef} style={{ width: '100%', height: '100%', backgroundColor: '#020617' }}></div>
+        <div ref={mapContainerRef} style={{ width: '100%', height: isMobile ? '55%' : '100%', backgroundColor: '#020617', flexShrink: 0 }}></div>
 
         {/* Map Style Switcher */}
         <div style={{ position: 'absolute', top: '20px', right: isWidget ? '20px' : '80px', zIndex: 1000 }}>
@@ -469,8 +476,19 @@ const CommandMap = ({ isWidget = false }) => {
           </div>
         </div>
 
-        {/* Floating Glassmorphic Sidebar */}
-        <div style={{ 
+        {/* Floating Glassmorphic Sidebar / Mobile Bottom Sheet */}
+        <div style={isMobile ? { 
+          position: 'relative',
+          width: '100%',
+          height: '45%',
+          background: 'rgba(10, 18, 35, 0.98)', 
+          borderTop: '2px solid rgba(56,189,248,0.3)',
+          display: 'flex',
+          flexDirection: 'column',
+          zIndex: 1000,
+          overflow: 'hidden',
+          flexShrink: 0
+        } : { 
           position: 'absolute',
           top: '20px',
           left: '20px',
@@ -489,14 +507,16 @@ const CommandMap = ({ isWidget = false }) => {
         }}>
           
           {/* Incidents Section */}
-          <div style={{ padding: '20px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <h3 style={{ color: '#fff', margin: 0, fontSize: '14px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              <ShieldAlert size={18} color="#ef4444" />
-              Active Emergencies <span style={{ background: '#ef4444', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }}>{incidents.length}</span>
-            </h3>
-          </div>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', flex: 1, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', borderRight: isMobile ? '1px solid rgba(255,255,255,0.07)' : 'none', borderBottom: !isMobile ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+            <div style={{ padding: isMobile ? '10px 12px' : '20px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
+              <h3 style={{ color: '#fff', margin: 0, fontSize: isMobile ? '11px' : '14px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                <ShieldAlert size={isMobile ? 14 : 18} color="#ef4444" />
+                Emergencies <span style={{ background: '#ef4444', color: 'white', padding: '2px 6px', borderRadius: '12px', fontSize: '10px' }}>{incidents.length}</span>
+              </h3>
+            </div>
           
-          <div className="glass-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="glass-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '10px 12px' : '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {incidents.length === 0 ? (
               <div style={{ color: '#64748b', textAlign: 'center', padding: '40px 0', fontSize: '13px', fontWeight: '600' }}>
                 All clear. No active emergencies.
@@ -532,13 +552,16 @@ const CommandMap = ({ isWidget = false }) => {
               ))
             )}
           </div>
+          </div>
           
           {/* Responders Section */}
-          <div style={{ padding: '20px', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', maxHeight: '45%' }}>
-            <h3 style={{ color: '#fff', margin: '0 0 16px 0', fontSize: '14px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              <AlertCircle size={18} color="#38bdf8" />
-              On-Duty Responders <span style={{ background: '#38bdf8', color: '#0f172a', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }}>{responders.length}</span>
-            </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', background: 'rgba(0,0,0,0.3)', borderTop: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ padding: isMobile ? '10px 12px' : '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
+              <h3 style={{ color: '#fff', margin: 0, fontSize: isMobile ? '11px' : '14px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                <AlertCircle size={isMobile ? 14 : 18} color="#38bdf8" />
+                Responders <span style={{ background: '#38bdf8', color: '#0f172a', padding: '2px 6px', borderRadius: '12px', fontSize: '10px' }}>{responders.length}</span>
+              </h3>
+            </div>
             
             <div className="glass-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
               {responders.length === 0 ? (
@@ -582,6 +605,7 @@ const CommandMap = ({ isWidget = false }) => {
                 })
               )}
             </div>
+          </div>
           </div>
         </div>
 
