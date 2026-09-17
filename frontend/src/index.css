@@ -1637,7 +1637,7 @@ input[type="password"]::-ms-clear {
 
   background-color: var(--tac-bg);
   min-height: 100vh;
-  
+  margin: -24px; /* counteract content-body padding */
   padding: 24px;
   color: var(--tac-text-main);
   font-family: 'Inter', sans-serif;
@@ -1764,62 +1764,3 @@ input[type="password"]::-ms-clear {
   max-width: 100% !important;
 }
 
-
-/* ========================================================
-   ADMIN DASHBOARD PAGE-SPECIFIC DARK MODE
-   (Applies only to Header and Sidebar on /admin route)
-   ======================================================== */
-.admin-dashboard-active {
-  background-color: #0b0f19;
-}
-
-.admin-dashboard-active .main-content {
-  background-color: #0b0f19;
-}
-
-.admin-dashboard-active .header {
-  background-color: #0b0f19 !important;
-  border-bottom: 1px solid #1f2937;
-}
-
-.admin-dashboard-active .header-title {
-  color: #f3f4f6 !important;
-}
-
-.admin-dashboard-active .sidebar {
-  background-color: #080b12 !important;
-  border-right: 1px solid #1f2937;
-}
-
-.admin-dashboard-active .sidebar-link {
-  color: #9ca3af !important;
-}
-
-.admin-dashboard-active .sidebar-link:hover {
-  background-color: rgba(255,255,255,0.05) !important;
-  color: #f3f4f6 !important;
-}
-
-.admin-dashboard-active .sidebar-link.active {
-  background-color: rgba(59, 130, 246, 0.1) !important;
-  color: #3b82f6 !important;
-}
-
-.admin-dashboard-active .sidebar-link.active::before {
-  background-color: #3b82f6 !important;
-}
-
-.admin-dashboard-active .btn-outline {
-  border-color: #1f2937;
-  color: #9ca3af;
-}
-
-.admin-dashboard-active .btn-outline:hover {
-  background-color: rgba(255,255,255,0.05);
-  color: #f3f4f6;
-}
-
-.admin-dashboard-active .avatar-circle {
-  background-color: #1f2937;
-  color: #f3f4f6;
-}

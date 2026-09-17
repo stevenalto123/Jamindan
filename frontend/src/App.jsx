@@ -464,7 +464,7 @@ const AppLayout = ({ children }) => {
   }
 
   return (
-    <div className={`app-container ${path === '/admin' ? 'admin-dashboard-active' : ''} route-${path === '/' ? 'dashboard' : path.replace(/^\//, '').replace(/\//g, '-')}`}>
+    <div className="app-container">
       <Sidebar 
         isOpen={sidebarOpen} 
         toggleSidebar={toggleSidebar} 
@@ -742,3 +742,4 @@ function App() {
 }
 
 export default App;
+
