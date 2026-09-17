@@ -98,14 +98,14 @@ const AdminDashboard = () => {
     <div className="content-body" style={{ padding: '24px', margin: '0 auto', maxWidth: '1200px', paddingBottom: '80px' }}>
 
       {/* 2x2 Vibrant Status Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         
         {/* Pending */}
         <div 
           onClick={() => navigate('/incidents')}
           style={{ 
             background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)', 
-            padding: '24px', 
+            padding: '16px', 
             borderRadius: '20px', 
             display: 'flex', 
             flexDirection: 'column', 
@@ -136,7 +136,7 @@ const AdminDashboard = () => {
           onClick={() => navigate('/incidents')}
           style={{ 
             background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', 
-            padding: '24px', 
+            padding: '16px', 
             borderRadius: '20px', 
             display: 'flex', 
             flexDirection: 'column', 
@@ -167,7 +167,7 @@ const AdminDashboard = () => {
           onClick={() => navigate('/incidents')}
           style={{ 
             background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)', 
-            padding: '24px', 
+            padding: '16px', 
             borderRadius: '20px', 
             display: 'flex', 
             flexDirection: 'column', 
@@ -198,7 +198,7 @@ const AdminDashboard = () => {
           onClick={() => navigate('/responders')}
           style={{ 
             background: 'linear-gradient(135deg, #64748b 0%, #334155 100%)', 
-            padding: '24px', 
+            padding: '16px', 
             borderRadius: '20px', 
             display: 'flex', 
             flexDirection: 'column', 
