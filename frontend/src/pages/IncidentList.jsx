@@ -139,7 +139,7 @@ const IncidentList = () => {
 
         {/* Filters Container */}
         <div style={{ background: 'var(--card-bg)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.04)', display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
-          <div className="input-icon-wrapper" style={{ flex: 1, minWidth: '200px' }}>
+          <div className="input-icon-wrapper" style={{ flex: 1, minWidth: '130px' }}>
             <select
               className="form-select"
               style={{ height: '44px', paddingLeft: '40px', fontSize: '14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-color)' }}
@@ -151,7 +151,7 @@ const IncidentList = () => {
             </select>
             <Filter size={18} className="input-icon-left" style={{ left: '14px', color: 'var(--text-muted)' }} />
           </div>
-          <div className="input-icon-wrapper" style={{ flex: 1, minWidth: '200px' }}>
+          <div className="input-icon-wrapper" style={{ flex: 1, minWidth: '130px' }}>
             <select
               className="form-select"
               style={{ height: '44px', paddingLeft: '40px', fontSize: '14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-color)' }}
@@ -318,16 +318,15 @@ const IncidentList = () => {
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             
             <form onSubmit={handleSearchSubmit} style={{ flex: 1, minWidth: '280px', display: 'flex', gap: '8px' }}>
-              <div className="input-icon-wrapper" style={{ flex: 1 }}>
+              <div style={{ flex: 1 }}>
                 <input
                   type="text"
                   className="form-input"
-                  style={{ height: '44px', paddingLeft: '44px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white' }}
+                  style={{ width: '100%', height: '44px', paddingLeft: '16px', paddingRight: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white' }}
                   placeholder="Search by code, reporter, or location..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
-                <Search size={18} className="input-icon-left" style={{ left: '16px', color: 'var(--text-muted)' }} />
               </div>
               <button type="submit" style={{ height: '44px', width: '44px', borderRadius: '12px', background: 'var(--primary-color)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
                 <Search size={20} />
