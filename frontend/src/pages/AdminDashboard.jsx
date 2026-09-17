@@ -99,8 +99,9 @@ const AdminDashboard = () => {
   return (
     <div className="content-body" style={{ padding: '24px', margin: '0 auto', maxWidth: '1200px', paddingBottom: '80px' }}>
 
-      {/* 2x2 Vibrant Status Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      {/* Admin Exclusive: Top Metrics */}
+      {user?.role === 'Admin' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         
         {/* Pending */}
         <div 
@@ -227,16 +228,19 @@ const AdminDashboard = () => {
         </div>
         
       </div>
+      )}
 
       {/* Command Map Widget */}
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <MapPin size={20} color="var(--primary-color)" /> Live Operations Map
+      {user?.role === 'Admin' && (
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <MapPin size={20} color="var(--primary-color)" /> Live Operations Map
         </h3>
         <div style={{ borderRadius: '20px', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
           <CommandMap isWidget={true} />
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Fleet Management & Quick Actions */}
       {user?.role === 'Admin' && (
