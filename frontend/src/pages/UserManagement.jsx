@@ -44,6 +44,8 @@ const UserManagement = () => {
   const [agencyType, setAgencyType] = useState('MDRRMO'); // 'Police', 'Fire', 'Medical', 'MDRRMO'
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [idPhoto, setIdPhoto] = useState(null);
+  const [selfiePhoto, setSelfiePhoto] = useState(null);
   
   // Image Viewer State
   const [viewImage, setViewImage] = useState(null);
@@ -125,6 +127,8 @@ const UserManagement = () => {
     setBarangay(BARANGAYS[0] || '');
     setRole('Resident');
     setAgencyType('MDRRMO');
+    setIdPhoto(null);
+    setSelfiePhoto(null);
     setShowModal(true);
   };
 
@@ -137,11 +141,18 @@ const UserManagement = () => {
     setBarangay(u.barangay);
     setRole(u.role);
     setAgencyType(u.agency_type || 'MDRRMO');
+    setIdPhoto(null);
+    setSelfiePhoto(null);
     setShowModal(true);
   };
 
   const openImageViewer = (url) => {
     setViewImage(url);
+    setImageRotation(0);
+  };
+
+  const closeImageViewer = () => {
+    setViewImage(null);
     setImageRotation(0);
   };
 
@@ -183,14 +194,19 @@ const UserManagement = () => {
           agency_type: agencyType
         });
       } else {
-        await axios.post('/api/users', {
-          username,
-          password: password || 'DefaultPass123!',
-          full_name: fullName,
-          phone,
-          barangay,
-          role,
-          agency_type: agencyType
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('password', password || 'DefaultPass123!');
+        formData.append('full_name', fullName);
+        formData.append('phone', phone);
+        formData.append('barangay', barangay);
+        formData.append('role', role);
+        formData.append('agency_type', agencyType);
+        if (idPhoto) formData.append('id_photo', idPhoto);
+        if (selfiePhoto) formData.append('selfie_photo', selfiePhoto);
+
+        await axios.post('/api/users', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
       }
       setShowModal(false);
@@ -499,6 +515,28 @@ const UserManagement = () => {
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Photo Upload Section for New Residents */}
+                {!editingUser && role === 'Resident' && (
+                  <div style={{ background: 'white', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                    <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <UserIcon size={16} color="var(--text-muted)" /> Identity Verification (Optional)
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label">ID Photo</label>
+                        <input type="file" accept="image/*" className="form-input" onChange={(e) => setIdPhoto(e.target.files[0])} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label">Selfie Photo</label>
+                        <input type="file" accept="image/*" className="form-input" onChange={(e) => setSelfiePhoto(e.target.files[0])} />
+                      </div>
+                    </div>
+                    <p style={{ margin: '8px 0 0 0', fontSize: '11px', color: 'var(--text-light)' }}>
+                      You can upload the resident's ID and Selfie here. Since you are an Admin, this is optional and the account will be auto-verified.
+                    </p>
                   </div>
                 )}
 

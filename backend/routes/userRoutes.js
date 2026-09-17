@@ -2,13 +2,23 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const { authRequired, requireRole } = require('../middleware/auth');
+const multer = require('multer');
+const { storage } = require('../config/cloudinary');
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
 
 // Apply Admin role protection to all routes in this file
 router.use(authRequired);
 router.use(requireRole(['Admin']));
 
 // Create new user (Admin only)
-router.post('/', async (req, res) => {
+router.post('/', upload.fields([
+  { name: 'id_photo', maxCount: 1 },
+  { name: 'selfie_photo', maxCount: 1 }
+]), async (req, res) => {
   const { username, password, full_name, phone, barangay, role, agency_type } = req.body;
 
   if (!username || !password || !full_name || !phone || !barangay || !role) {
@@ -48,11 +58,16 @@ router.post('/', async (req, res) => {
     const password_hash = bcrypt.hashSync(password, salt);
 
     const finalAgency = role === 'Responder' ? (agency_type || null) : null;
+    
+    const id_photo_path = req.files && req.files['id_photo'] ? req.files['id_photo'][0].path : null;
+    const selfie_photo_path = req.files && req.files['selfie_photo'] ? req.files['selfie_photo'][0].path : null;
+    // Note: Admin-created users are auto-verified
+    const is_verified = 1;
 
     await db.execute(`
-      INSERT INTO users (username, password_hash, role, agency_type, full_name, phone, barangay)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [username.trim().toLowerCase(), password_hash, role, finalAgency, full_name.trim(), phone.trim(), barangay.trim()]);
+      INSERT INTO users (username, password_hash, role, agency_type, full_name, phone, barangay, id_photo_path, selfie_photo_path, is_verified)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [username.trim().toLowerCase(), password_hash, role, finalAgency, full_name.trim(), phone.trim(), barangay.trim(), id_photo_path, selfie_photo_path, is_verified]);
 
     await db.logAudit(`User account created by admin: @${username.trim().toLowerCase()} (Role: ${role}, Agency: ${finalAgency || 'N/A'})`, req.user.username, req.ip);
     return res.status(201).json({ message: 'User created successfully' });
