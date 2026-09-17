@@ -69,10 +69,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
       <div className="sidebar-user-card">
         <div className="sidebar-user-avatar">
-          {user.first_name ? user.first_name[0].toUpperCase() : <User size={20} />}
+          {(user.full_name || user.first_name || user.username) ? (user.full_name || user.first_name || user.username)[0].toUpperCase() : <User size={20} />}
         </div>
         <div className="sidebar-user-info">
-          <span className="sidebar-user-name">{user.first_name} {user.last_name}</span>
+          <span className="sidebar-user-name">{user.full_name || (user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.username)}</span>
           <span className="sidebar-user-role">{user.role}</span>
         </div>
       </div>
@@ -180,6 +180,12 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                  <span>Responders</span>
                </NavLink>
              </li>
+             <li className="sidebar-item">
+               <NavLink to="/news" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
+                 <Radio size={18} />
+                 <span>News & Updates</span>
+               </NavLink>
+             </li>
           </>
         )}
 
@@ -198,30 +204,25 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 <span>Users</span>
               </NavLink>
             </li>
+            <li className="sidebar-item">
+              <NavLink to="/logs" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
+                <History size={18} />
+                <span>System Logs</span>
+              </NavLink>
+            </li>
           </>
-        )}
-
-        {(isAdmin || isResponder) && (
-          <li className="sidebar-item">
-            <NavLink to="/news" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
-              <Radio size={18} />
-              <span>Announcements</span>
-            </NavLink>
-          </li>
-        )}
-
-        {isAdmin && (
-          <li className="sidebar-item">
-            <NavLink to="/logs" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
-              <History size={18} />
-              <span>System Logs</span>
-            </NavLink>
-          </li>
         )}
 
         {(isAdmin || isResponder) && (
           <>
             <div className="sidebar-section-header">Account</div>
+            <li className="sidebar-item">
+              <NavLink to="/notifications" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
+                <Bell size={18} />
+                <span>{t('notifications') || 'Notifications'}</span>
+                {unreadCount > 0 && <span className="notif-badge-sidebar">{unreadCount}</span>}
+              </NavLink>
+            </li>
             <li className="sidebar-item">
               <NavLink to="/settings" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <Settings size={18} />
@@ -231,6 +232,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           </>
         )}
 
+        {/* Unconditional profile (renders inside Account for Admin/Responder, and at the end of Account for Resident) */}
         <li className="sidebar-item">
           <NavLink to="/profile" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
             <User size={18} />
