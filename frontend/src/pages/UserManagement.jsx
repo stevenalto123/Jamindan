@@ -8,6 +8,7 @@ import {
   Trash2, 
   Edit2, 
   Eye,
+  EyeOff,
   X,
   PlusCircle,
   ShieldCheck,
@@ -42,6 +43,7 @@ const UserManagement = () => {
   const [role, setRole] = useState('Resident');
   const [agencyType, setAgencyType] = useState('MDRRMO'); // 'Police', 'Fire', 'Medical', 'MDRRMO'
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   // Image Viewer State
   const [viewImage, setViewImage] = useState(null);
@@ -218,16 +220,7 @@ const UserManagement = () => {
     <div className="content-body" style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '40px' }}>
       
       {/* Header Section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Users size={26} color="var(--primary-color)" />
-            User Directory
-          </h2>
-          <p style={{ color: 'var(--text-light)', margin: 0, fontSize: '14px' }}>
-            Manage accounts, roles, and system access.
-          </p>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
         <button 
           onClick={handleOpenAddModal} 
           style={{ 
@@ -521,7 +514,16 @@ const UserManagement = () => {
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">Password</label>
-                        <input type="password" className="form-input" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Choose password" required style={{ background: '#f8fafc' }} />
+                        <div style={{ position: 'relative' }}>
+                          <input type={showPassword ? "text" : "password"} className="form-input" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Choose password" required style={{ background: '#f8fafc', paddingRight: '40px' }} />
+                          <button 
+                            type="button" 
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
