@@ -178,9 +178,9 @@ const Hotlines = () => {
       {/* ─── Recently Called Section ───────────────────────────────── */}
       {recentHotlines.length > 0 && !searchQuery && (
         <div style={{ marginBottom: '36px' }}>
-          <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            <Clock size={18} color="var(--primary-color)" /> {t('recentlyCalled') || 'Recently Called'}
-          </h3>
+            <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <Clock size={18} color="var(--primary-color)" /> {t('recentHotlines') || 'Recent Hotlines'}
+            </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
             {recentHotlines.map((hotline, idx) => {
               const meta = getAgencyMeta(hotline.agency_name);

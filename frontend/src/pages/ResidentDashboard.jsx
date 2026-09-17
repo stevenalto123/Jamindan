@@ -13,6 +13,22 @@ const ResidentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const handleQuickCall = async (e, agencyName, number, category) => {
+    e.preventDefault();
+    const newRecent = { id: agencyName, agency_name: agencyName, contact_number: number, category: category };
+    const saved = localStorage.getItem('recentHotlines');
+    let prev = saved ? JSON.parse(saved) : [];
+    const filtered = prev.filter(h => h.id !== newRecent.id);
+    const updated = [newRecent, ...filtered].slice(0, 3);
+    localStorage.setItem('recentHotlines', JSON.stringify(updated));
+    try {
+      await axios.post('/api/emergency/hotlines/log', { hotline_name: agencyName, hotline_number: number });
+    } catch (err) {
+      console.warn("Failed to log call intent", err);
+    }
+    window.location.href = `tel:${number}`;
+  };
+
   const fetchStats = async () => {
     try {
       const res = await axios.get('/api/dashboard/resident');
@@ -55,7 +71,7 @@ const ResidentDashboard = () => {
       
       {/* Premium Quick-Dial Action Bar */}
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', marginTop: '20px' }}>
-        <a href="tel:09086415589" style={{ flex: 1, textDecoration: 'none' }}>
+        <a href="tel:09086415589" onClick={(e) => handleQuickCall(e, 'Jamindan Police Station', '09086415589', 'Police')} style={{ flex: 1, textDecoration: 'none' }}>
           <div className="glass-card" style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(52, 152, 219, 0.1)' }}>
             <div style={{ padding: '8px', backgroundColor: '#3498db', borderRadius: '50%', color: 'white' }}>
               <Shield size={20} />
@@ -63,7 +79,7 @@ const ResidentDashboard = () => {
             <span style={{ fontSize: '12px', fontWeight: '600', color: '#2980b9' }}>Police</span>
           </div>
         </a>
-        <a href="tel:09106964585" style={{ flex: 1, textDecoration: 'none' }}>
+        <a href="tel:09106964585" onClick={(e) => handleQuickCall(e, 'Jamindan Fire Station', '09106964585', 'Fire')} style={{ flex: 1, textDecoration: 'none' }}>
           <div className="glass-card" style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(230, 126, 34, 0.1)' }}>
             <div style={{ padding: '8px', backgroundColor: '#e67e22', borderRadius: '50%', color: 'white' }}>
               <Flame size={20} />
@@ -71,7 +87,7 @@ const ResidentDashboard = () => {
             <span style={{ fontSize: '12px', fontWeight: '600', color: '#d35400' }}>Fire</span>
           </div>
         </a>
-        <a href="tel:09304562011" style={{ flex: 1, textDecoration: 'none' }}>
+        <a href="tel:09304562011" onClick={(e) => handleQuickCall(e, 'Jamindan RHU / EMS', '09304562011', 'Medical')} style={{ flex: 1, textDecoration: 'none' }}>
           <div className="glass-card" style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(46, 204, 113, 0.1)' }}>
             <div style={{ padding: '8px', backgroundColor: '#2ecc71', borderRadius: '50%', color: 'white' }}>
               <HeartPulse size={20} />
