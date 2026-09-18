@@ -235,7 +235,7 @@ const AdminDashboard = () => {
       {user?.role === 'Admin' && (
         <div style={{ marginBottom: '24px' }}>
           <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <MapPin size={20} color="var(--primary-color)" /> Live Operations Map
+            <MapPin size={20} color="var(--primary-color)" /> {t('liveCommandMap')}
         </h3>
         <div style={{ borderRadius: '20px', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
           <CommandMap isWidget={true} />
@@ -243,7 +243,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Fleet Management & Quick Actions */}
+      {/* {t('fleetManagement')} & Quick Actions */}
       {user?.role === 'Admin' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '24px' }}>
           <button
@@ -268,7 +268,7 @@ const AdminDashboard = () => {
             onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
           >
             <div style={{ background: '#eff6ff', padding: '10px', borderRadius: '10px' }}><Truck size={20} color="#3b82f6" /></div>
-            FLEET MANAGEMENT
+            {t('fleetManagement')}
           </button>
           
           <button
@@ -293,7 +293,7 @@ const AdminDashboard = () => {
             onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
           >
             <div style={{ background: '#fef2f2', padding: '10px', borderRadius: '10px' }}><BarChart3 size={20} color="#ef4444" /></div>
-            INCIDENT ANALYTICS
+            {t('incidentAnalytics')}
           </button>
           
           <button 
@@ -318,7 +318,7 @@ const AdminDashboard = () => {
             onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
           >
             <div style={{ background: '#fef3c7', padding: '10px', borderRadius: '10px' }}><Radio size={20} color="#d97706" /></div>
-            MASS BROADCAST
+            {t('massBroadcast')}
           </button>
         </div>
       )}
@@ -348,7 +348,7 @@ const AdminDashboard = () => {
             }}
           >
             <Power size={24} />
-            {togglingDuty ? 'UPDATING STATUS...' : (user.is_on_duty === 1 ? 'ON DUTY - RECEIVING ALERTS' : 'OFF DUTY - NOTIFICATIONS PAUSED')}
+            {togglingDuty ? t('updatingStatus') : (user.is_on_duty === 1 ? t('onDutyToggle') : t('offDuty'))}
           </button>
         </div>
       )}
@@ -390,7 +390,7 @@ const AdminDashboard = () => {
                       </span>
                     </div>
                     <div style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '500' }}>
-                      Dialed <strong style={{ color: 'var(--text-main)' }}>{log.hotline_number}</strong> by <strong style={{ color: 'var(--text-main)' }}>{log.caller_name}</strong>
+                      {t('dialedWord')} <strong style={{ color: 'var(--text-main)' }}>{log.hotline_number}</strong> {t('byWord')} <strong style={{ color: 'var(--text-main)' }}>{log.caller_name}</strong>
                     </div>
                   </div>
                 ))}
@@ -404,7 +404,7 @@ const AdminDashboard = () => {
       {user?.role === 'Responder' && (
         <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
           <div style={{ fontWeight: '800', fontSize: '18px', color: 'var(--text-main)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertTriangle size={20} color="#ef4444" /> Live Emergencies
+            <AlertTriangle size={20} color="#ef4444" /> {t('liveEmergencies')}
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -420,7 +420,7 @@ const AdminDashboard = () => {
                       <span style={{ fontSize: '12px', fontWeight: '800', backgroundColor: '#ef4444', color: 'white', padding: '2px 8px', borderRadius: '12px' }}>{inc.type}</span>
                       <span style={{ fontSize: '12px', fontWeight: '800', color: '#3b82f6' }}>{inc.code}</span>
                     </div>
-                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', marginBottom: '2px' }}>{inc.location_address || 'GPS Location Attached'}</div>
+                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', marginBottom: '2px' }}>{inc.location_address || t('gpsLocation')}</div>
                     <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>{inc.status} • {new Date(inc.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                   </div>
                   <div style={{ padding: '10px', background: 'white', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
@@ -449,7 +449,7 @@ const AdminDashboard = () => {
                   <Radio size={24} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '20px', fontWeight: '800' }}>Mass Broadcast</h3>
+                  <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '20px', fontWeight: '800' }}>{t('massBroadcast')}</h3>
                   <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-light)', fontWeight: '500' }}>
                     Send an instant push notification to all users.
                   </p>

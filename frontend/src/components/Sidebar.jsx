@@ -81,7 +81,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         {/* Resident Sidebar Items */}
         {isResident && (
           <>
-            <div className="sidebar-section-header">Main Menu</div>
+            <div className="sidebar-section-header">{t('mainMenu')}</div>
             <li className="sidebar-item">
               <NavLink to="/dashboard" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <LayoutDashboard size={18} />
@@ -107,7 +107,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                </NavLink>
              </li>
 
-             <div className="sidebar-section-header">Resources</div>
+             <div className="sidebar-section-header">{t('resourcesTitle')}</div>
              <li className="sidebar-item">
                <NavLink to="/evacuation" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                  <Map size={18} />
@@ -123,17 +123,17 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
              <li className="sidebar-item">
                <NavLink to="/news" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                  <Radio size={18} />
-                 <span>News & Updates</span>
+                 <span>{t('newsUpdates')}</span>
                </NavLink>
              </li>
             <li className="sidebar-item">
               <NavLink to="/tips" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <BookOpen size={18} />
-                <span>Emergency Tips</span>
+                <span>{t('emergencyTips')}</span>
               </NavLink>
             </li>
 
-            <div className="sidebar-section-header">Account</div>
+            <div className="sidebar-section-header">{t('accountTitle')}</div>
             <li className="sidebar-item">
               <NavLink to="/notifications" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <Bell size={18} />
@@ -147,43 +147,43 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         {/* Admin / Responder Sidebar Items */}
         {(isAdmin || isResponder) && (
           <>
-            <div className="sidebar-section-header">Operations</div>
+            <div className="sidebar-section-header">{t('operationsTitle')}</div>
             <li className="sidebar-item">
               <NavLink to="/admin" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <LayoutDashboard size={18} />
-                <span>Dashboard</span>
+                <span>{t('dashboard')}</span>
               </NavLink>
             </li>
              <li className="sidebar-item">
                <NavLink to="/incidents" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                  <AlertTriangle size={18} />
-                 <span>Incidents</span>
+                 <span>{t('incidentsList')}</span>
                </NavLink>
              </li>
 
-             <div className="sidebar-section-header">Command Center</div>
+             <div className="sidebar-section-header">{t('commandCenterTitle')}</div>
              <li className="sidebar-item">
                <NavLink to="/evacuation" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                  <Map size={18} />
-                 <span>Evacuation Centers</span>
+                 <span>{t('evacuationCenters')}</span>
                </NavLink>
              </li>
              <li className="sidebar-item">
                <NavLink to="/hotlines" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                  <PhoneCall size={18} />
-                 <span>Hotlines Directory</span>
+                 <span>{t('hotlines')}</span>
                </NavLink>
              </li>
              <li className="sidebar-item">
                <NavLink to="/responders" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                  <Shield size={18} />
-                 <span>Responders</span>
+                 <span>{t('respondersTitle')}</span>
                </NavLink>
              </li>
              <li className="sidebar-item">
                <NavLink to="/news" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                  <Radio size={18} />
-                 <span>News & Updates</span>
+                 <span>{t('newsUpdates')}</span>
                </NavLink>
              </li>
           </>
@@ -191,23 +191,23 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
         {isAdmin && (
           <>
-            <div className="sidebar-section-header">Administration</div>
+            <div className="sidebar-section-header">{t('administrationTitle')}</div>
             <li className="sidebar-item">
               <NavLink to="/verifications" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <UserCheck size={18} />
-                <span>Verifications</span>
+                <span>{t('verifications')}</span>
               </NavLink>
             </li>
             <li className="sidebar-item">
               <NavLink to="/users" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <Users size={18} />
-                <span>Users</span>
+                <span>{t('userManagement')}</span>
               </NavLink>
             </li>
             <li className="sidebar-item">
               <NavLink to="/logs" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <History size={18} />
-                <span>System Logs</span>
+                <span>{t('systemLogs')}</span>
               </NavLink>
             </li>
           </>
@@ -215,7 +215,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
         {(isAdmin || isResponder) && (
           <>
-            <div className="sidebar-section-header">Account</div>
+            <div className="sidebar-section-header">{t('accountTitle')}</div>
             <li className="sidebar-item">
               <NavLink to="/notifications" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <Bell size={18} />
@@ -226,7 +226,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             <li className="sidebar-item">
               <NavLink to="/settings" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                 <Settings size={18} />
-                <span>Settings</span>
+                <span>{t('settingsTitle')}</span>
               </NavLink>
             </li>
           </>
