@@ -10,7 +10,7 @@ import {
   BookOpen, 
   Settings as SettingsIcon,
   LogOut,
-  ChevronRight, Map
+  ChevronRight
 } from 'lucide-react';
 
 const MoreMenu = () => {
@@ -28,7 +28,7 @@ const MoreMenu = () => {
     ...(user?.role === 'Resident' ? [{ title: t('householdList'), icon: <Users size={20} />, link: '/household', color: '#9b59b6' }] : []),
     ...(user?.role === 'Admin' ? [{ title: 'User Management', icon: <Users size={20} />, link: '/users', color: '#8e44ad' }] : []),
     ...(user?.role === 'Admin' ? [{ title: 'System Logs', icon: <BookOpen size={20} />, link: '/logs', color: '#34495e' }] : []),
-    ...(user?.role === 'Admin' || user?.role === 'Responder' ? [{ title: 'Live Command Map', icon: <Map size={20} />, link: '/command-map', color: '#38bdf8' }] : []), { title: t('emergencyHotlines'), icon: <PhoneCall size={20} />, link: '/hotlines', color: '#e74c3c' },
+    { title: t('emergencyHotlines'), icon: <PhoneCall size={20} />, link: '/hotlines', color: '#e74c3c' },
     { title: t('newsUpdates'), icon: <Radio size={20} />, link: '/news', color: '#f39c12' },
     { title: t('emergencyTips'), icon: <BookOpen size={20} />, link: '/tips', color: '#2ecc71' },
     { title: t('settingsTitle'), icon: <SettingsIcon size={20} />, link: '/settings', color: '#7f8c8d' }
