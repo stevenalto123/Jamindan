@@ -463,7 +463,7 @@ const EvacuationCenters = () => {
             borderRadius: 0,
             border: 'none',
           } : {
-            height: '400px', // More reasonable fixed height for map
+            height: window.innerWidth < 768 ? '280px' : '400px', // More reasonable fixed height for map
             border: '1px solid var(--border-color)',
             borderRadius: '12px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.05)',

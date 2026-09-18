@@ -249,7 +249,7 @@ const CommandMap = ({ isWidget = false }) => {
         position: 'relative',
         display: 'flex', 
         flexDirection: 'column', 
-        height: isWidget ? '700px' : (isFullscreen ? '100vh' : (isMobile ? 'calc(100dvh - 60px)' : 'calc(100vh - 80px)')), 
+        height: isWidget ? '700px' : (isFullscreen ? '100vh' : (isMobile ? 'calc(100dvh - 140px)' : 'calc(100vh - 80px)')), 
         backgroundColor: '#0f172a', 
         borderRadius: isWidget || !isFullscreen ? '20px' : '0', 
         overflow: 'hidden', 
