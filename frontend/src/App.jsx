@@ -517,7 +517,7 @@ const AppLayout = ({ children }) => {
           </div>
         )}
         <Header title={pageTitle} subtitle={pageSubtitle} toggleSidebar={toggleSidebar} />
-        {children}
+        {children}<div style={{ height: "100px", width: "100%", flexShrink: 0 }} className="mobile-bottom-spacer"></div>
       </div>
       {installPrompt && (
         <div style={{ position: 'fixed', bottom: '80px', right: '20px', left: 'auto', width: 'calc(100% - 40px)', maxWidth: '350px', padding: '16px', backgroundColor: '#eaf5ee', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', border: '1px solid #a9dfbf', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 9999 }}>
