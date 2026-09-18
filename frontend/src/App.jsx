@@ -491,7 +491,7 @@ const AppLayout = ({ children }) => {
   }
 
   return (
-    <div className="app-container">
+    <><div className="app-container">
       <Sidebar 
         isOpen={sidebarOpen} 
         toggleSidebar={toggleSidebar} 
@@ -531,7 +531,7 @@ const AppLayout = ({ children }) => {
           </div>
         </div>
       )}
-            <MobileBottomNav />
+
       {sidebarOpen && (
         <div 
           onClick={toggleSidebar} 
@@ -539,7 +539,7 @@ const AppLayout = ({ children }) => {
           className="menu-toggle"
         />
       )}
-      {activeEvacuation && (
+      </div><MobileBottomNav />{activeEvacuation && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(192, 57, 43, 0.95)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center', color: 'white', animation: 'pulse 1s infinite' }}>
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '20px' }}>⚠️ EVACUATION ALERT ⚠️</h1>
           <h2 style={{ fontSize: '22px', marginBottom: '15px' }}>{activeEvacuation.title}</h2>
@@ -552,7 +552,7 @@ const AppLayout = ({ children }) => {
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -739,4 +739,7 @@ function App() {
 }
 
 export default App;
+
+
+
 
