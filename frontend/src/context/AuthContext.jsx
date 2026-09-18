@@ -117,7 +117,7 @@ export const AuthProvider = ({ children }) => {
 
     const res = await axios.post('/api/auth/login', { username, password });
     
-    if (rememberMe) {
+    if (true) {
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('cached_user', JSON.stringify(res.data.user));
     } else {
