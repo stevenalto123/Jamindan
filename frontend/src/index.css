@@ -1794,3 +1794,6 @@ input[type="password"]::-ms-clear {
   background: rgba(255, 255, 255, 0.4);
 }
 input[type="date"].form-input { min-width: 0; }
+
+@media (max-width: 768px) { .main-content { padding-bottom: 100px !important; } .content-body { padding-bottom: 100px !important; } }
+
