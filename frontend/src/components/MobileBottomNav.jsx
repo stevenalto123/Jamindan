@@ -66,7 +66,7 @@ const MobileBottomNav = () => {
         )}
 
         {/* Map / Evacuation Tab */}
-        <NavLink to={isResident ? "/evacuation" : "/command-map"} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+        <NavLink to="/evacuation" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <Map size={22} className="nav-icon" />
           <span className="nav-label">{t('navMap')}</span>
         </NavLink>
