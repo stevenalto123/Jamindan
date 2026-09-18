@@ -10,6 +10,7 @@ import {
   Clock,
   Radio,
   Power,
+  Truck,
   Ambulance,
   BarChart3,
   Users,
