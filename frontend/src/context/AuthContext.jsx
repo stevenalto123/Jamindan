@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
       } catch (err) {
         console.error('Failed to load user profile on startup', err);
         // If it's a network error (offline), DO NOT log them out. Just use cached user.
-        if (!err.response) {
+        if (!err.response || (err.response.status !== 401 && err.response.status !== 403)) {
           const cachedUser = localStorage.getItem('cached_user') || sessionStorage.getItem('cached_user');
           if (cachedUser) {
             setUser(JSON.parse(cachedUser));
