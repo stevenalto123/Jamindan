@@ -371,8 +371,34 @@ const IncidentList = () => {
               {search || statusFilter || typeFilter ? "No incidents match your filters." : "No incidents reported yet."}
             </div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
+            <>
+              {/* Mobile Cards View */}
+              <div className="show-mobile-flex" style={{ flexDirection: 'column', gap: '12px' }}>
+                {paginatedIncidents.map((incident) => {
+                  const isCritical = incident.priority === 'CRITICAL';
+                  return (
+                    <Link to={`/incidents/${incident.id}`} key={incident.id} style={{ textDecoration: 'none', background: isCritical ? '#fff1f2' : 'white', borderRadius: '12px', padding: '16px', border: isCritical ? '1px solid #ffe4e6' : '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <span style={{ fontSize: '12px', fontWeight: '800', color: 'var(--text-main)', background: isCritical ? '#fecdd3' : '#f1f5f9', padding: '4px 8px', borderRadius: '6px', fontFamily: 'monospace' }}>{incident.code}</span>
+                          {isCritical && <span style={{ fontSize: '10px', background: '#e11d48', color: 'white', padding: '2px 6px', borderRadius: '4px', fontWeight: '800', animation: 'pulse 2s infinite' }}>CRITICAL</span>}
+                        </div>
+                        {getStatusBadge(incident.status)}
+                      </div>
+                      <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>{incident.type}</div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{incident.location_address || 'Coordinates Only'}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-light)', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: '10px', marginTop: '4px' }}>
+                        <span>{new Date(incident.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        <span style={{ fontWeight: '600', color: 'var(--primary-color)' }}>View Details →</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hide-mobile" style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
                 <thead>
                   <tr>
                     <th style={{ padding: '0 16px', textAlign: 'left', fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '0.5px' }}>{t('colCode')}</th>
@@ -470,7 +496,8 @@ const IncidentList = () => {
                   })}
                 </tbody>
               </table>
-            </div>
+              </div>
+            </>
           )}
         </div>
 

@@ -794,6 +794,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Responsive Grid/Flex Utilities */
+.show-mobile-flex { display: none !important; }
+
 @media (max-width: 768px) {
   .responsive-grid-col {
     grid-template-columns: 1fr !important;
@@ -804,6 +806,7 @@ h1, h2, h3, h4, h5, h6 {
     text-align: center;
     gap: 16px !important;
   }
+  .show-mobile-flex { display: flex !important; }
   .hide-mobile {
     display: none !important;
   }
