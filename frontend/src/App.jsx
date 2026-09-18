@@ -104,6 +104,7 @@ const AppLayout = ({ children }) => {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const { user } = useAuth();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [audioUnlocked, setAudioUnlocked] = useState(sessionStorage.getItem('audioUnlocked') === 'true');
 
   const [installPrompt, setInstallPrompt] = useState(null);
   const [activeEvacuation, setActiveEvacuation] = useState(null);
@@ -461,18 +462,67 @@ const AppLayout = ({ children }) => {
   } else if (path === '/hotlines') {
     pageTitle = "Emergency Hotlines";
     pageSubtitle = "Direct access to emergency responders";
-  } else if (path === '/analytics') {
+  } else if (path === '/admin-analytics') {
     pageTitle = "Analytics & Reports";
     pageSubtitle = "System performance and incident metrics";
-  } else if (path === '/vehicles') {
+  } else if (path === '/admin-vehicles') {
     pageTitle = "Emergency Vehicles";
     pageSubtitle = "Fleet status and deployment tracking";
-  } else if (path === '/verify') {
+  } else if (path === '/verifications') {
     pageTitle = "Pending Verifications";
     pageSubtitle = "Review new user registrations";
-  } else if (path.startsWith('/users/')) {
+  } else if (path.startsWith('/admin/users/')) {
     pageTitle = "User Profile";
     pageSubtitle = "View and edit user details";
+  }
+
+  const handleUnlockAudio = () => {
+    try {
+      if (!globalAudioCtx) {
+        globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (globalAudioCtx.state === 'suspended') {
+        globalAudioCtx.resume();
+      }
+      
+      // Play a tiny silent snippet to permanently unlock audio for this session
+      const osc = globalAudioCtx.createOscillator();
+      const gain = globalAudioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(globalAudioCtx.destination);
+      gain.gain.value = 0.01;
+      osc.start(0);
+      osc.stop(globalAudioCtx.currentTime + 0.1);
+      
+      setAudioUnlocked(true);
+      sessionStorage.setItem('audioUnlocked', 'true');
+    } catch(e) {
+      console.warn("Audio unlock failed:", e);
+      setAudioUnlocked(true); // Fallback so they aren't stuck
+    }
+  };
+
+  // If Admin/Responder and Audio is NOT unlocked, show the Go On Duty Screen
+  if (user && (user.role === 'Admin' || user.role === 'Responder') && !audioUnlocked) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-color)', padding: '20px', textAlign: 'center', zIndex: 9999 }}>
+        <div style={{ background: 'var(--card-bg)', padding: '40px 30px', borderRadius: '24px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', maxWidth: '400px', width: '100%' }}>
+          <div style={{ width: '80px', height: '80px', background: 'rgba(231, 76, 60, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+            <span style={{ fontSize: '40px' }}>🔔</span>
+          </div>
+          <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '12px' }}>Ready for Duty?</h2>
+          <p style={{ fontSize: '15px', color: 'var(--text-light)', marginBottom: '32px', lineHeight: '1.5' }}>
+            Browser policies require you to click before audio alarms can play. Click the button below to go on duty and enable the emergency siren.
+          </p>
+          <button 
+            onClick={handleUnlockAudio}
+            style={{ width: '100%', padding: '16px', background: 'var(--danger-color)', color: 'white', border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(231, 76, 60, 0.4)' }}
+          >
+            Go On Duty
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
