@@ -57,10 +57,10 @@ const EvacuationCenters = () => {
   const fetchCenters = async () => {
     try {
       const res = await axios.get('/api/emergency/evacuation-centers');
-      setCenters(res.data);
+      setCenters(res.data); localStorage.setItem('cached_evacuation_centers', JSON.stringify(res.data));
     } catch (err) {
       console.error(err);
-      setError('Failed to fetch evacuation centers.');
+      const cached = localStorage.getItem('cached_evacuation_centers'); if (cached) { setCenters(JSON.parse(cached)); } else { setError('Failed to fetch evacuation centers.'); }
     } finally {
       setLoading(false);
     }

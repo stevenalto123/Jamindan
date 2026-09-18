@@ -27,41 +27,23 @@ const ReportIncident = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [smsCopied, setSmsCopied] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  // Offline Draft Auto-Sync
-  useEffect(() => {
-    const handleOnline = async () => {
-      const draftData = localStorage.getItem('offline_incident_draft');
-      if (draftData) {
-        try {
-          const draft = JSON.parse(draftData);
-          const formData = new FormData();
-          let address = draft.locationText;
-          try {
-            const geoRes = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${draft.lat}&lon=${draft.lng}`);
-            if (geoRes.data && geoRes.data.display_name) {
-              address = geoRes.data.display_name.split(',').slice(0, 3).join(', ');
-            }
-          } catch (e) { console.warn('Reverse geocode failed', e); }
-          formData.append('type', draft.type);
-          formData.append('description', `[Location Details: ${draft.locationText.trim()}] (OFFLINE DRAFT) ${draft.description.trim()}`);
-          formData.append('location_lat', draft.lat);
-          formData.append('location_lng', draft.lng);
-          formData.append('location_address', address);
-          if (draft.details) formData.append('details', JSON.stringify(draft.details));
-          const res = await axios.post('/api/incidents', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-          localStorage.removeItem('offline_incident_draft');
-          alert(`Your offline draft was successfully submitted! Report Code: ${res.data.code}`);
-          navigate(`/incidents/${res.data.incidentId}`);
-        } catch (err) { console.error('Failed to sync offline draft:', err); }
-      }
-    };
-    window.addEventListener('online', handleOnline);
-    if (navigator.onLine && localStorage.getItem('offline_incident_draft')) handleOnline();
-    return () => window.removeEventListener('online', handleOnline);
-  }, [navigate]);
+  
 
   useEffect(() => { setDetails({}); }, [type]);
 
@@ -380,6 +362,21 @@ const ReportIncident = () => {
                 </>
               )}
             </button>
+
+            {isOffline && (
+              <a 
+                href={`sms:09123456789?body=${encodeURIComponent(`EMERGENCY REPORT\nType: ${type || 'Unknown'}\nLocation: ${locationText || 'Unknown'}\nDetails: ${description || 'None'}`)}`}
+                className="btn"
+                style={{
+                  width: '100%', height: '48px', fontSize: '14px', fontWeight: '700',
+                  backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '12px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none'
+                }}
+              >
+                <Signal size={18} /> Send via SMS (Offline Fallback)
+              </a>
+            )}
+
             <button
               type="button"
               onClick={() => navigate('/dashboard')}
