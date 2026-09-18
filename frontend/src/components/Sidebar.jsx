@@ -62,8 +62,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           <img src="/logo.png" alt="Jamindan Seal" className="sidebar-seal" />
         </div>
         <div>
-          <h2 className="sidebar-appname">Emergency<br/>Response</h2>
-          <span className="sidebar-subtitle">Capiz, Philippines</span>
+          <h2 className="sidebar-appname">Emergency Response</h2>
+          <span className="sidebar-subtitle" style={{ letterSpacing: '0.5px' }}>CAPIZ, PHILIPPINES</span>
         </div>
       </div>
 

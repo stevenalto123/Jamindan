@@ -357,6 +357,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .sidebar-logo-wrapper {
+  overflow: hidden;
   background: white;
   padding: 4px;
   border-radius: var(--radius-full);
@@ -369,6 +370,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .sidebar-seal {
+  border-radius: 50%;
+  object-fit: cover;
   width: 36px;
   height: 36px;
 }
