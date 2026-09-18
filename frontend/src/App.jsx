@@ -313,77 +313,40 @@ const AppLayout = ({ children }) => {
 
     const playSiren = () => {
       try {
-        let oscillator = null;
-        let gainNode = null;
+        if (!globalAudioCtx) {
+          globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (globalAudioCtx.state === 'suspended') {
+          globalAudioCtx.resume().catch(() => console.warn("Cannot resume audio context"));
+        }
+
+        const oscillator = globalAudioCtx.createOscillator();
+        const gainNode = globalAudioCtx.createGain();
         
-        // 1. Play loud real emergency siren MP3 audio (works on Android APK WebView)
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        audio.volume = 1.0;
+        oscillator.type = 'sawtooth';
+        oscillator.connect(gainNode);
+        gainNode.connect(globalAudioCtx.destination);
+        oscillator.start(0);
 
-        window.stopGlobalSiren = () => {
+        let high = false;
+        const fmInterval = setInterval(() => {
           try {
-            audio.pause();
-            audio.currentTime = 0;
-            if (gainNode) {
-              gainNode.gain.cancelScheduledValues(globalAudioCtx.currentTime);
-              gainNode.gain.setValueAtTime(gainNode.gain.value || 0.1, globalAudioCtx.currentTime);
-              gainNode.gain.exponentialRampToValueAtTime(0.001, globalAudioCtx.currentTime + 0.1);
-            }
-            if (oscillator) {
-              oscillator.stop(globalAudioCtx.currentTime + 0.15);
-            }
-            if (navigator.vibrate) navigator.vibrate(0); 
-          } catch(e) {}
-        };
-
-        const playSynthFallback = () => {
-          // 2. Web Audio Synth Fallback (Only plays if MP3 fails)
-          if (!globalAudioCtx) {
-            globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          }
-          if (globalAudioCtx.state === 'suspended') {
-            globalAudioCtx.resume().catch(() => console.warn("Cannot resume audio context without user gesture"));
-          }
-
-          oscillator = globalAudioCtx.createOscillator();
-          gainNode = globalAudioCtx.createGain();
-          
-          oscillator.type = 'sawtooth';
-          oscillator.connect(gainNode);
-          gainNode.connect(globalAudioCtx.destination);
-          oscillator.start(0);
-
-          let high = false;
-          let loops = 0;
-          const fmInterval = setInterval(() => {
-            loops++;
-            if (loops > 20) { // ~7 seconds
-              clearInterval(fmInterval);
-              try { oscillator.stop(); } catch(e){}
-              return;
-            }
             oscillator.frequency.setValueAtTime(high ? 1100.00 : 750.00, globalAudioCtx.currentTime);
             gainNode.gain.setValueAtTime(high ? 0.3 : 0.2, globalAudioCtx.currentTime);
-            high = !high;
-          }, 350);
-          
-          // Allow global stop to clear interval
-          window.stopGlobalSiren = () => {
-            try { clearInterval(fmInterval); } catch(e){}
-            try { oscillator.stop(); } catch(e){}
-          };
-        };
+          } catch(e){}
+          high = !high;
+        }, 350);
 
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(e => {
-            console.warn("Audio autoplay blocked, using synth fallback:", e);
-            playSynthFallback();
-          });
-        } else {
-          // In case play() doesn't return a promise on older browsers
-          playSynthFallback();
-        }
+        const vibeInterval = setInterval(() => {
+           if (navigator.vibrate) navigator.vibrate([1000, 300]);
+        }, 1300);
+        
+        window.stopGlobalSiren = () => {
+          try { clearInterval(fmInterval); } catch(e){}
+          try { clearInterval(vibeInterval); } catch(e){}
+          try { oscillator.stop(); } catch(e){}
+          if (navigator.vibrate) navigator.vibrate(0);
+        };
       } catch (e) {
         console.warn("Audio Context Error", e);
       }
