@@ -97,6 +97,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 };
 
 let globalAudioCtx = null;
+let isAudioUnlockedGlobal = false;
 
 // Main App Layout Wrapper (Resolves titles dynamically to match templates)
 const AppLayout = ({ children }) => {
@@ -104,7 +105,7 @@ const AppLayout = ({ children }) => {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const { user } = useAuth();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [audioUnlocked, setAudioUnlocked] = useState(sessionStorage.getItem('audioUnlocked') === 'true');
+  const [audioUnlocked, setAudioUnlocked] = useState(isAudioUnlockedGlobal);
 
   const [installPrompt, setInstallPrompt] = useState(null);
   const [activeEvacuation, setActiveEvacuation] = useState(null);
@@ -331,8 +332,8 @@ const AppLayout = ({ children }) => {
         let high = false;
         const fmInterval = setInterval(() => {
           try {
-            oscillator.frequency.setValueAtTime(high ? 1100.00 : 750.00, globalAudioCtx.currentTime);
-            gainNode.gain.setValueAtTime(high ? 0.3 : 0.2, globalAudioCtx.currentTime);
+            oscillator.frequency.value = high ? 1100.00 : 750.00;
+            gainNode.gain.value = high ? 1.0 : 0.6;
           } catch(e){}
           high = !high;
         }, 350);
@@ -458,10 +459,11 @@ const AppLayout = ({ children }) => {
       osc.stop(globalAudioCtx.currentTime + 0.1);
       
       setAudioUnlocked(true);
-      sessionStorage.setItem('audioUnlocked', 'true');
+      isAudioUnlockedGlobal = true;
     } catch(e) {
       console.warn("Audio unlock failed:", e);
       setAudioUnlocked(true); // Fallback so they aren't stuck
+      isAudioUnlockedGlobal = true;
     }
   };
 
