@@ -10,12 +10,11 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }
 });
 
-// Apply Admin role protection to all routes in this file
+// Apply auth to all routes in this file
 router.use(authRequired);
-router.use(requireRole(['Admin']));
 
 // Create new user (Admin only)
-router.post('/', upload.fields([
+router.post('/', requireRole(['Admin']), upload.fields([
   { name: 'id_photo', maxCount: 1 },
   { name: 'selfie_photo', maxCount: 1 }
 ]), async (req, res) => {
@@ -78,7 +77,7 @@ router.post('/', upload.fields([
 });
 
 // Get all users (with search, role filter, and pagination)
-router.get('/', async (req, res) => {
+router.get('/', requireRole(['Admin', 'Responder']), async (req, res) => {
   const { search, role, is_on_duty, page = 1, limit = 10 } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
 
@@ -141,8 +140,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get single user profile and history
-router.get('/:id/profile', async (req, res) => {
+// Get single user details
+router.get('/:id/profile', requireRole(['Admin']), async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -196,7 +195,7 @@ router.get('/:id/profile', async (req, res) => {
 });
 
 // Update user details & role
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireRole(['Admin']), async (req, res) => {
   const { id } = req.params;
   const { full_name, phone, barangay, role, agency_type } = req.body;
 
@@ -235,7 +234,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Toggle user activation status (Deactivate / Activate)
-router.put('/:id/status', async (req, res) => {
+router.put('/:id/status', requireRole(['Admin']), async (req, res) => {
   const { id } = req.params;
   const { is_active } = req.body; // Expecting 1 (active) or 0 (deactive)
 
@@ -262,8 +261,8 @@ router.put('/:id/status', async (req, res) => {
   }
 });
 
-// Delete user
-router.delete('/:id', async (req, res) => {
+// Delete user (Admin only)
+router.delete('/:id', requireRole(['Admin']), async (req, res) => {
   const { id } = req.params;
 
   try {
