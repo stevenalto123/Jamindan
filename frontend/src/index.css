@@ -1824,7 +1824,3 @@ input[type="date"].form-input { min-width: 0; }
 
 @media (min-width: 769px) { .mobile-bottom-spacer { display: none !important; } }
 
-/ *   H i d e   L e a f l e t   R o u t i n g   M a c h i n e   i t i n e r a r y   c o n t a i n e r   * /  
- . l e a f l e t - r o u t i n g - c o n t a i n e r   {   d i s p l a y :   n o n e   ! i m p o r t a n t ;   }  
- . l e a f l e t - r o u t i n g - c o n t a i n e r - h i d e   {   d i s p l a y :   n o n e   ! i m p o r t a n t ;   }  
- 
