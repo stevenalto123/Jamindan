@@ -17,8 +17,10 @@ const AdminResponders = () => {
   useEffect(() => {
     const fetchResponders = async () => {
       try {
-        const res = await axios.get('/api/users', { params: { role: 'Responder', limit: 100 } });
-        setResponders(res.data.users);
+        const res = await axios.get('/api/users', { params: { limit: 500 } });
+        // Filter locally to include both Responders and Admins in the directory
+        const validOfficers = res.data.users.filter(u => u.role === 'Responder' || u.role === 'Admin');
+        setResponders(validOfficers);
       } catch (err) {
         console.error(err);
       } finally {
