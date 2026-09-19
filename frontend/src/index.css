@@ -1824,3 +1824,8 @@ input[type="date"].form-input { min-width: 0; }
 
 @media (min-width: 769px) { .mobile-bottom-spacer { display: none !important; } }
 
+
+
+/* Hide Leaflet Routing Machine itinerary container */
+.leaflet-routing-container { display: none !important; }
+.leaflet-routing-container-hide { display: none !important; }
