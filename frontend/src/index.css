@@ -1843,3 +1843,12 @@ input[type="date"].form-input { min-width: 0; }
   }
 }
 
+
+/* Fix broken unicode multiplication sign for collapse button */
+.leaflet-routing-container .leaflet-routing-collapse-btn:after {
+  content: 'x' !important;
+  font-family: monospace !important;
+  font-size: 18px !important;
+  color: #333 !important;
+}
+
