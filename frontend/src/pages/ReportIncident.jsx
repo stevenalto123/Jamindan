@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import MapPicker from '../components/MapPicker';
-import { AlertTriangle, Upload, Check, MapPin, Flame, HeartPulse, Droplets, WifiOff, Car, ShieldAlert, HelpCircle, Copy, Signal } from 'lucide-react';
+import { AlertTriangle, Upload, Check, MapPin, Flame, HeartPulse, Droplets, WifiOff, Car, ShieldAlert, HelpCircle, Copy, Signal, PhoneCall } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const INCIDENT_TYPES = [
@@ -363,19 +363,33 @@ const ReportIncident = () => {
               )}
             </button>
 
-            {isOffline && (
-              <a 
-                href={`sms:09123456789?body=${encodeURIComponent(`EMERGENCY REPORT\nType: ${type || 'Unknown'}\nLocation: ${locationText || 'Unknown'}\nDetails: ${description || 'None'}`)}`}
-                className="btn"
-                style={{
-                  width: '100%', height: '48px', fontSize: '14px', fontWeight: '700',
-                  backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '12px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none'
-                }}
-              >
-                <Signal size={18} /> Send via SMS (Offline Fallback)
-              </a>
-            )}
+              {isOffline && (
+                <>
+                  <a 
+                    href="tel:911"
+                    className="btn"
+                    style={{
+                      width: '100%', height: '48px', fontSize: '14px', fontWeight: '800',
+                      backgroundColor: '#e11d48', color: 'white', border: 'none', borderRadius: '12px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none',
+                      animation: 'pulse 2s infinite'
+                    }}
+                  >
+                    <PhoneCall size={18} /> Call 911 (Free)
+                  </a>
+                  <a 
+                    href={`sms:09123456789?body=${encodeURIComponent(`EMERGENCY REPORT\nType: ${type || 'Unknown'}\nLocation: ${locationText || 'Unknown'}\nDetails: ${description || 'None'}`)}`}
+                    className="btn"
+                    style={{
+                      width: '100%', height: '48px', fontSize: '14px', fontWeight: '700',
+                      backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '12px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none'
+                    }}
+                  >
+                    <Signal size={18} /> Send via SMS (Requires Load)
+                  </a>
+                </>
+              )}
 
             <button
               type="button"
