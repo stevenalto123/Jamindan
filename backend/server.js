@@ -123,7 +123,13 @@ io.on('connection', (socket) => {
   console.log('New Socket.IO Connection:', socket.id);
 
   // Broadcaster (Resident) joins the room for their incident
-  socket.on('join-incident-room', (incidentId) => {
+  socket.on('broadcaster-ready', () => {
+      // Broadcaster ready, tell room
+      const rooms = Array.from(socket.rooms).filter(r => r !== socket.id);
+      rooms.forEach(r => socket.to(r).emit('broadcaster-ready'));
+    });
+
+    socket.on('join-incident-room', (incidentId) => {
     socket.join(`incident-${incidentId}`);
     console.log(`Socket ${socket.id} joined incident room: ${incidentId}`);
     // Notify others in the room that someone joined (useful for WebRTC renegotiation)

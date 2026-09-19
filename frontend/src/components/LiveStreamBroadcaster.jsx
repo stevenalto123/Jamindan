@@ -6,7 +6,9 @@ import { Camera, Mic, MicOff, CameraOff, AlertTriangle } from 'lucide-react';
 const LiveStreamBroadcaster = ({ incidentId }) => {
   const videoRef = useRef(null);
   const socketRef = useRef(null);
-  const peerConnectionRef = useRef(null);
+  const peerConnectionsRef = useRef({}); // Store multiple connections
+  const localStreamRef = useRef(null);
+  
   const [streamActive, setStreamActive] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [videoEnabled, setVideoEnabled] = useState(true);
@@ -21,7 +23,7 @@ const LiveStreamBroadcaster = ({ incidentId }) => {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('Broadcaster connected to signaling server');
+      console.log('Broadcaster connected to signaling server:', socket.id);
       socket.emit('join-incident-room', incidentId);
     });
 
@@ -32,43 +34,44 @@ const LiveStreamBroadcaster = ({ incidentId }) => {
       ]
     };
 
-    // Setup RTCPeerConnection
-    const peerConnection = new RTCPeerConnection(configuration);
-    peerConnectionRef.current = peerConnection;
+    // Helper to create a new P2P connection for a specific viewer
+    const createPeerConnection = async (viewerId, stream) => {
+      console.log('Creating new RTCPeerConnection for viewer:', viewerId);
+      
+      const pc = new RTCPeerConnection(configuration);
+      peerConnectionsRef.current[viewerId] = pc;
 
-    // Send ICE candidates to the viewer
-    peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit('ice-candidate', {
+      // Add local tracks to this new connection
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream);
+      });
+
+      // Send ICE candidates targeted to this viewer
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('ice-candidate', {
+            incidentId,
+            targetId: viewerId,
+            candidate: event.candidate
+          });
+        }
+      };
+
+      // Create and send Offer to this specific Viewer
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('webrtc-offer', {
           incidentId,
-          candidate: event.candidate
+          targetId: viewerId,
+          offer
         });
+      } catch (err) {
+        console.error("Error creating offer for", viewerId, err);
       }
     };
 
-    // Listen for Viewer's Answer
-    socket.on('webrtc-answer', async (data) => {
-      if (data.answer) {
-        try {
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-        } catch (err) {
-          console.error("Error setting remote description:", err);
-        }
-      }
-    });
-
-    // Listen for Viewer's ICE candidates
-    socket.on('ice-candidate', async (data) => {
-      if (data.candidate) {
-        try {
-          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } catch (err) {
-          console.error("Error adding ice candidate:", err);
-        }
-      }
-    });
-
-    // Capture Local Media (Rear Camera preferred)
+    // Capture Local Media
     const startMedia = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -76,32 +79,22 @@ const LiveStreamBroadcaster = ({ incidentId }) => {
           audio: true
         });
 
+        localStreamRef.current = stream;
+
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
 
-        stream.getTracks().forEach((track) => {
-          peerConnection.addTrack(track, stream);
-        });
-
         setStreamActive(true);
+        
+        // Let any viewers already in the room know we are ready
+        socket.emit('broadcaster-ready');
 
-        // Create and send Offer to Viewer
-        const sendOffer = async () => {
-          const offer = await peerConnection.createOffer();
-          await peerConnection.setLocalDescription(offer);
-          socket.emit('webrtc-offer', {
-            incidentId,
-            offer
-          });
-        };
-
-        await sendOffer();
-
-        // If a new viewer joins later, re-send the offer
-        socket.on('viewer-joined', async () => {
-          console.log('Viewer joined, re-sending offer...');
-          await sendOffer();
+        // Listen for new viewers joining
+        socket.on('viewer-joined', async (viewerId) => {
+          if (!viewerId || viewerId === socket.id) return;
+          console.log('New viewer joined, initiating connection:', viewerId);
+          await createPeerConnection(viewerId, stream);
         });
 
       } catch (err) {
@@ -112,18 +105,51 @@ const LiveStreamBroadcaster = ({ incidentId }) => {
 
     startMedia();
 
+    // Listen for Viewer's Answer
+    socket.on('webrtc-answer', async (data) => {
+      // Must be addressed to us
+      if (data.targetId && data.targetId !== socket.id) return;
+      
+      const pc = peerConnectionsRef.current[data.senderId];
+      if (pc && data.answer) {
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+        } catch (err) {
+          console.error("Error setting remote description:", err);
+        }
+      }
+    });
+
+    // Listen for Viewer's ICE candidates
+    socket.on('ice-candidate', async (data) => {
+      if (data.targetId && data.targetId !== socket.id) return;
+
+      const pc = peerConnectionsRef.current[data.senderId];
+      if (pc && data.candidate) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (err) {
+          console.error("Error adding ice candidate:", err);
+        }
+      }
+    });
+
     return () => {
       if (socketRef.current) socketRef.current.disconnect();
-      if (peerConnectionRef.current) peerConnectionRef.current.close();
-      if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+      
+      // Close all peer connections
+      Object.values(peerConnectionsRef.current).forEach(pc => pc.close());
+      peerConnectionsRef.current = {};
+      
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(track => track.stop());
       }
     };
   }, [incidentId]);
 
   const toggleAudio = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const audioTrack = videoRef.current.srcObject.getAudioTracks()[0];
+    if (localStreamRef.current) {
+      const audioTrack = localStreamRef.current.getAudioTracks()[0];
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
         setAudioEnabled(audioTrack.enabled);
@@ -132,8 +158,8 @@ const LiveStreamBroadcaster = ({ incidentId }) => {
   };
 
   const toggleVideo = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const videoTrack = videoRef.current.srcObject.getVideoTracks()[0];
+    if (localStreamRef.current) {
+      const videoTrack = localStreamRef.current.getVideoTracks()[0];
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
         setVideoEnabled(videoTrack.enabled);

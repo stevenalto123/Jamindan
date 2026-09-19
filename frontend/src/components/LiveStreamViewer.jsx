@@ -7,19 +7,19 @@ const LiveStreamViewer = ({ incidentId }) => {
   const videoRef = useRef(null);
   const socketRef = useRef(null);
   const peerConnectionRef = useRef(null);
+  const broadcasterIdRef = useRef(null); // Keep track of who is broadcasting
   const [streamActive, setStreamActive] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!incidentId) return;
 
-    // Connect to Socket.IO signaling server
     const socketUrl = axios.defaults.baseURL || '';
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('Viewer connected to signaling server');
+      console.log('Viewer connected to signaling server:', socket.id);
       socket.emit('join-incident-room', incidentId);
     });
 
@@ -35,9 +35,10 @@ const LiveStreamViewer = ({ incidentId }) => {
 
     // Send ICE candidates to the Broadcaster
     peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
+      if (event.candidate && broadcasterIdRef.current) {
         socket.emit('ice-candidate', {
           incidentId,
+          targetId: broadcasterIdRef.current,
           candidate: event.candidate
         });
       }
@@ -51,15 +52,28 @@ const LiveStreamViewer = ({ incidentId }) => {
       }
     };
 
+    // If broadcaster announces they are ready, re-send viewer-joined to trigger offer
+    socket.on('broadcaster-ready', () => {
+      console.log('Broadcaster is ready, announcing presence...');
+      // Server will relay this to broadcaster, who will then send us an offer
+      socket.emit('join-incident-room', incidentId);
+    });
+
     // Listen for Broadcaster's Offer
     socket.on('webrtc-offer', async (data) => {
+      // Only process offers addressed to this specific viewer
+      if (data.targetId && data.targetId !== socket.id) return;
+      
       if (data.offer) {
         try {
+          broadcasterIdRef.current = data.senderId; // Save broadcaster's socket ID
           await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
           const answer = await peerConnection.createAnswer();
           await peerConnection.setLocalDescription(answer);
+          
           socket.emit('webrtc-answer', {
             incidentId,
+            targetId: data.senderId,
             answer
           });
         } catch (err) {
@@ -70,6 +84,9 @@ const LiveStreamViewer = ({ incidentId }) => {
 
     // Listen for Broadcaster's ICE candidates
     socket.on('ice-candidate', async (data) => {
+      // Only process candidates addressed to this specific viewer
+      if (data.targetId && data.targetId !== socket.id) return;
+
       if (data.candidate) {
         try {
           await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
@@ -90,7 +107,7 @@ const LiveStreamViewer = ({ incidentId }) => {
       
       {error ? (
         <div style={{ color: '#fff', padding: '20px', textAlign: 'center' }}>
-          <AlertTriangle size={32} color="var(--danger-color)" style={{ marginBottom: '10px' }} />
+          <AlertTriangle size={32} color={`var(--danger-color)`} style={{ marginBottom: '10px' }} />
           <p>{error}</p>
         </div>
       ) : (
