@@ -219,14 +219,16 @@ const IncidentList = () => {
                         <Icon size={24} color={meta.color} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
                           <span style={{ fontWeight: '800', fontSize: '18px', color: 'var(--text-main)' }}>{incident.type}</span>
                           {isCritical && <span style={{ backgroundColor: '#ffe4e6', color: '#e11d48', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: '800', letterSpacing: '0.5px' }}>CRITICAL</span>}
                         </div>
-                        <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700', fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 8px', borderRadius: '6px' }}>{incident.code}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700', fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>{incident.code}</span>
+                          {getStatusBadge(incident.status)}
+                        </div>
                       </div>
-                      {getStatusBadge(incident.status)}
-                      <ChevronRight size={20} color="var(--text-muted)" style={{ flexShrink: 0, marginLeft: '8px' }} />
+                      <ChevronRight size={20} color="var(--text-muted)" style={{ flexShrink: 0, marginLeft: 'auto' }} />
                     </div>
 
                     <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-main)', lineHeight: '1.6', fontWeight: '500' }}>
