@@ -285,7 +285,7 @@ const EvacuationCenters = () => {
           lineOptions: {
             styles: [{ color: '#3498db', weight: 6, opacity: 0.9 }]
           },
-          show: true,
+          show: false,
           collapsible: true,
           addWaypoints: false,
           routeWhileDragging: false,
