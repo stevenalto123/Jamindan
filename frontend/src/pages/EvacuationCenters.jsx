@@ -416,7 +416,8 @@ const EvacuationCenters = () => {
   }
 
   return (
-    <div className="content-body" style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '60px' }}>
+    <div className="content-body" style={{ paddingBottom: '60px' }}>
+      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
       {/* Header Actions */}
       <div className="header-actions" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -478,7 +479,7 @@ const EvacuationCenters = () => {
             onClick={() => setIsFullScreen(!isFullScreen)}
             style={{ 
               position: 'absolute', 
-              top: '10px', 
+              top: isFullScreen ? 'calc(env(safe-area-inset-top, 0px) + 20px)' : '10px', 
               right: '10px', 
               zIndex: 1000, 
               backgroundColor: 'white', 
@@ -681,6 +682,7 @@ const EvacuationCenters = () => {
               <strong>{t('statusFull')}</strong>.
             </div>
           </div>
+          )}
         </div>
 
       </div>
