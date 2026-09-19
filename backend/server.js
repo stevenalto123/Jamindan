@@ -122,33 +122,33 @@ app.use((err, req, res, next) => {
 io.on('connection', (socket) => {
   console.log('New Socket.IO Connection:', socket.id);
 
-  // Broadcaster (Resident) joins the room for their incident
   socket.on('broadcaster-ready', () => {
-      // Broadcaster ready, tell room
-      const rooms = Array.from(socket.rooms).filter(r => r !== socket.id);
-      rooms.forEach(r => socket.to(r).emit('broadcaster-ready'));
-    });
+    // Broadcaster ready, tell room
+    const rooms = Array.from(socket.rooms).filter(r => r !== socket.id);
+    rooms.forEach(r => socket.to(r).emit('broadcaster-ready'));
+  });
 
-    socket.on('join-incident-room', (incidentId) => {
+  // Broadcaster (Resident) joins the room for their incident
+  socket.on('join-incident-room', (incidentId) => {
     socket.join(`incident-${incidentId}`);
     console.log(`Socket ${socket.id} joined incident room: ${incidentId}`);
     // Notify others in the room that someone joined (useful for WebRTC renegotiation)
-    socket.to(`incident-${incidentId}`).emit('viewer-joined');
+    socket.to(`incident-${incidentId}`).emit('viewer-joined', socket.id);
   });
 
   // Relay WebRTC Offer from Viewer (Admin) to Broadcaster (Resident)
   socket.on('webrtc-offer', (data) => {
-    socket.to(`incident-${data.incidentId}`).emit('webrtc-offer', data);
+    socket.to(`incident-${data.incidentId}`).emit('webrtc-offer', { ...data, senderId: socket.id });
   });
 
   // Relay WebRTC Answer from Broadcaster (Resident) to Viewer (Admin)
   socket.on('webrtc-answer', (data) => {
-    socket.to(`incident-${data.incidentId}`).emit('webrtc-answer', data);
+    socket.to(`incident-${data.incidentId}`).emit('webrtc-answer', { ...data, senderId: socket.id });
   });
 
   // Relay ICE Candidates
   socket.on('ice-candidate', (data) => {
-    socket.to(`incident-${data.incidentId}`).emit('ice-candidate', data);
+    socket.to(`incident-${data.incidentId}`).emit('ice-candidate', { ...data, senderId: socket.id });
   });
 
   // Removed Walkie-Talkie
