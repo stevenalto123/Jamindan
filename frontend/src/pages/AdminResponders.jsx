@@ -114,7 +114,7 @@ const AdminResponders = () => {
                 style={{ 
                   display: 'flex', 
                   justifyContent: 'space-between', 
-                  alignItems: 'center', 
+                  alignItems: 'flex-start', 
                   padding: '16px', 
                   border: '1px solid var(--border-color)', 
                   borderRadius: '12px',
@@ -122,10 +122,10 @@ const AdminResponders = () => {
                   boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
                   transition: 'transform 0.2s ease',
                   flexWrap: 'wrap',
-                  gap: '16px'
+                  gap: '12px'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', flex: '1 1 200px', minWidth: 0 }}>
                   {/* Responder Avatar */}
                   {resp.avatar ? (
                     <img 
@@ -137,7 +137,8 @@ const AdminResponders = () => {
                         borderRadius: '50%',
                         objectFit: 'cover',
                         flexShrink: 0,
-                        border: '2px solid var(--border-color)'
+                        border: '2px solid var(--border-color)',
+                        marginTop: '2px'
                       }}
                     />
                   ) : (
@@ -152,46 +153,48 @@ const AdminResponders = () => {
                       justifyContent: 'center',
                       fontWeight: 'bold',
                       fontSize: '18px',
-                      flexShrink: 0
+                      flexShrink: 0,
+                      marginTop: '2px'
                     }}>
                       {resp.full_name ? resp.full_name.charAt(0).toUpperCase() : 'R'}
                     </div>
                   )}
 
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                      <h4 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{resp.full_name}</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                      <h4 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{resp.full_name}</h4>
+                      
                       {/* Duty Status Badge */}
                       {resp.is_on_duty === 1 ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#eafaf1', padding: '2px 8px', borderRadius: '12px', border: '1px solid #d5f5e3', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#eafaf1', padding: '3px 8px', borderRadius: '12px', border: '1px solid #d5f5e3', whiteSpace: 'nowrap' }}>
                           <span style={{
                             width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#2ecc71',
                             boxShadow: '0 0 0 rgba(46, 204, 113, 0.4)',
                             animation: 'pulse 2s infinite'
                           }}></span>
-                          <span style={{ fontSize: '11px', color: '#27ae60', fontWeight: 'bold' }}>ON DUTY</span>
+                          <span style={{ fontSize: '10px', color: '#27ae60', fontWeight: 'bold' }}>ON DUTY</span>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#f5f5f5', padding: '2px 8px', borderRadius: '12px', border: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#f5f5f5', padding: '3px 8px', borderRadius: '12px', border: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
                           <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#95a5a6' }}></span>
-                          <span style={{ fontSize: '11px', color: '#7f8c8d', fontWeight: 'bold' }}>OFF DUTY</span>
+                          <span style={{ fontSize: '10px', color: '#7f8c8d', fontWeight: 'bold' }}>OFF DUTY</span>
                         </div>
                       )}
                     </div>
                     
-                    <div style={{ display: 'flex', gap: '16px', marginTop: '6px', fontSize: '13px', color: 'var(--text-light)', flexWrap: 'wrap' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                        <Phone size={14} /> {resp.phone}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', color: 'var(--text-light)' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <Phone size={13} style={{ flexShrink: 0 }} /> {resp.phone}
                       </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                        <MapPin size={14} /> {resp.barangay}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <MapPin size={13} style={{ flexShrink: 0 }} /> {resp.barangay}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Action Button */}
-                <div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', flex: '1 0 80px' }}>
                   <a 
                     href={`tel:${resp.phone}`} 
                     className="btn btn-primary" 
