@@ -43,6 +43,10 @@ const UserProfile = () => {
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
+    if (emergencyContactPhone && (emergencyContactPhone.length !== 11 || !emergencyContactPhone.startsWith('09'))) {
+      setError('Emergency Contact Phone must be a valid 11-digit number starting with 09.');
+      return;
+    }
     setSubmitting(true);
     setError('');
     setSuccess('');
@@ -215,7 +219,11 @@ const UserProfile = () => {
 
                     <div className="form-group" style={{ margin: 0, flex: 1 }}>
                       <label className="form-label">{t('contactPhoneLabel')}</label>
-                      <input type="text" className="form-input" placeholder={t('contactPhonePlaceholder')} value={emergencyContactPhone} onChange={(e) => setEmergencyContactPhone(e.target.value)} />
+                      <input type="text" className="form-input" placeholder={t('contactPhonePlaceholder')} value={emergencyContactPhone} onChange={(e) => {
+                        let val = e.target.value.replace(/[^0-9]/g, '');
+                        if (val.length > 11) val = val.slice(0, 11);
+                        setEmergencyContactPhone(val);
+                      }} />
                     </div>
                   </div>
                 </div>

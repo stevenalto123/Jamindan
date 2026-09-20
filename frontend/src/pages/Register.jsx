@@ -206,7 +206,11 @@ const Register = () => {
 
       setError('');
       setCurrentStep(2);
-    } else if (currentStep === 2) {
+      } else if (currentStep === 2) {
+      if (formData.emergency_contact_phone && (formData.emergency_contact_phone.length !== 11 || !formData.emergency_contact_phone.startsWith('09'))) {
+        setError('Emergency Contact Phone must be a valid 11-digit number starting with 09.');
+        return;
+      }
       setError('');
       setCurrentStep(3);
     }
