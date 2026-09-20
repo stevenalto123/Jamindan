@@ -109,12 +109,12 @@ const UserProfile = () => {
             </div>
 
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <div className="form-group" style={{ margin: 0, flex: '1 1 140px', minWidth: 0 }}>
+              <div className="form-group" style={{ margin: 0, flex: '1 1 100%', minWidth: 0 }}>
                 <label className="form-label">{t('fullNameLabel')}</label>
                 <input type="text" className="form-input" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
               </div>
 
-              <div className="form-group" style={{ margin: 0, flex: '1 1 140px', minWidth: 0 }}>
+              <div className="form-group" style={{ margin: 0, flex: '1 1 100%', minWidth: 0 }}>
                 <label className="form-label">{t('phoneNumberLabel')}</label>
                 <input type="text" className="form-input" value={phone} onChange={(e) => setPhone(e.target.value)} required />
               </div>
@@ -126,7 +126,7 @@ const UserProfile = () => {
             </div>
 
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <div className="form-group" style={{ margin: 0, flex: '2 1 150px', minWidth: 0 }}>
+              <div className="form-group" style={{ margin: 0, flex: '1 1 100%', minWidth: 0 }}>
                 <label className="form-label">Date of Birth</label>
                 <input 
                   type="date" 
@@ -149,7 +149,7 @@ const UserProfile = () => {
                   required 
                 />
               </div>
-              <div className="form-group" style={{ margin: 0, flex: '1 1 80px', minWidth: 0 }}>
+              <div className="form-group" style={{ margin: 0, flex: '1 1 100%', minWidth: 0 }}>
                 <label className="form-label">Age</label>
                 <input type="number" className="form-input" value={age} readOnly style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-muted)', width: '100%' }} />
               </div>
