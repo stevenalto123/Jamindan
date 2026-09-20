@@ -108,30 +108,30 @@ const UserProfile = () => {
               <input type="text" className="form-input" value={user?.username || ''} disabled style={{ backgroundColor: '#f0f2f0', cursor: 'not-allowed' }} />
             </div>
 
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <div className="form-group" style={{ margin: 0, flex: '1 1 100%', minWidth: 0 }}>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
                 <label className="form-label">{t('fullNameLabel')}</label>
-                <input type="text" className="form-input" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+                <input type="text" className="form-input" value={fullName} onChange={(e) => setFullName(e.target.value)} required style={{ width: '100%', minWidth: 0 }} />
               </div>
 
-              <div className="form-group" style={{ margin: 0, flex: '1 1 100%', minWidth: 0 }}>
+              <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
                 <label className="form-label">{t('phoneNumberLabel')}</label>
-                <input type="text" className="form-input" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                <input type="text" className="form-input" value={phone} onChange={(e) => setPhone(e.target.value)} required style={{ width: '100%', minWidth: 0 }} />
               </div>
             </div>
 
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Email Address</label>
-              <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
+              <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={{ width: '100%', minWidth: 0 }} />
             </div>
 
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <div className="form-group" style={{ margin: 0, flex: '1 1 100%', minWidth: 0 }}>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <div className="form-group" style={{ margin: 0, flex: '1 0 auto', minWidth: 0, maxWidth: '65%' }}>
                 <label className="form-label">Date of Birth</label>
                 <input 
                   type="date" 
                   className="form-input" 
-                  style={{ width: '100%' }}
+                  style={{ width: '100%', minWidth: 0 }}
                   value={dateOfBirth} 
                   onChange={(e) => {
                     setDateOfBirth(e.target.value);
@@ -149,9 +149,9 @@ const UserProfile = () => {
                   required 
                 />
               </div>
-              <div className="form-group" style={{ margin: 0, flex: '1 1 100%', minWidth: 0 }}>
+              <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
                 <label className="form-label">Age</label>
-                <input type="number" className="form-input" value={age} readOnly style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-muted)', width: '100%' }} />
+                <input type="number" className="form-input" value={age} readOnly style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-muted)', width: '100%', minWidth: 0 }} />
               </div>
             </div>
 
