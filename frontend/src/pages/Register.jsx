@@ -61,12 +61,6 @@ const Register = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  useEffect(() => {
-    if (error) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [error]);
 
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -140,12 +134,18 @@ const Register = () => {
 
   useEffect(() => {
     if (error || success) {
-      const container = document.getElementById('auth-container');
-      if (container) {
-        container.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      // Use setTimeout to ensure the DOM has updated and rendered the error/success div
+      setTimeout(() => {
+        const alertEl = document.getElementById('auth-message-alert');
+        if (alertEl) {
+          alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          // Fallback if not rendered
+          document.getElementById('auth-container')?.scrollTo({ top: 0, behavior: 'smooth' });
+          document.getElementById('root')?.scrollTo({ top: 0, behavior: 'smooth' });
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 50);
     }
   }, [error, success]);
 
@@ -400,8 +400,8 @@ const Register = () => {
           ))}
         </div>
 
-        {error && <div className="alert alert-danger" style={{ marginBottom: '20px' }}>{error}</div>}
-        {success && <div className="alert alert-success" style={{ marginBottom: '20px' }}>{success}</div>}
+        {error && <div id="auth-message-alert" className="alert alert-danger" style={{ marginBottom: '20px' }}>{error}</div>}
+        {success && <div id="auth-message-alert" className="alert alert-success" style={{ marginBottom: '20px' }}>{success}</div>}
 
         <form ref={formRef} onSubmit={handleSubmit} encType="multipart/form-data">
           
