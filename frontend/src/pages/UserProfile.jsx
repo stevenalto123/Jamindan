@@ -125,13 +125,13 @@ const UserProfile = () => {
               <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={{ width: '100%', minWidth: 0 }} />
             </div>
 
-            <div style={{ display: "flex", gap: "12px" }}>
-              <div className="form-group" style={{ margin: 0, flex: '1 0 auto', minWidth: 0, maxWidth: '65%' }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 90px", gap: "10px" }}>
+              <div className="form-group" style={{ margin: 0, overflow: 'hidden' }}>
                 <label className="form-label">Date of Birth</label>
                 <input 
                   type="date" 
                   className="form-input" 
-                  style={{ width: '100%', minWidth: 0 }}
+                  style={{ width: '100%', minWidth: 0, paddingLeft: '8px', paddingRight: '8px' }}
                   value={dateOfBirth} 
                   onChange={(e) => {
                     setDateOfBirth(e.target.value);
@@ -149,9 +149,9 @@ const UserProfile = () => {
                   required 
                 />
               </div>
-              <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
+              <div className="form-group" style={{ margin: 0, overflow: 'hidden' }}>
                 <label className="form-label">Age</label>
-                <input type="number" className="form-input" value={age} readOnly style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-muted)', width: '100%', minWidth: 0 }} />
+                <input type="number" className="form-input" value={age} readOnly style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-muted)', width: '100%', minWidth: 0, paddingLeft: '8px', paddingRight: '8px' }} />
               </div>
             </div>
 
