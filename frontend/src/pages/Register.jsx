@@ -139,10 +139,15 @@ const Register = () => {
   };
 
   useEffect(() => {
-    if (error) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (error || success) {
+      const container = document.getElementById('auth-container');
+      if (container) {
+        container.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
-  }, [error]);
+  }, [error, success]);
 
   const handleNext = () => {
     if (currentStep === 1) {
@@ -286,7 +291,7 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-page" style={{ overflowY: 'auto', padding: '20px 0' }}>
+    <div id="auth-container" className="auth-page" style={{ overflowY: 'auto', padding: '20px 0' }}>
       <style>{`
         input[type="password"]::-ms-reveal,
         input[type="password"]::-ms-clear { display: none; }
