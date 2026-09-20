@@ -608,6 +608,7 @@ const UserManagement = () => {
                           <option value="MDRRMO">MDRRMO / General Rescue</option>
                           <option value="Fire">BFP / Fire Department</option>
                           <option value="Medical">Medical / Ambulance</option>
+                          <option value="Police">PNP / Police Station</option>
                         </select>
                       </div>
                     )}
