@@ -26,6 +26,14 @@ async function migrate() {
     console.error("Error (might already exist):", err.message);
   }
 
+  try {
+    console.log("Adding household_members to users...");
+    await db.query(`ALTER TABLE users ADD COLUMN household_members TEXT NULL`);
+    console.log("Success.");
+  } catch (err) {
+    console.error("Error (might already exist):", err.message);
+  }
+
   await db.end();
 }
 

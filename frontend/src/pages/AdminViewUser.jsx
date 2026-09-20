@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, User, Phone, MapPin, Calendar, Activity, X, RotateCw, Mail, Heart, AlertCircle, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, User, Phone, MapPin, Calendar, Activity, X, RotateCw, Mail, Heart, AlertCircle, ShieldAlert, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const AdminViewUser = () => {
@@ -11,6 +11,7 @@ const AdminViewUser = () => {
   
   const [profile, setProfile] = useState(null);
   const [incidents, setIncidents] = useState([]);
+  const [household, setHousehold] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,6 +27,11 @@ const AdminViewUser = () => {
         setProfile(res.data.user);
         setIncidents(res.data.incidents);
         setStats(res.data.stats);
+        
+        if (res.data.user?.role === 'Resident') {
+          const householdRes = await axios.get(`/api/household/admin/${id}`);
+          setHousehold(householdRes.data);
+        }
       } catch (err) {
         console.error(err);
         setError('Failed to load user profile. They may have been deleted.');
@@ -193,6 +199,34 @@ const AdminViewUser = () => {
                     <span style={{ fontWeight: '600', color: '#b45309', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}><Phone size={14}/> {profile.emergency_contact_phone}</span>
                   </div>
                 )}
+              </div>
+            </>
+          )}
+
+          {/* Household Members Section */}
+          {household && household.length > 0 && (
+            <>
+              <div style={{ height: '1px', background: 'var(--border-color)' }}></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <h4 style={{ margin: 0, color: 'var(--text-main)', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Users size={18} color="#8b5cf6" /> Household Members
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {household.map((member) => (
+                    <div key={member.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '14px' }}>{member.full_name}</span>
+                        {member.medical_notes && (
+                          <span style={{ color: '#e11d48', fontSize: '12px', fontWeight: '500' }}>Med: {member.medical_notes}</span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '600' }}>Age {member.age}</span>
+                        <span style={{ fontSize: '12px', color: '#6366f1', background: '#e0e7ff', padding: '4px 8px', borderRadius: '12px', fontWeight: '700' }}>{member.gender}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </>
           )}

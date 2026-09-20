@@ -16,6 +16,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Admin get household members by user ID
+router.get('/admin/:userId', async (req, res) => {
+  if (req.user.role !== 'Admin') {
+    return res.status(403).json({ message: 'Unauthorized' });
+  }
+  try {
+    const [rows] = await db.execute('SELECT * FROM household_members WHERE user_id = ? ORDER BY id ASC', [req.params.userId]);
+    return res.json(rows);
+  } catch (error) {
+    console.error('Fetch admin household error:', error);
+    return res.status(500).json({ message: 'Server error while fetching household members' });
+  }
+});
+
 // Add household member
 router.post('/', async (req, res) => {
   const { full_name, age, gender, medical_notes } = req.body;
