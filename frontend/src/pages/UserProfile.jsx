@@ -41,8 +41,25 @@ const UserProfile = () => {
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const scrollToAlert = () => {
+    setTimeout(() => {
+      const alertEl = document.getElementById('profile-alert');
+      if (alertEl) {
+        alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        document.getElementById('main-content-area')?.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 50);
+  };
+
+  useEffect(() => {
+    if (error || success) scrollToAlert();
+  }, [error, success]);
+
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
+    scrollToAlert();
     if (emergencyContactPhone && (emergencyContactPhone.length !== 11 || !emergencyContactPhone.startsWith('09'))) {
       setError('Emergency Contact Phone must be a valid 11-digit number starting with 09.');
       return;
@@ -76,6 +93,7 @@ const UserProfile = () => {
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
+    scrollToAlert();
     if (!currentPassword || !newPassword) return;
     setSubmitting(true);
     setError('');
@@ -96,8 +114,8 @@ const UserProfile = () => {
   return (
     <div className="content-body" style={{ maxWidth: '900px', margin: '0 auto' }}>
 
-      {success && <div className="alert alert-success" style={{ fontSize: '13px', padding: '10px 14px' }}>{success}</div>}
-      {error && <div className="alert alert-danger" style={{ fontSize: '13px', padding: '10px 14px' }}>{error}</div>}
+      {success && <div id="profile-alert" className="alert alert-success" style={{ fontSize: '13px', padding: '10px 14px' }}>{success}</div>}
+      {error && <div id="profile-alert" className="alert alert-danger" style={{ fontSize: '13px', padding: '10px 14px' }}>{error}</div>}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }} className="responsive-grid-col">
         {/* Profile Info */}
