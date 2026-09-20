@@ -171,7 +171,7 @@ const Register = () => {
         return;
       }
       
-      const nameRegex = /^[a-zA-Z\s\-'.]{4,50}$/;
+      const nameRegex = /^[a-zA-ZñÑ\s\-'.]{3,50}$/;
       if (!nameRegex.test(formData.fullName.trim()) || !formData.fullName.trim().includes(' ')) {
         setError('Please enter a valid complete Full Name (First Name and Last Name).');
         return;
