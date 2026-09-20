@@ -228,7 +228,7 @@ const ReportIncident = () => {
           {/* Visual Incident Type Selector */}
           <div className="form-group" style={{ margin: 0 }}>
             <label className="form-label" style={{ marginBottom: '10px', display: 'block' }}>{t('incidentType')}</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px' }}>
               {INCIDENT_TYPES.map(({ value, label, icon: Icon, color, bg }) => (
                 <button
                   key={value}
