@@ -138,6 +138,12 @@ const Register = () => {
     setCameraActive(true);
   };
 
+  useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [error]);
+
   const handleNext = () => {
     if (currentStep === 1) {
       // Trigger HTML5 validation to automatically highlight and scroll to missing required fields
@@ -159,6 +165,13 @@ const Register = () => {
         setError(`Please fill in missing fields: ${missing.join(', ')}`);
         return;
       }
+      
+      const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+      if (!usernameRegex.test(formData.username)) {
+        setError('Username must be 3-20 characters long and contain only letters, numbers, or underscores.');
+        return;
+      }
+
       if (passwordStrength.score < 4) {
         setError('Password must meet all security requirements.');
         return;
