@@ -422,13 +422,13 @@ const Register = () => {
               <h3 style={{ fontSize: '18px', marginBottom: '20px', color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>Personal Information</h3>
               
               <div className="form-group">
-                <label className="form-label" htmlFor="fullName">{t('fullNameLabel')}</label>
+                <label className="form-label" htmlFor="fullName">{t('fullNameLabel')} <span style={{color: 'red'}}>*</span></label>
                 <input type="text" id="fullName" name="fullName" className="form-input" value={formData.fullName} onChange={handleChange} placeholder={t('completeName')} required />
               </div>
 
               <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '15px' }}>
                 <div>
-                  <label className="form-label" htmlFor="date_of_birth">Date of Birth</label>
+                  <label className="form-label" htmlFor="date_of_birth">Date of Birth <span style={{color: 'red'}}>*</span></label>
                   <input type="date" id="date_of_birth" name="date_of_birth" className="form-input" value={formData.date_of_birth} onChange={handleChange} required />
                 </div>
                 <div>
@@ -439,17 +439,17 @@ const Register = () => {
 
               <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <div>
-                  <label className="form-label" htmlFor="phone">{t('phoneNumberLabel')}</label>
+                  <label className="form-label" htmlFor="phone">{t('phoneNumberLabel')} <span style={{color: 'red'}}>*</span></label>
                   <input type="tel" id="phone" name="phone" className="form-input" value={formData.phone} onChange={handleChange} placeholder="09XXXXXXXXX" required />
                 </div>
                 <div>
-                  <label className="form-label" htmlFor="email">Email Address</label>
+                  <label className="form-label" htmlFor="email">Email Address <span style={{color: 'red'}}>*</span></label>
                   <input type="email" id="email" name="email" className="form-input" value={formData.email} onChange={handleChange} placeholder="Email" required />
                 </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="barangay">{t('barangayLabel')}</label>
+                <label className="form-label" htmlFor="barangay">{t('barangayLabel')} <span style={{color: 'red'}}>*</span></label>
                 <select id="barangay" name="barangay" className="form-select" value={formData.barangay} onChange={handleChange} required>
                   <option value="">{t('selectBarangay')}</option>
                   {BARANGAYS.map((brg) => <option key={brg} value={brg}>{brg}</option>)}
@@ -459,13 +459,13 @@ const Register = () => {
               <h3 style={{ fontSize: '18px', margin: '30px 0 20px 0', color: 'var(--text-main)', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>Account Security</h3>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="username">{t('usernameLabel')}</label>
+                <label className="form-label" htmlFor="username">{t('usernameLabel')} <span style={{color: 'red'}}>*</span></label>
                 <input type="text" id="username" name="username" className="form-input" value={formData.username} onChange={handleChange} placeholder={t('createUsername')} required />
               </div>
 
               <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <div>
-                  <label className="form-label" htmlFor="password">{t('passwordLabel')}</label>
+                  <label className="form-label" htmlFor="password">{t('passwordLabel')} <span style={{color: 'red'}}>*</span></label>
                   <div style={{ position: 'relative' }}>
                     <input type={showPassword ? 'text' : 'password'} id="password" name="password" className="form-input" style={{ paddingRight: '40px' }} value={formData.password} onChange={handleChange} placeholder={t('createStrongPass')} required />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -474,7 +474,7 @@ const Register = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="form-label" htmlFor="confirmPassword">{t('confirmPassword')}</label>
+                  <label className="form-label" htmlFor="confirmPassword">{t('confirmPassword')} <span style={{color: 'red'}}>*</span></label>
                   <div style={{ position: 'relative' }}>
                     <input type={showPassword ? 'text' : 'password'} id="confirmPassword" name="confirmPassword" className="form-input" style={{ paddingRight: '40px' }} value={formData.confirmPassword} onChange={handleChange} placeholder={t('retypePass')} required />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
