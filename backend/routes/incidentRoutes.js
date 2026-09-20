@@ -92,10 +92,10 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
 
       // 3. Determine Target Agencies based on Incident Type
       const targetAgencies = [];
-      if (type === 'Crime') targetAgencies.push('Police');
+      if (type === 'Crime') targetAgencies.push('MDRRMO');
       if (type === 'Fire') targetAgencies.push('Fire');
       if (type === 'Medical') targetAgencies.push('Medical');
-      if (type === 'Accident') targetAgencies.push('Medical', 'Police');
+      if (type === 'Accident') targetAgencies.push('Medical', 'MDRRMO');
 
       // 4. Fetch Potential Recipients
       const [recipients] = await conn.query("SELECT id, role, agency_type, is_on_duty, push_subscription FROM users WHERE role IN ('Admin', 'Responder') AND is_active = 1");
