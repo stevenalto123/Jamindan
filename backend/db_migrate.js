@@ -34,6 +34,15 @@ async function migrate() {
     console.error("Error (might already exist):", err.message);
   }
 
+  try {
+    console.log("Adding assigned_responder_id to incidents...");
+    await db.query(`ALTER TABLE incidents ADD COLUMN assigned_responder_id INT NULL`);
+    await db.query(`ALTER TABLE incidents ADD CONSTRAINT fk_responder FOREIGN KEY (assigned_responder_id) REFERENCES users(id) ON DELETE SET NULL`);
+    console.log("Success.");
+  } catch (err) {
+    console.error("Error (might already exist):", err.message);
+  }
+
   await db.end();
 }
 

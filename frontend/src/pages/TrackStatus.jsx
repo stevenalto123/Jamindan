@@ -169,6 +169,34 @@ const TrackStatus = () => {
 
   const isStaff = user?.role === 'Admin' || user?.role === 'Responder';
 
+  const [respondersList, setRespondersList] = useState([]);
+  const [selectedResponder, setSelectedResponder] = useState('');
+  const [assigning, setAssigning] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === 'Admin') {
+      axios.get('/api/users?role=Responder&limit=100')
+        .then(res => setRespondersList(res.data.users))
+        .catch(err => console.error(err));
+    }
+  }, [user]);
+
+  const handleAssignResponder = async (e) => {
+    e.preventDefault();
+    if (!selectedResponder) return;
+    setAssigning(true);
+    try {
+      await axios.put(`/api/incidents/${id}/assign`, { responder_id: selectedResponder });
+      alert('Responder successfully assigned!');
+      await fetchIncidentDetail();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to assign responder.');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
   // Parse structured details
   let parsedDetails = null;
   if (incident?.details) {
@@ -440,6 +468,43 @@ const TrackStatus = () => {
           )}
 
           {/* Dispatcher Actions */}
+          {user?.role === 'Admin' && (
+            <div className="card no-print" style={{ borderColor: 'rgba(59, 130, 246, 0.3)', marginBottom: '24px' }}>
+              <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6' }}>
+                <Navigation size={18} /> Dispatch Responder
+              </h3>
+              
+              {incident.assigned_responder_id ? (
+                <div style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe', marginBottom: '12px' }}>
+                  <p style={{ margin: 0, fontSize: '14px', color: '#1e3a8a' }}>
+                    <strong>Assigned To:</strong> {incident.assigned_responder_name || 'Responder'} ({incident.assigned_responder_agency || 'N/A'})
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleAssignResponder}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="responderSelect">Select Responder to Dispatch</label>
+                    <select
+                      id="responderSelect"
+                      className="form-select"
+                      value={selectedResponder}
+                      onChange={(e) => setSelectedResponder(e.target.value)}
+                      required
+                    >
+                      <option value="">-- Choose Responder --</option>
+                      {respondersList.map(r => (
+                        <option key={r.id} value={r.id}>{r.full_name} ({r.agency_type || 'Responder'})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button type="submit" className="btn btn-primary btn-full" disabled={assigning || !selectedResponder} style={{ height: '40px' }}>
+                    {assigning ? 'Dispatching...' : 'Dispatch Responder'}
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+
           {isStaff && (
             <div className="card no-print" style={{ borderColor: 'rgba(75, 142, 98, 0.3)' }}>
               <h3 className="card-title">Update Status</h3>

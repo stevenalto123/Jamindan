@@ -177,9 +177,12 @@ router.get('/', authRequired, async (req, res) => {
 
   try {
     let query = `
-      SELECT i.*, u.full_name as reporter_name, u.phone as reporter_phone, u.barangay as reporter_barangay
+      SELECT i.*, 
+             u.full_name as reporter_name, u.phone as reporter_phone, u.barangay as reporter_barangay,
+             r.full_name as assigned_responder_name, r.agency_type as assigned_responder_agency
       FROM incidents i
       JOIN users u ON i.reporter_id = u.id
+      LEFT JOIN users r ON i.assigned_responder_id = r.id
     `;
     const params = [];
     const conditions = [];
@@ -187,6 +190,9 @@ router.get('/', authRequired, async (req, res) => {
     // Filter by ownership
     if (req.user.role === 'Resident') {
       conditions.push('i.reporter_id = ?');
+      params.push(req.user.id);
+    } else if (req.user.role === 'Responder') {
+      conditions.push('i.assigned_responder_id = ?');
       params.push(req.user.id);
     }
 
@@ -500,6 +506,44 @@ router.post('/:id/chat', authRequired, async (req, res) => {
   } catch (error) {
     console.error('Send chat error:', error);
     return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Assign Responder (Admin only)
+router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res) => {
+  const { id } = req.params;
+  const { responder_id } = req.body;
+  
+  if (!responder_id) {
+    return res.status(400).json({ message: 'responder_id is required' });
+  }
+
+  try {
+    const [result] = await db.query(
+      'UPDATE incidents SET assigned_responder_id = ?, status = ? WHERE id = ?',
+      [responder_id, 'In Progress', id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Incident not found.' });
+    }
+
+    // Log the action
+    await db.query(
+      'INSERT INTO incident_updates (incident_id, status, comment, updated_by) VALUES (?, ?, ?, ?)',
+      [id, 'In Progress', `Incident dispatched to responder #${responder_id}`, req.user.id]
+    );
+    
+    // Optionally emit event via socket
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('incident-updated', { id, status: 'In Progress' });
+    }
+
+    return res.json({ message: 'Responder assigned successfully' });
+  } catch (error) {
+    console.error('Assign responder error:', error);
+    return res.status(500).json({ message: 'Server error while assigning responder' });
   }
 });
 
