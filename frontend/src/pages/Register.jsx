@@ -132,24 +132,26 @@ const Register = () => {
     setCameraActive(true);
   };
 
+  const scrollToError = () => {
+    setTimeout(() => {
+      const alertEl = document.getElementById('auth-message-alert');
+      if (alertEl) {
+        alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        document.querySelector('.auth-page')?.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 50);
+  };
+
   useEffect(() => {
     if (error || success) {
-      // Use setTimeout to ensure the DOM has updated and rendered the error/success div
-      setTimeout(() => {
-        const alertEl = document.getElementById('auth-message-alert');
-        if (alertEl) {
-          alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else {
-          // Fallback if not rendered
-          document.getElementById('auth-container')?.scrollTo({ top: 0, behavior: 'smooth' });
-          document.getElementById('root')?.scrollTo({ top: 0, behavior: 'smooth' });
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      }, 50);
+      scrollToError();
     }
   }, [error, success]);
 
   const handleNext = () => {
+    scrollToError();
     if (currentStep === 1) {
       // Trigger HTML5 validation to automatically highlight and scroll to missing required fields
       if (formRef.current && !formRef.current.reportValidity()) {
@@ -237,6 +239,7 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    scrollToError();
     if (currentStep !== 3) return;
 
     if (!formData.id_type || !idPhoto || !selfiePhoto || !legalChecked) {
