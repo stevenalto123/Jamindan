@@ -16,6 +16,10 @@ router.post('/subscribe', authRequired, async (req, res) => {
 
   try {
     const subscriptionString = JSON.stringify(subscription);
+    
+    // Prevent phantom notifications: Remove this device's token from any other accounts it was previously logged into
+    await db.execute('UPDATE users SET push_subscription = NULL WHERE push_subscription = ?', [subscriptionString]);
+
     const [result] = await db.execute(
       'UPDATE users SET push_subscription = ? WHERE id = ?',
       [subscriptionString, userId]
