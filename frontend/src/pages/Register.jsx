@@ -171,6 +171,23 @@ const Register = () => {
         return;
       }
       
+      const nameRegex = /^[a-zA-Z\s\-'.]{4,50}$/;
+      if (!nameRegex.test(formData.fullName.trim()) || !formData.fullName.trim().includes(' ')) {
+        setError('Please enter a valid complete Full Name (First Name and Last Name).');
+        return;
+      }
+      
+      // Top-to-bottom UI validation order
+      if (parseInt(formData.age) < 18) {
+        setError(t('mustBe18'));
+        return;
+      }
+
+      if (formData.phone.length !== 11 || !formData.phone.startsWith('09')) {
+        setError(t('phoneMustBe11'));
+        return;
+      }
+      
       const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
       if (!usernameRegex.test(formData.username)) {
         setError('Username must be 3-20 characters long and contain only letters, numbers, or underscores.');
@@ -181,18 +198,12 @@ const Register = () => {
         setError('Password must meet all security requirements.');
         return;
       }
+
       if (formData.password !== formData.confirmPassword) {
         setError(t('passwordsDoNotMatch'));
         return;
       }
-      if (formData.phone.length !== 11 || !formData.phone.startsWith('09')) {
-        setError(t('phoneMustBe11'));
-        return;
-      }
-      if (parseInt(formData.age) < 18) {
-        setError(t('mustBe18'));
-        return;
-      }
+
       setError('');
       setCurrentStep(2);
     } else if (currentStep === 2) {
