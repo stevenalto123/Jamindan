@@ -185,10 +185,10 @@ router.get('/', authRequired, async (req, res) => {
     let query = `
       SELECT i.*, 
              u.full_name as reporter_name, u.phone as reporter_phone, u.barangay as reporter_barangay,
-             r.full_name as assigned_responder_name, r.agency_type as assigned_responder_agency
+             r.full_name as responder_name, r.agency_type as responder_agency
       FROM incidents i
       JOIN users u ON i.reporter_id = u.id
-      LEFT JOIN users r ON i.assigned_responder_id = r.id
+      LEFT JOIN users r ON i.responder_id = r.id
     `;
     const params = [];
     const conditions = [];
@@ -198,7 +198,7 @@ router.get('/', authRequired, async (req, res) => {
       conditions.push('i.reporter_id = ?');
       params.push(req.user.id);
     } else if (req.user.role === 'Responder') {
-      conditions.push('i.assigned_responder_id = ?');
+      conditions.push('i.responder_id = ?');
       params.push(req.user.id);
     }
 
@@ -533,7 +533,7 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
     }
 
     const [result] = await db.query(
-      'UPDATE incidents SET assigned_responder_id = ?, status = ? WHERE id = ?',
+      'UPDATE incidents SET responder_id = ?, status = ? WHERE id = ?',
       [responder_id, 'In Progress', id]
     );
 
@@ -570,3 +570,5 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
 });
 
 module.exports = router;
+
+
