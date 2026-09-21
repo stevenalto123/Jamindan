@@ -97,312 +97,40 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
       if (type === 'Medical') targetAgencies.push('Medical');
       if (type === 'Accident') targetAgencies.push('Medical', 'MDRRMO');
 
-      // 4. Fetch Potential Recipients
-      const [recipients] = await conn.query("SELECT id, role, agency_type, is_on_duty, push_subscription FROM users WHERE role IN ('Admin', 'Responder') AND is_active = 1");
+      // 4. Fetch Potential Recipients (Only Admins get the initial report broadcast now)
+      const [recipients] = await conn.query("SELECT id, role, agency_type, push_subscription FROM users WHERE role = 'Admin' AND is_active = 1");
       const [residentRows] = await conn.query("SELECT full_name FROM users WHERE id = ?", [req.user.id]);
       const resident = residentRows[0];
 
       for (const recipient of recipients) {
-        // Auto-Routing Logic:
-        let shouldNotify = false;
-        
-        if (recipient.role === 'Admin') {
-          shouldNotify = true; // Admins see everything
-        } else {
-          // It is a Responder. Check Duty Status unless it's a massive panic
-          if (recipient.is_on_duty !== 1 && type !== 'SOS Panic') {
-            shouldNotify = false;
-          } else {
-            if (['Flood', 'Other', 'SOS Panic'].includes(type) || targetAgencies.length === 0) {
-              shouldNotify = true; // General incident, broadcast to everyone
-            } else {
-              // Specific incident type, check agency
-              if (recipient.agency_type && targetAgencies.includes(recipient.agency_type)) {
-                shouldNotify = true;
-              } else if (!recipient.agency_type || recipient.agency_type === 'MDRRMO' || recipient.agency_type === 'General') {
-                shouldNotify = true; // General command sees everything
-              }
-            }
-          }
-        }
+        await conn.execute(
+          'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES (?, ?, ?, ?, ?)',
+          [
+            recipient.id,
+            'New Emergency Report',
+            'A new ' + type + ' report (' + code + ') has been reported by ' + (resident ? resident.full_name : 'a Resident') + '.',
+            'incident',
+            insId
+          ]
+        );
 
-        if (!shouldNotify) continue;
-
-        // App Notification
-        await conn.execute(`
-          INSERT INTO notifications (user_id, title, message, reference_type, reference_id)
-          VALUES (?, 'New Emergency Report', ?, 'incident', ?)
-        `, [
-          recipient.id,
-          `A new ${type} report (${code}) has been reported by ${resident ? resident.full_name : 'a Resident'}.`,
-          insId
-        ]);
-
-        // Web Push Notification
         if (recipient.push_subscription) {
           try {
             const subscription = JSON.parse(recipient.push_subscription);
             const payload = JSON.stringify({
-              title: `🚨 URGENT: ${type}`,
-              body: `Incident ${code} reported by ${resident ? resident.full_name : 'Resident'} at ${address || 'GPS Location'}!`,
+              title: '?? URGENT: ' + type,
+              body: 'Incident ' + code + ' reported by ' + (resident ? resident.full_name : 'Resident') + ' at ' + (address || 'GPS Location') + '!',
               icon: '/jamindan-seal.png',
               url: '/incidents'
             });
             await webpush.sendNotification(subscription, payload);
           } catch (pushErr) {
-            console.error('Failed to send push notification to user', recipient.id, pushErr.message);
+            console.error('Failed to send push notification', recipient.id);
           }
         }
       }
 
       return insId;
-    });
-
-    await db.logAudit(`Incident reported: ${code} (${type})`, req.user.username, req.ip);
-    
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('new-incident', { incidentId, type, code });
-    }
-
-    return res.status(201).json({
-      message: 'Report submitted successfully!',
-      code,
-      incidentId
-    });
-
-  } catch (error) {
-    console.error('Incident creation error:', error);
-    return res.status(500).json({ message: 'Server error while submitting report' });
-  }
-});
-
-// List Incidents
-router.get('/', authRequired, async (req, res) => {
-  const { status, type, search } = req.query;
-
-  try {
-    let query = `
-      SELECT i.*, 
-             u.full_name as reporter_name, u.phone as reporter_phone, u.barangay as reporter_barangay,
-             r.full_name as responder_name, r.agency_type as responder_agency
-      FROM incidents i
-      JOIN users u ON i.reporter_id = u.id
-      LEFT JOIN users r ON i.responder_id = r.id
-    `;
-    const params = [];
-    const conditions = [];
-
-    // Filter by ownership
-    if (req.user.role === 'Resident') {
-      conditions.push('i.reporter_id = ?');
-      params.push(req.user.id);
-    } else if (req.user.role === 'Responder') {
-      conditions.push('i.responder_id = ?');
-      params.push(req.user.id);
-    }
-
-    // Filter by status
-    if (status) {
-      if (status.includes(',')) {
-        const statuses = status.split(',').map(s => s.trim());
-        const placeholders = statuses.map(() => '?').join(',');
-        conditions.push(`i.status IN (${placeholders})`);
-        params.push(...statuses);
-      } else {
-        conditions.push('i.status = ?');
-        params.push(status);
-      }
-    }
-
-    // Filter by type
-    if (type) {
-      conditions.push('i.type = ?');
-      params.push(type);
-    }
-
-    // Search query (for admin/responder)
-    if (search && req.user.role !== 'Resident') {
-      conditions.push('(u.full_name LIKE ? OR i.code LIKE ? OR u.barangay LIKE ? OR i.description LIKE ?)');
-      const wildCard = `%${search}%`;
-      params.push(wildCard, wildCard, wildCard, wildCard);
-    }
-
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    // If Admin/Responder, force Critical-keyword incidents to float to the very top
-    if (req.user.role !== 'Resident') {
-      const keywordRegex = '(unconscious|bleeding|fire|trapped|armed|heart attack|stroke|not breathing|critical|severe|gun|knife|suicide|explosion)';
-      query += ` ORDER BY CASE WHEN i.description REGEXP '${keywordRegex}' THEN 1 ELSE 2 END ASC, i.created_at DESC`;
-    } else {
-      query += ' ORDER BY i.created_at DESC';
-    }
-
-    const [incidents] = await db.query(query, params);
-    
-    // Epic Feature 4: Smart Incident Prioritization Algorithm
-    const criticalKeywords = /(unconscious|bleeding|fire|trapped|armed|heart attack|stroke|not breathing|critical|severe|gun|knife|suicide|explosion)/i;
-    
-    const processedIncidents = incidents.map(inc => {
-      let priority = 'Normal';
-      // If the description contains any severe keyword, instantly flag as CRITICAL
-      if (inc.description && criticalKeywords.test(inc.description)) {
-        priority = 'CRITICAL';
-      }
-      return { ...inc, priority };
-    });
-
-    return res.json(processedIncidents);
-
-  } catch (error) {
-    console.error('List incidents error:', error);
-    return res.status(500).json({ message: 'Server error while fetching incidents' });
-  }
-});
-
-// Get Incident Detail (with status history timeline)
-router.get('/:id', authRequired, async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const [incidentRows] = await db.query(`
-      SELECT i.*, 
-             u.full_name as reporter_name, 
-             u.phone as reporter_phone, 
-             u.barangay as reporter_barangay,
-             u.purok_sitio as reporter_purok_sitio,
-             u.blood_type as reporter_blood_type,
-             u.allergies as reporter_allergies,
-             u.medical_conditions as reporter_medical_conditions,
-             u.emergency_contact_name as reporter_emergency_contact_name,
-             u.emergency_contact_phone as reporter_emergency_contact_phone,
-             resp.full_name as responder_name,
-             resp.phone as responder_phone,
-             resp.current_lat as responder_lat,
-             resp.current_lng as responder_lng
-      FROM incidents i
-      JOIN users u ON i.reporter_id = u.id
-      LEFT JOIN users resp ON i.responder_id = resp.id
-      WHERE i.id = ?
-    `, [id]);
-
-    const incident = incidentRows[0];
-
-    if (!incident) {
-      return res.status(404).json({ message: 'Incident report not found' });
-    }
-
-    // Security check: Residents can only view their own
-    if (req.user.role === 'Resident' && incident.reporter_id !== req.user.id) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
-    const [history] = await db.query(`
-      SELECT h.*, u.full_name as updated_by_name, u.role as updated_by_role
-      FROM incident_status_history h
-      JOIN users u ON h.updated_by = u.id
-      WHERE h.incident_id = ?
-      ORDER BY h.created_at ASC
-    `, [id]);
-
-    // Fetch reporter's household members list
-    const [household] = await db.query(`
-      SELECT id, full_name, age, gender, medical_notes
-      FROM household_members
-      WHERE user_id = ?
-      ORDER BY id ASC
-    `, [incident.reporter_id]);
-
-    return res.json({ 
-      incident, 
-      history, 
-      reporterHousehold: household 
-    });
-
-  } catch (error) {
-    console.error('Fetch incident detail error:', error);
-    return res.status(500).json({ message: 'Server error while fetching incident detail' });
-  }
-});
-
-// Epic Feature 1: Live Responder Tracking - Get Responder Location
-router.get('/:id/responder-location', authRequired, async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const [rows] = await db.query(`
-      SELECT i.reporter_id, u.current_lat, u.current_lng, u.full_name as responder_name
-      FROM incidents i
-      JOIN users u ON i.responder_id = u.id
-      WHERE i.id = ?
-    `, [id]);
-
-    const data = rows[0];
-
-    if (!data) {
-      return res.status(404).json({ message: 'Responder or Incident not found.' });
-    }
-
-    // Security check: Only the reporter or an Admin/Responder can track
-    if (req.user.role === 'Resident' && data.reporter_id !== req.user.id) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
-    return res.json({
-      responder_name: data.responder_name,
-      lat: data.current_lat,
-      lng: data.current_lng
-    });
-
-  } catch (error) {
-    console.error('Fetch responder location error:', error);
-    return res.status(500).json({ message: 'Server error while fetching responder location' });
-  }
-});
-
-// Update Incident Status (Admin / Responder only)
-router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), async (req, res) => {
-  const { id } = req.params;
-  const { status, comment } = req.body;
-
-  const validStatuses = ['Pending', 'Acknowledged', 'Responding', 'On Scene', 'Resolved', 'False Alarm'];
-  if (!status || !validStatuses.includes(status)) {
-    return res.status(400).json({ message: 'Invalid status value' });
-  }
-
-  try {
-    const [incidentRows] = await db.query('SELECT code, reporter_id, status, responder_id FROM incidents WHERE id = ?', [id]);
-    const incident = incidentRows[0];
-    if (!incident) {
-      return res.status(404).json({ message: 'Incident not found' });
-    }
-
-    if (incident.status === status) {
-      return res.status(400).json({ message: `Incident is already marked as ${status}` });
-    }
-
-    await db.transaction(async (conn) => {
-      // 1. Update status (and auto-assign Responder if they are the first to change it from Pending)
-      let updateQuery = 'UPDATE incidents SET status = ?, updated_at = CURRENT_TIMESTAMP';
-      const updateParams = [status];
-      
-      if (req.user.role === 'Responder' && incident.responder_id === null) {
-        updateQuery += ', responder_id = ?';
-        updateParams.push(req.user.id);
-      }
-      
-      updateQuery += ' WHERE id = ?';
-      updateParams.push(id);
-
-      await conn.execute(updateQuery, updateParams);
-
-      // 2. Insert into history
-      await conn.execute(`
-        INSERT INTO incident_status_history (incident_id, status, comment, updated_by)
-        VALUES (?, ?, ?, ?)
-      `, [id, status, comment || `Status updated to ${status}.`, req.user.id]);
 
       // 3. Notify resident
       await conn.execute(`
@@ -538,12 +266,44 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
     );
 
     // Log the action
-    await db.query(
-      'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, ?, ?, ?)',
-      [id, 'In Progress', `Incident dispatched to responder #${responder_id}`, req.user.id]
-    );
-    
-    // Optionally emit event via socket
+      await db.query(
+        'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, ?, ?, ?)',
+        [id, 'In Progress', `Incident dispatched to responder #${responder_id}`, req.user.id]
+      );
+
+      // Send Database and Web Push Notification to the assigned responder
+      const [respRows] = await db.query('SELECT push_subscription FROM users WHERE id = ?', [responder_id]);
+      if (respRows.length > 0) {
+        const assignedResponder = respRows[0];
+        await db.execute(
+          'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES (?, ?, ?, ?, ?)',
+          [
+            responder_id,
+            'Dispatch Alert',
+            'You have been assigned to Incident ' + incident.code + '. Please respond immediately.',
+            'incident',
+            id
+          ]
+        );
+
+        if (assignedResponder.push_subscription) {
+          try {
+            const subscription = JSON.parse(assignedResponder.push_subscription);
+            const webpush = require('web-push'); // Ensure webpush is in scope if needed, though it's global
+            const payload = JSON.stringify({
+              title: '?? DISPATCH ALERT',
+              body: 'You have been assigned to Incident ' + incident.code + '. Please respond immediately!',
+              icon: '/jamindan-seal.png',
+              url: '/incidents/' + id
+            });
+            await webpush.sendNotification(subscription, payload);
+          } catch (pushErr) {
+            console.error('Failed to send dispatch push notification', responder_id);
+          }
+        }
+      }
+
+      // Optionally emit event via socket
     const io = req.app.get('io');
     if (io) {
       io.emit('responder-dispatched', { 
@@ -570,5 +330,8 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
 });
 
 module.exports = router;
+
+
+
 
 
