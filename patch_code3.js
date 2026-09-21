@@ -1,1 +1,0 @@
-const fs = require("fs"); let data = fs.readFileSync("backend/routes/incidentRoutes.js", "utf8"); data = data.replace("ORDER BY id DESC", "ORDER BY code DESC"); fs.writeFileSync("backend/routes/incidentRoutes.js", data);

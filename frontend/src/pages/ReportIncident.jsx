@@ -72,6 +72,7 @@ const ReportIncident = () => {
       console.log("Offline detected. Proceeding to submit so Workbox Background Sync queues the request.");
     }
 
+    let isMultipart = false;
     const formData = new FormData();
     let address = locationText;
     try {
@@ -85,10 +86,17 @@ const ReportIncident = () => {
     formData.append('location_lng', lng);
     formData.append('location_address', address);
     if (Object.keys(details).length > 0) formData.append('details', JSON.stringify(details));
-    if (photo) formData.append('photo', photo);
+    if (photo) { formData.append('photo', photo); isMultipart = true; }
 
     try {
-      const res = await axios.post('/api/incidents', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      let payload = formData;
+      let config = { headers: { 'Content-Type': 'multipart/form-data' } };
+      if (!isMultipart) {
+        payload = { type, description: `[Location Details: ${locationText.trim()}] ${description.trim()}`, location_lat: lat, location_lng: lng, location_address: address };
+        if (Object.keys(details).length > 0) payload.details = JSON.stringify(details);
+        config = {};
+      }
+      const res = await axios.post('/api/incidents', payload, config);
       setSuccess(`Report submitted! Code: ${res.data.code}`);
       setTimeout(() => navigate(`/incidents/${res.data.incidentId}`), 2000);
     } catch (err) {
