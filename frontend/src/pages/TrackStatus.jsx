@@ -477,7 +477,7 @@ const TrackStatus = () => {
               {incident.responder_id ? (
                 <div style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe', marginBottom: '12px' }}>
                   <p style={{ margin: 0, fontSize: '14px', color: '#1e3a8a' }}>
-                    <strong>Assigned To:</strong> {incident.responder_name || 'Responder'} ({incident.responder_agency || 'N/A'})
+                    <strong>Assigned To:</strong> {incident.responder_name || 'Responder'} ({incident.responder_phone || 'No Phone Provided'})
                   </p>
                 </div>
               ) : (
@@ -666,6 +666,7 @@ const TrackStatus = () => {
 };
 
 export default TrackStatus;
+
 
 
 
