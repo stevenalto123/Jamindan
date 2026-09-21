@@ -25,9 +25,12 @@ const NotificationHandler = () => {
 
   const playSiren = () => {
     stopAllAlarms();
-    if (window.sirenAudio) {
-      window.sirenAudio.currentTime = 0;
-      window.sirenAudio.play().catch(e => console.warn("Siren blocked:", e));
+    const siren = document.getElementById('siren-audio');
+    if (siren) {
+      siren.volume = 1.0;
+      siren.muted = false;
+      siren.currentTime = 0;
+      siren.play().catch(e => console.warn("Siren blocked:", e));
       setIsRinging(true);
       ringTimeout.current = setTimeout(() => stopAllAlarms(), 15000); // Stop after 15s
     }
@@ -35,9 +38,12 @@ const NotificationHandler = () => {
 
   const playChime = () => {
     stopAllAlarms();
-    if (window.chimeAudio) {
-      window.chimeAudio.currentTime = 0;
-      window.chimeAudio.play().catch(e => console.warn("Chime blocked:", e));
+    const chime = document.getElementById('chime-audio');
+    if (chime) {
+      chime.volume = 1.0;
+      chime.muted = false;
+      chime.currentTime = 0;
+      chime.play().catch(e => console.warn("Chime blocked:", e));
       setIsRinging(true);
       ringTimeout.current = setTimeout(() => stopAllAlarms(), 5000); // Stop after 5s
     }
@@ -121,3 +127,4 @@ const NotificationHandler = () => {
 };
 
 export default NotificationHandler;
+

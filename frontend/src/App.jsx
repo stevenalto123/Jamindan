@@ -430,8 +430,8 @@ const AppLayout = ({ children }) => {
     );
   }    return (
       <><div className="app-container">
-        <audio ref={sirenRef} src="/siren.wav" preload="auto" loop style={{display: 'none'}}></audio>
-        <audio ref={chimeRef} src="/chime.wav" preload="auto" style={{display: 'none'}}></audio>
+        <audio id="siren-audio" ref={sirenRef} src="/siren.wav" preload="auto" loop style={{display: "none"}}></audio>
+        <audio id="chime-audio" ref={chimeRef} src="/chime.wav" preload="auto" style={{display: "none"}}></audio>
       <Sidebar 
         isOpen={sidebarOpen} 
         toggleSidebar={toggleSidebar} 
@@ -667,6 +667,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
