@@ -19,6 +19,8 @@ import {
   Map,
   PhoneCall,
   UserCheck,
+  BarChart3,
+  Truck,
   HeartPulse
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -252,3 +254,5 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 };
 
 export default Sidebar;
+
+
