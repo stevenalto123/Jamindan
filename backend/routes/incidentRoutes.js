@@ -43,23 +43,8 @@ const generateIncidentCode = async () => {
   const date = new Date();
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
-  const prefix = `#${year}-${month}-`;
-
-  const [rows] = await db.query(
-    "SELECT code FROM incidents WHERE code LIKE ? ORDER BY id DESC LIMIT 1",
-    [`${prefix}%`]
-  );
-
-  let nextNum = 1;
-  if (rows.length > 0) {
-    const lastCode = rows[0].code;
-    const lastNum = parseInt(lastCode.split('-').pop(), 10);
-    if (!isNaN(lastNum)) {
-      nextNum = lastNum + 1;
-    }
-  }
-
-  return `${prefix}${String(nextNum).padStart(4, '0')}`;};
+  const randomHex = Math.floor(Math.random() * 65535).toString(16).toUpperCase().padStart(4, '0');
+  return `#${year}-${month}-${randomHex}`;};
 
 // Create Incident Report (Residents only)
 router.post('/', authRequired, requireRole(['Resident']), upload.single('photo'), async (req, res) => {
