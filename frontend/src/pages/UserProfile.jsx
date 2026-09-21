@@ -142,7 +142,7 @@ const UserProfile = () => {
               <ShieldCheck size={20} style={{ flexShrink: 0 }} />
               <div>
                 <strong style={{ display: 'block', marginBottom: '2px' }}>Identity Locked</strong>
-                Identity fields are secured. Please <Link to="/hotlines" style={{ color: '#4f46e5', fontWeight: 'bold', textDecoration: 'underline' }}>call the MDRRMO</Link> or visit the Municipal Hall to request corrections.
+                Identity fields are secured. Please visit the Jamindan Municipal Hall or your local Barangay Hall to request corrections to your account.
               </div>
             </div>
 
