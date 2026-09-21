@@ -30,7 +30,21 @@ const ReportIncident = () => {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   
   useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
+    const handleOnline = async () => {
+      setIsOffline(false);
+      const savedPayload = localStorage.getItem('offline_incident_payload');
+      if (savedPayload) {
+        try {
+          const payload = JSON.parse(savedPayload);
+          const res = await axios.post('/api/incidents', payload);
+          localStorage.removeItem('offline_incident_payload');
+          alert('Your offline report has been successfully auto-submitted! (Code: ' + res.data.code + ')');
+          window.location.href = '/incidents/' + res.data.incidentId;
+        } catch (err) {
+          console.error('Failed to sync offline report', err);
+        }
+      }
+    };
     const handleOffline = () => setIsOffline(true);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -101,9 +115,10 @@ const ReportIncident = () => {
       setTimeout(() => navigate(`/incidents/${res.data.incidentId}`), 2000);
     } catch (err) {
       if (!navigator.onLine || err.message === 'Network Error') {
-        // Handled by Workbox Background Sync
+        if (!isMultipart) localStorage.setItem('offline_incident_payload', JSON.stringify(payload));
         setSuccess('offline');
         setLoading(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setError((err.response?.data?.message || 'Failed') + ': ' + (err.response?.data?.errorDetails || err.message));
         setLoading(false);
