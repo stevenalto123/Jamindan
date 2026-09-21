@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, ShieldCheck, Eye, EyeOff, Lock } from 'lucide-react';
+import { User, ShieldCheck, Eye, EyeOff, Lock, Phone } from 'lucide-react';
 import { BARANGAYS } from './Register';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -41,16 +42,14 @@ const UserProfile = () => {
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Scroll to alert when error or success changes
   const scrollToAlert = () => {
     setTimeout(() => {
       const alertEl = document.getElementById('profile-alert');
       if (alertEl) {
         alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else {
-        document.getElementById('main-content-area')?.scrollTo({ top: 0, behavior: 'smooth' });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-    }, 50);
+    }, 100);
   };
 
   useEffect(() => {
@@ -99,7 +98,7 @@ const UserProfile = () => {
       setSuccess('Profile updated successfully.');
     } catch (err) {
       console.error(err);
-      setError('Failed to update profile details.');
+      setError(err.response?.data?.message || 'Failed to update profile.');
     } finally {
       setSubmitting(false);
     }
@@ -139,9 +138,12 @@ const UserProfile = () => {
             {t('profileDetails')}
           </h3>
           <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-            <div style={{ padding: '10px 12px', backgroundColor: '#eef2ff', color: '#4338ca', borderRadius: '6px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Lock size={16} />
-              <span>Identity fields are secured and read-only. Contact the administrator to request corrections.</span>
+            <div style={{ padding: '10px 12px', backgroundColor: '#eef2ff', color: '#4338ca', borderRadius: '6px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', lineHeight: '1.4' }}>
+              <ShieldCheck size={20} style={{ flexShrink: 0 }} />
+              <div>
+                <strong style={{ display: 'block', marginBottom: '2px' }}>Identity Locked</strong>
+                Identity fields are secured. Please <Link to="/hotlines" style={{ color: '#4f46e5', fontWeight: 'bold', textDecoration: 'underline' }}>call the MDRRMO</Link> or visit the Municipal Hall to request corrections.
+              </div>
             </div>
 
             <div className="form-group" style={{ margin: 0, flex: 1 }}>
