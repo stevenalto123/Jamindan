@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { User, ShieldCheck, Eye, EyeOff, Lock } from 'lucide-react';
 import { BARANGAYS } from './Register';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -139,18 +139,24 @@ const UserProfile = () => {
             {t('profileDetails')}
           </h3>
           <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+            <div style={{ padding: '10px 12px', backgroundColor: '#eef2ff', color: '#4338ca', borderRadius: '6px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Lock size={16} />
+              <span>Identity fields are secured and read-only. Contact the administrator to request corrections.</span>
+            </div>
+
             <div className="form-group" style={{ margin: 0, flex: 1 }}>
-              <label className="form-label">{t('usernameLabel')}</label>
-              <input type="text" className="form-input" value={user?.username || ''} disabled style={{ backgroundColor: '#f0f2f0', cursor: 'not-allowed' }} />
+              <label className="form-label">
+                {t('usernameLabel')} <Lock size={12} style={{ marginLeft: '4px', color: '#888', display: 'inline-block', verticalAlign: 'middle' }} />
+              </label>
+              <input type="text" className="form-input" value={user?.username || ''} disabled style={{ backgroundColor: '#f0f2f0', color: '#666', cursor: 'not-allowed' }} />
             </div>
 
               <div style={{ display: "flex", gap: "12px", marginBottom: "12px", flexWrap: 'wrap' }}>
                 <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
-                  <label className="form-label">{t('fullNameLabel')}</label>
-                  <input type="text" className="form-input" value={fullName} onChange={(e) => {
-                    let val = e.target.value.replace(/[^A-Za-z \-\'\.]/g, '');
-                    setFullName(val);
-                  }} required style={{ width: '100%', minWidth: 0 }} />
+                  <label className="form-label">
+                    {t('fullNameLabel')} <Lock size={12} style={{ marginLeft: '4px', color: '#888', display: 'inline-block', verticalAlign: 'middle' }} />
+                  </label>
+                  <input type="text" className="form-input" value={fullName} disabled style={{ backgroundColor: '#f0f2f0', color: '#666', cursor: 'not-allowed', width: '100%', minWidth: 0 }} />
                 </div>
 
                 <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
@@ -170,27 +176,15 @@ const UserProfile = () => {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 90px", gap: "10px" }}>
               <div className="form-group" style={{ margin: 0, overflow: 'hidden' }}>
-                <label className="form-label">Date of Birth</label>
+                <label className="form-label">
+                  Date of Birth <Lock size={12} style={{ marginLeft: '4px', color: '#888', display: 'inline-block', verticalAlign: 'middle' }} />
+                </label>
                 <input 
                   type="date" 
-                  max={new Date().toISOString().split("T")[0]}
                   className="form-input" 
-                  style={{ width: '100%', minWidth: 0, paddingLeft: '8px', paddingRight: '8px' }}
+                  style={{ width: '100%', minWidth: 0, paddingLeft: '8px', paddingRight: '8px', backgroundColor: '#f0f2f0', color: '#666', cursor: 'not-allowed' }}
                   value={dateOfBirth} 
-                  onChange={(e) => {
-                    setDateOfBirth(e.target.value);
-                    if (e.target.value) {
-                      const today = new Date();
-                      const birthDate = new Date(e.target.value);
-                      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-                      const m = today.getMonth() - birthDate.getMonth();
-                      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                        calculatedAge--;
-                      }
-                      setAge(calculatedAge);
-                    }
-                  }} 
-                  required 
+                  disabled
                 />
               </div>
               <div className="form-group" style={{ margin: 0, overflow: 'hidden' }}>
