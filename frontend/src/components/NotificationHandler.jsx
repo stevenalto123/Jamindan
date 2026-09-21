@@ -10,7 +10,7 @@ const NotificationHandler = () => {
   // Synthetic Siren Generator
   const playSiren = () => {
     try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const audioCtx = window.globalAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
 
@@ -43,31 +43,29 @@ const NotificationHandler = () => {
 
   const playChime = () => {
     try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-
-      oscillator.type = 'sine';
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-
-      const now = audioCtx.currentTime;
-      const duration = 6; // Rings 3 times over 6 seconds
+      const audioCtx = window.globalAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
       
-      gainNode.gain.setValueAtTime(0, now);
-
+      // Ring 3 times securely using separate oscillators
       for (let i = 0; i < 3; i++) {
-        let t = now + (i * 2);
-        oscillator.frequency.setValueAtTime(523.25, t); // C5
-        oscillator.frequency.setValueAtTime(659.25, t + 0.15); // E5
-        
-        gainNode.gain.setValueAtTime(0, t);
-        gainNode.gain.linearRampToValueAtTime(0.2, t + 0.05);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
-      }
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
 
-      oscillator.start(now);
-      oscillator.stop(now + duration);
+        osc.type = 'sine';
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        const startTime = audioCtx.currentTime + (i * 1.5);
+        
+        osc.frequency.setValueAtTime(523.25, startTime); // C5
+        osc.frequency.setValueAtTime(659.25, startTime + 0.15); // E5
+        
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 1.0);
+
+        osc.start(startTime);
+        osc.stop(startTime + 1.0);
+      }
     } catch (e) {
       console.warn('AudioContext not supported or blocked by browser policy.', e);
     }
@@ -140,5 +138,7 @@ const NotificationHandler = () => {
 };
 
 export default NotificationHandler;
+
+
 
 

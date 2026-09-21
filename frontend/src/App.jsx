@@ -97,7 +97,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
-let globalAudioCtx = null;
+window.globalAudioCtx = null;
 let isAudioUnlockedGlobal = false;
 
 // Main App Layout Wrapper (Resolves titles dynamically to match templates)
@@ -361,21 +361,21 @@ const AppLayout = ({ children }) => {
 
   const handleUnlockAudio = () => {
     try {
-      if (!globalAudioCtx) {
-        globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if ((!window.globalAudioCtx)) {
+        window.globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
-      if (globalAudioCtx.state === 'suspended') {
-        globalAudioCtx.resume();
+      if (window.globalAudioCtx.state === 'suspended') {
+        window.globalAudioCtx.resume();
       }
       
       // Play a tiny silent snippet to permanently unlock audio for this session
-      const osc = globalAudioCtx.createOscillator();
-      const gain = globalAudioCtx.createGain();
+      const osc = window.globalAudioCtx.createOscillator();
+      const gain = window.globalAudioCtx.createGain();
       osc.connect(gain);
-      gain.connect(globalAudioCtx.destination);
+      gain.connect(window.globalAudioCtx.destination);
       gain.gain.value = 0.01;
       osc.start(0);
-      osc.stop(globalAudioCtx.currentTime + 0.1);
+      osc.stop(window.globalAudioCtx.currentTime + 0.1);
       
       setAudioUnlocked(true);
       isAudioUnlockedGlobal = true;
@@ -646,6 +646,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
