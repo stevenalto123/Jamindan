@@ -56,7 +56,7 @@ export default defineConfig({
       workbox: {
         importScripts: ['/push-sw.js'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB limit for MapLibre chunk
-        globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,ico,wav}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -140,3 +140,4 @@ export default defineConfig({
     }
   }
 });
+

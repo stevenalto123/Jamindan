@@ -378,7 +378,25 @@ const AppLayout = ({ children }) => {
       gain.connect(window.globalAudioCtx.destination);
       gain.gain.value = 0.000001;
       osc.start(0);
-      // osc.stop(); removed to keep iOS AudioContext permanently active
+        window.sirenAudio = sirenRef.current;
+        if (sirenRef.current) {
+          sirenRef.current.volume = 0.001;
+          sirenRef.current.play().then(() => {
+            sirenRef.current.pause();
+            sirenRef.current.currentTime = 0;
+            sirenRef.current.volume = 1;
+          }).catch(e => console.warn(e));
+        }
+
+        window.chimeAudio = chimeRef.current;
+        if (chimeRef.current) {
+          chimeRef.current.volume = 0.001;
+          chimeRef.current.play().then(() => {
+            chimeRef.current.pause();
+            chimeRef.current.currentTime = 0;
+            chimeRef.current.volume = 1;
+          }).catch(e => console.warn(e));
+        }
       
       setAudioUnlocked(true);
       isAudioUnlockedGlobal = true;
@@ -410,10 +428,10 @@ const AppLayout = ({ children }) => {
         </div>
       </div>
     );
-  }
-
-  return (
-    <><div className="app-container">
+  }    return (
+      <><div className="app-container">
+        <audio ref={sirenRef} src="/siren.wav" preload="auto" loop style={{display: 'none'}}></audio>
+        <audio ref={chimeRef} src="/chime.wav" preload="auto" style={{display: 'none'}}></audio>
       <Sidebar 
         isOpen={sidebarOpen} 
         toggleSidebar={toggleSidebar} 
@@ -649,6 +667,8 @@ function App() {
 }
 
 export default App;
+
+
 
 
 
