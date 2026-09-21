@@ -99,7 +99,6 @@ const NotificationHandler = () => {
 
     socket.on('incident-status-updated', (data) => {
       if (user.role === 'Resident' && String(data.reporterId) === String(user.id)) {
-        playChime();
         let message = 'Your incident ' + data.code + ' status was updated to ' + data.status + '.';
         if (data.status === 'In Progress') {
           message = 'Help is on the way! Responders have been dispatched to your location for ' + data.code + '.';
@@ -144,6 +143,8 @@ const NotificationHandler = () => {
 };
 
 export default NotificationHandler;
+
+
 
 
 
