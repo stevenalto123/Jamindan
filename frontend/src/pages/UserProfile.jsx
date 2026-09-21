@@ -60,10 +60,24 @@ const UserProfile = () => {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     scrollToAlert();
+    
+    if (fullName.trim().length < 2) {
+      setError('Please provide a valid full name.');
+      return;
+    }
+    if (phone && (phone.length !== 11 || !phone.startsWith('09'))) {
+      setError('Primary phone number must be a valid 11-digit number starting with 09.');
+      return;
+    }
+    if (age < 0) {
+      setError('Date of birth cannot be in the future.');
+      return;
+    }
     if (emergencyContactPhone && (emergencyContactPhone.length !== 11 || !emergencyContactPhone.startsWith('09'))) {
       setError('Emergency Contact Phone must be a valid 11-digit number starting with 09.');
       return;
     }
+
     setSubmitting(true);
     setError('');
     setSuccess('');
@@ -130,17 +144,24 @@ const UserProfile = () => {
               <input type="text" className="form-input" value={user?.username || ''} disabled style={{ backgroundColor: '#f0f2f0', cursor: 'not-allowed' }} />
             </div>
 
-            <div style={{ display: "flex", gap: "12px" }}>
-              <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
-                <label className="form-label">{t('fullNameLabel')}</label>
-                <input type="text" className="form-input" value={fullName} onChange={(e) => setFullName(e.target.value)} required style={{ width: '100%', minWidth: 0 }} />
-              </div>
+              <div style={{ display: "flex", gap: "12px", marginBottom: "12px", flexWrap: 'wrap' }}>
+                <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
+                  <label className="form-label">{t('fullNameLabel')}</label>
+                  <input type="text" className="form-input" value={fullName} onChange={(e) => {
+                    let val = e.target.value.replace(/[^A-Za-z \-]/g, '');
+                    setFullName(val);
+                  }} required style={{ width: '100%', minWidth: 0 }} />
+                </div>
 
-              <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
-                <label className="form-label">{t('phoneNumberLabel')}</label>
-                <input type="text" className="form-input" value={phone} onChange={(e) => setPhone(e.target.value)} required style={{ width: '100%', minWidth: 0 }} />
+                <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
+                  <label className="form-label">{t('phoneNumberLabel')}</label>
+                  <input type="text" className="form-input" value={phone} onChange={(e) => {
+                    let val = e.target.value.replace(/[^0-9]/g, '');
+                    if (val.length > 11) val = val.slice(0, 11);
+                    setPhone(val);
+                  }} required style={{ width: '100%', minWidth: 0 }} />
+                </div>
               </div>
-            </div>
 
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Email Address</label>
@@ -152,6 +173,7 @@ const UserProfile = () => {
                 <label className="form-label">Date of Birth</label>
                 <input 
                   type="date" 
+                  max={new Date().toISOString().split("T")[0]}
                   className="form-input" 
                   style={{ width: '100%', minWidth: 0, paddingLeft: '8px', paddingRight: '8px' }}
                   value={dateOfBirth} 
