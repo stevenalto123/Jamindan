@@ -11,20 +11,30 @@ router.get('/stats', requireRole(['Admin', 'Responder']), async (req, res) => {
     const [totalUsersRows] = await db.query('SELECT COUNT(*) as count FROM users');
     const totalUsers = totalUsersRows[0].count;
 
-    const [totalReportsRows] = await db.query('SELECT COUNT(*) as count FROM incidents');
-    const totalReports = totalReportsRows[0].count;
+    let totalReports = 0;
+    let activeIncidents = 0;
+    let pendingReports = 0;
+    let resolvedReports = 0;
 
-    const [activeIncidentsRows] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE status NOT IN ('Pending', 'Resolved')");
-    const activeIncidents = activeIncidentsRows[0].count;
-
-    const [respondersOnDutyRows] = await db.query("SELECT COUNT(*) as count FROM users WHERE role = 'Responder' AND is_active = 1");
-    const respondersOnDuty = respondersOnDutyRows[0].count;
-
-    const [pendingReportsRows] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE status = 'Pending'");
-    const pendingReports = pendingReportsRows[0].count;
-
-    const [resolvedReportsRows] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE status = 'Resolved'");
-    const resolvedReports = resolvedReportsRows[0].count;
+    if (req.user.role === 'Responder') {
+      const [r1] = await db.query('SELECT COUNT(*) as count FROM incidents WHERE responder_id = ?', [req.user.id]);
+      totalReports = r1[0].count;
+      const [r2] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE responder_id = ? AND status NOT IN ('Pending', 'Resolved')", [req.user.id]);
+      activeIncidents = r2[0].count;
+      const [r3] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE responder_id = ? AND status = 'Pending'", [req.user.id]);
+      pendingReports = r3[0].count;
+      const [r4] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE responder_id = ? AND status = 'Resolved'", [req.user.id]);
+      resolvedReports = r4[0].count;
+    } else {
+      const [r1] = await db.query('SELECT COUNT(*) as count FROM incidents');
+      totalReports = r1[0].count;
+      const [r2] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE status NOT IN ('Pending', 'Resolved')");
+      activeIncidents = r2[0].count;
+      const [r3] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE status = 'Pending'");
+      pendingReports = r3[0].count;
+      const [r4] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE status = 'Resolved'");
+      resolvedReports = r4[0].count;
+    }
 
     // Weekly incident trend chart data (last 7 days)
     const weeklyTrends = [];
@@ -41,13 +51,27 @@ router.get('/stats', requireRole(['Admin', 'Responder']), async (req, res) => {
     }
 
     // Recent incident reports (limit 5)
-    const [recentIncidents] = await db.query(`
-      SELECT i.*, u.full_name as reporter_name, u.barangay as reporter_barangay
-      FROM incidents i
-      JOIN users u ON i.reporter_id = u.id
-      ORDER BY i.created_at DESC
-      LIMIT 5
-    `);
+    let recentIncidents = [];
+    if (req.user.role === 'Responder') {
+      const [rows] = await db.query(\
+        SELECT i.*, u.full_name as reporter_name, u.barangay as reporter_barangay
+        FROM incidents i
+        JOIN users u ON i.reporter_id = u.id
+        WHERE i.responder_id = ?
+        ORDER BY i.created_at DESC
+        LIMIT 5
+      \, [req.user.id]);
+      recentIncidents = rows;
+    } else {
+      const [rows] = await db.query(\
+        SELECT i.*, u.full_name as reporter_name, u.barangay as reporter_barangay
+        FROM incidents i
+        JOIN users u ON i.reporter_id = u.id
+        ORDER BY i.created_at DESC
+        LIMIT 5
+      \);
+      recentIncidents = rows;
+    }
 
     // Recent call logs (limit 10)
     let recentCallLogs = [];
@@ -147,3 +171,5 @@ router.get('/logs', requireRole(['Admin', 'Responder']), async (req, res) => {
 });
 
 module.exports = router;
+
+
