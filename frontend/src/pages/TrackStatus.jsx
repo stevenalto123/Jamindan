@@ -267,7 +267,7 @@ const TrackStatus = () => {
 
   // Check if resolved to show closure summary
   const isResolved = incident.status === 'Resolved';
-  const closureComment = isResolved ? history.findLast(h => h.status === 'Resolved')?.comment : null;
+  const closureComment = isResolved ? [...history].reverse().find(h => h.status === 'Resolved')?.comment : null;
 
   return (
     <div className="content-body" ref={printRef} style={{ padding: '20px', backgroundColor: '#fff', color: '#000' }}>
@@ -474,10 +474,10 @@ const TrackStatus = () => {
                 <Navigation size={18} /> Dispatch Responder
               </h3>
               
-              {incident.assigned_responder_id ? (
+              {incident.responder_id ? (
                 <div style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe', marginBottom: '12px' }}>
                   <p style={{ margin: 0, fontSize: '14px', color: '#1e3a8a' }}>
-                    <strong>Assigned To:</strong> {incident.assigned_responder_name || 'Responder'} ({incident.assigned_responder_agency || 'N/A'})
+                    <strong>Assigned To:</strong> {incident.responder_name || 'Responder'} ({incident.responder_agency || 'N/A'})
                   </p>
                 </div>
               ) : (
@@ -666,3 +666,5 @@ const TrackStatus = () => {
 };
 
 export default TrackStatus;
+
+
