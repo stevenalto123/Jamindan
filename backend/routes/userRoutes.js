@@ -203,6 +203,10 @@ router.put('/:id', requireRole(['Admin']), async (req, res) => {
     return res.status(400).json({ message: 'Full name, phone, barangay, and role are required' });
   }
 
+  if (age !== null && age !== undefined && age !== '' && Number(age) < 18) {
+    return res.status(400).json({ message: 'User must be at least 18 years old.' });
+  }
+
   const validRoles = ['Admin', 'Responder', 'Resident'];
   if (!validRoles.includes(role)) {
     return res.status(400).json({ message: 'Invalid role selection' });
@@ -224,7 +228,11 @@ router.put('/:id', requireRole(['Admin']), async (req, res) => {
 
     if (date_of_birth !== undefined) {
       query += `, date_of_birth = ?, age = ?`;
-      params.push(date_of_birth || null, age || null);
+      let finalAge = 18;
+      if (age !== null && age !== undefined && age !== '') {
+        finalAge = Number(age);
+      }
+      params.push(date_of_birth || null, finalAge);
     }
 
     query += ` WHERE id = ?`;
@@ -236,7 +244,7 @@ router.put('/:id', requireRole(['Admin']), async (req, res) => {
     return res.json({ message: 'User updated successfully' });
   } catch (error) {
     console.error('User update error:', error);
-    return res.status(500).json({ message: 'Server error while updating user' });
+    return res.status(500).json({ message: 'Server error while updating user: ' + error.message });
   }
 });
 

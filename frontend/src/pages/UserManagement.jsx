@@ -189,6 +189,11 @@ const UserManagement = () => {
       return;
     }
 
+    if (age !== '' && age !== null && age < 18) {
+      alert('User must be at least 18 years old.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       if (editingUser) {
