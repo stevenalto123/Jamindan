@@ -84,7 +84,7 @@ const NotificationHandler = () => {
     socketRef.current = socket;
 
     socket.on('new-incident', (data) => {
-      if (user.role === 'Admin') {
+      if (user.role === 'Admin' || user.role === 'Responder') {
         playSiren();
         showNotification('?? URGENT: New Incident', 'A new ' + data.type + ' incident (' + data.code + ') has been reported!');
       }
@@ -144,5 +144,6 @@ const NotificationHandler = () => {
 };
 
 export default NotificationHandler;
+
 
 
