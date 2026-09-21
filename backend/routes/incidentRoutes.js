@@ -43,16 +43,23 @@ const generateIncidentCode = async () => {
   const date = new Date();
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
-  
-  // Count reports for current month in MySQL
+  const prefix = `#${year}-${month}-`;
+
   const [rows] = await db.query(
-    "SELECT COUNT(*) as count FROM incidents WHERE DATE_FORMAT(created_at, '%Y-%m') = ?",
-    [`${year}-${month}`]
+    "SELECT code FROM incidents WHERE code LIKE ? ORDER BY id DESC LIMIT 1",
+    [`${prefix}%`]
   );
-  const count = rows[0] ? rows[0].count : 0;
-  const nextNum = String(count + 1).padStart(4, '0');
-  return `#${year}-${month}-${nextNum}`;
-};
+
+  let nextNum = 1;
+  if (rows.length > 0) {
+    const lastCode = rows[0].code;
+    const lastNum = parseInt(lastCode.split('-').pop(), 10);
+    if (!isNaN(lastNum)) {
+      nextNum = lastNum + 1;
+    }
+  }
+
+  return `${prefix}${String(nextNum).padStart(4, '0')}`;};
 
 // Create Incident Report (Residents only)
 router.post('/', authRequired, requireRole(['Resident']), upload.single('photo'), async (req, res) => {
