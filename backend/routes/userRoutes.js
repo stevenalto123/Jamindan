@@ -197,10 +197,10 @@ router.get('/:id/profile', requireRole(['Admin']), async (req, res) => {
 // Update user details & role
 router.put('/:id', requireRole(['Admin']), async (req, res) => {
   const { id } = req.params;
-  const { full_name, phone, barangay, role, agency_type } = req.body;
+  const { full_name, phone, barangay, role, agency_type, date_of_birth, age } = req.body;
 
   if (!full_name || !phone || !barangay || !role) {
-    return res.status(400).json({ message: 'All fields are required' });
+    return res.status(400).json({ message: 'Full name, phone, barangay, and role are required' });
   }
 
   const validRoles = ['Admin', 'Responder', 'Resident'];
@@ -219,11 +219,18 @@ router.put('/:id', requireRole(['Admin']), async (req, res) => {
 
     const finalAgency = role === 'Responder' ? (agency_type || null) : null;
 
-    await db.execute(`
-      UPDATE users
-      SET full_name = ?, phone = ?, barangay = ?, role = ?, agency_type = ?
-      WHERE id = ?
-    `, [full_name.trim(), phone.trim(), barangay.trim(), role, finalAgency, id]);
+    let query = `UPDATE users SET full_name = ?, phone = ?, barangay = ?, role = ?, agency_type = ?`;
+    let params = [full_name.trim(), phone.trim(), barangay.trim(), role, finalAgency];
+
+    if (date_of_birth !== undefined) {
+      query += `, date_of_birth = ?, age = ?`;
+      params.push(date_of_birth || null, age || null);
+    }
+
+    query += ` WHERE id = ?`;
+    params.push(id);
+
+    await db.execute(query, params);
 
     await db.logAudit(`User details/role updated for @${targetUser ? targetUser.username : id} (Role: ${role}, Agency: ${finalAgency || 'N/A'})`, req.user.username, req.ip);
     return res.json({ message: 'User updated successfully' });

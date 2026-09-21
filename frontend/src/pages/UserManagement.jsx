@@ -39,6 +39,8 @@ const UserManagement = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [age, setAge] = useState('');
   const [barangay, setBarangay] = useState('');
   const [role, setRole] = useState('Resident');
   const [agencyType, setAgencyType] = useState('MDRRMO'); // 'Police', 'Fire', 'Medical', 'MDRRMO'
@@ -124,6 +126,8 @@ const UserManagement = () => {
     setPassword('');
     setFullName('');
     setPhone('');
+    setDateOfBirth('');
+    setAge('');
     setBarangay(BARANGAYS[0] || '');
     setRole('Resident');
     setAgencyType('MDRRMO');
@@ -138,6 +142,8 @@ const UserManagement = () => {
     setPassword(''); // Leave blank unless changing
     setFullName(u.full_name);
     setPhone(u.phone);
+    setDateOfBirth(u.date_of_birth ? u.date_of_birth.split('T')[0] : '');
+    setAge(u.age || '');
     setBarangay(u.barangay);
     setRole(u.role);
     setAgencyType(u.agency_type || 'MDRRMO');
@@ -189,6 +195,8 @@ const UserManagement = () => {
         await axios.put(`/api/users/${editingUser.id}`, {
           full_name: fullName,
           phone: phone,
+          date_of_birth: dateOfBirth || null,
+          age: age || null,
           barangay: barangay,
           role: role,
           agency_type: agencyType
@@ -199,6 +207,8 @@ const UserManagement = () => {
         formData.append('password', password || 'DefaultPass123!');
         formData.append('full_name', fullName);
         formData.append('phone', phone);
+        formData.append('date_of_birth', dateOfBirth || '');
+        formData.append('age', age || '');
         formData.append('barangay', barangay);
         formData.append('role', role);
         formData.append('agency_type', agencyType);
@@ -574,15 +584,47 @@ const UserManagement = () => {
                     <UserIcon size={16} color="var(--text-muted)" /> Personal Details
                   </h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label">Full Name</label>
-                      <input type="text" className="form-input" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="User complete name" required style={{ background: '#f8fafc' }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '16px' }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label">Full Name</label>
+                        <input type="text" className="form-input" value={fullName} onChange={(e) => {
+                          let val = e.target.value.replace(/[^A-Za-z \-\'\.]/g, '');
+                          setFullName(val);
+                        }} placeholder="User complete name" required style={{ background: '#f8fafc' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label">Date of Birth</label>
+                        <input 
+                          type="date" 
+                          max={new Date().toISOString().split("T")[0]}
+                          className="form-input" 
+                          value={dateOfBirth} 
+                          onChange={(e) => {
+                            setDateOfBirth(e.target.value);
+                            if (e.target.value) {
+                              const today = new Date();
+                              const birthDate = new Date(e.target.value);
+                              let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+                              const m = today.getMonth() - birthDate.getMonth();
+                              if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                                calculatedAge--;
+                              }
+                              setAge(calculatedAge);
+                            }
+                          }}
+                          style={{ background: '#f8fafc', paddingLeft: '8px', paddingRight: '8px' }} 
+                        />
+                      </div>
                     </div>
                     
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">Phone Number</label>
-                        <input type="text" className="form-input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. 09171234567" required style={{ background: '#f8fafc' }} />
+                        <input type="text" className="form-input" value={phone} onChange={(e) => {
+                          let val = e.target.value.replace(/[^0-9]/g, '');
+                          if (val.length > 11) val = val.slice(0, 11);
+                          setPhone(val);
+                        }} placeholder="e.g. 09171234567" required style={{ background: '#f8fafc' }} />
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">Barangay</label>
