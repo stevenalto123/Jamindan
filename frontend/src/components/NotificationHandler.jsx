@@ -27,46 +27,49 @@ const NotificationHandler = () => {
     stopAllAlarms();
     setIsRinging(true);
 
-    // Try HTML5 Audio
-    const siren = document.getElementById('siren-audio');
-    if (siren) {
-      siren.volume = 1.0;
-      siren.muted = false;
-      siren.currentTime = 0;
-      siren.play().catch(e => console.warn("Siren blocked:", e));
-    }
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-    // Try Web Audio API (Synthesized)
-    try {
-      const audioCtx = window.globalAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-
-      oscillator.type = 'square';
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-
-      const now = audioCtx.currentTime;
-      const duration = 15;
-      
-      oscillator.frequency.setValueAtTime(400, now);
-      for (let i = 0; i < duration; i++) {
-        oscillator.frequency.linearRampToValueAtTime(800, now + i + 0.5);
-        oscillator.frequency.linearRampToValueAtTime(400, now + i + 1.0);
+    if (isIOS) {
+      const siren = document.getElementById('siren-audio');
+      if (siren) {
+        siren.volume = 1.0;
+        siren.muted = false;
+        siren.currentTime = 0;
+        siren.play().catch(e => console.warn("Siren blocked:", e));
       }
+    } else {
+      try {
+        const audioCtx = window.globalAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
 
-      gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(0.3, now + 0.1);
-      gainNode.gain.setValueAtTime(0.3, now + (duration - 0.1));
-      gainNode.gain.linearRampToValueAtTime(0, now + duration);
+        oscillator.type = 'square';
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
 
-      oscillator.start(now);
-      
-      if (!window.activeOscillators) window.activeOscillators = [];
-      window.activeOscillators.push(oscillator);
-    } catch (e) {}
+        const now = audioCtx.currentTime;
+        const duration = 15;
+        
+        oscillator.frequency.setValueAtTime(400, now);
+        for (let i = 0; i < duration; i++) {
+          oscillator.frequency.linearRampToValueAtTime(800, now + i + 0.5);
+          oscillator.frequency.linearRampToValueAtTime(400, now + i + 1.0);
+        }
+
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.1);
+        gainNode.gain.setValueAtTime(0.3, now + (duration - 0.1));
+        gainNode.gain.linearRampToValueAtTime(0, now + duration);
+
+        oscillator.start(now);
+        oscillator.stop(now + duration); // FIXED: Force stop after duration
+        
+        if (!window.activeOscillators) window.activeOscillators = [];
+        window.activeOscillators.push(oscillator);
+      } catch (e) {}
+    }
 
     ringTimeout.current = setTimeout(() => stopAllAlarms(), 15000);
   };
@@ -75,45 +78,47 @@ const NotificationHandler = () => {
     stopAllAlarms();
     setIsRinging(true);
 
-    // Try HTML5 Audio
-    const chime = document.getElementById('chime-audio');
-    if (chime) {
-      chime.volume = 1.0;
-      chime.muted = false;
-      chime.currentTime = 0;
-      chime.play().catch(e => console.warn("Chime blocked:", e));
-    }
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-    // Try Web Audio API (Synthesized)
-    try {
-      const audioCtx = window.globalAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      
-      if (!window.activeOscillators) window.activeOscillators = [];
-
-      for (let i = 0; i < 3; i++) {
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-
-        osc.type = 'sine';
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-
-        const startTime = audioCtx.currentTime + (i * 1.5);
-        
-        osc.frequency.setValueAtTime(523.25, startTime);
-        osc.frequency.setValueAtTime(659.25, startTime + 0.15);
-        
-        gainNode.gain.setValueAtTime(0, startTime);
-        gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 1.0);
-
-        osc.start(startTime);
-        osc.stop(startTime + 1.0);
-        
-        window.activeOscillators.push(osc);
+    if (isIOS) {
+      const chime = document.getElementById('chime-audio');
+      if (chime) {
+        chime.volume = 1.0;
+        chime.muted = false;
+        chime.currentTime = 0;
+        chime.play().catch(e => console.warn("Chime blocked:", e));
       }
-    } catch (e) {}
+    } else {
+      try {
+        const audioCtx = window.globalAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        if (!window.activeOscillators) window.activeOscillators = [];
+
+        for (let i = 0; i < 3; i++) {
+          const osc = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+
+          osc.type = 'sine';
+          osc.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+
+          const startTime = audioCtx.currentTime + (i * 1.5);
+          
+          osc.frequency.setValueAtTime(523.25, startTime);
+          osc.frequency.setValueAtTime(659.25, startTime + 0.15);
+          
+          gainNode.gain.setValueAtTime(0, startTime);
+          gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 1.0);
+
+          osc.start(startTime);
+          osc.stop(startTime + 1.0);
+          
+          window.activeOscillators.push(osc);
+        }
+      } catch (e) {}
+    }
 
     ringTimeout.current = setTimeout(() => stopAllAlarms(), 5000);
   };
@@ -196,5 +201,6 @@ const NotificationHandler = () => {
 };
 
 export default NotificationHandler;
+
 
 
