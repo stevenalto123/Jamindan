@@ -68,10 +68,8 @@ const ReportIncident = () => {
     setLoading(true); setError(''); setSuccess('');
 
     if (!navigator.onLine) {
-      localStorage.setItem('offline_incident_draft', JSON.stringify({ type, details, locationText, description, lat, lng, timestamp: new Date().getTime() }));
-      setSuccess('offline');
-      setLoading(false);
-      return;
+      // We will let the fetch execute so Workbox Background Sync intercepts and queues it!
+      console.log("Offline detected. Proceeding to submit so Workbox Background Sync queues the request.");
     }
 
     const formData = new FormData();
@@ -94,8 +92,14 @@ const ReportIncident = () => {
       setSuccess(`Report submitted! Code: ${res.data.code}`);
       setTimeout(() => navigate(`/incidents/${res.data.incidentId}`), 2000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit. Please try again.');
-      setLoading(false);
+      if (!navigator.onLine || err.message === 'Network Error') {
+        // Handled by Workbox Background Sync
+        setSuccess('offline');
+        setLoading(false);
+      } else {
+        setError(err.response?.data?.message || 'Failed to submit. Please try again.');
+        setLoading(false);
+      }
     }
   };
 

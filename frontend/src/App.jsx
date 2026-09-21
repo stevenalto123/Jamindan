@@ -174,34 +174,7 @@ const AppLayout = ({ children }) => {
       setInstallPrompt(e);
     };
     
-    const handleOnline = async () => {
-      setIsOffline(false);
-      const draftData = localStorage.getItem('offline_incident_draft');
-      if (draftData) {
-        try {
-          const draft = JSON.parse(draftData);
-          const formData = new FormData();
-          let address = draft.locationText;
-          try {
-            const geoRes = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${draft.lat}&lon=${draft.lng}`);
-            if (geoRes.data && geoRes.data.display_name) {
-              address = geoRes.data.display_name.split(',').slice(0, 3).join(', ');
-            }
-          } catch (e) {}
-          formData.append('type', draft.type);
-          formData.append('description', `[Location Details: ${draft.locationText.trim()}] (OFFLINE DRAFT) ${draft.description.trim()}`);
-          formData.append('location_lat', draft.lat);
-          formData.append('location_lng', draft.lng);
-          formData.append('location_address', address);
-          if (draft.details) formData.append('details', JSON.stringify(draft.details));
-          const res = await axios.post('/api/incidents', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-          localStorage.removeItem('offline_incident_draft');
-          window.alert(`✅ SUCCESS: Your offline draft report was automatically submitted! (Code: ${res.data.code})`);
-        } catch (err) {
-          console.error('Failed to sync offline draft:', err);
-        }
-      }
-    };
+    const handleOnline = async () => { setIsOffline(false); };
     if (navigator.onLine) {
       setTimeout(() => handleOnline(), 1000);
     }
@@ -686,6 +659,8 @@ function App() {
 }
 
 export default App;
+
+
 
 
 

@@ -87,6 +87,19 @@ export default defineConfig({
             }
           },
           {
+            urlPattern: /\/api\/incidents/i,
+            handler: 'NetworkOnly',
+            method: 'POST',
+            options: {
+              backgroundSync: {
+                name: 'incident-queue',
+                options: {
+                  maxRetentionTime: 24 * 60 // Retry for max of 24 Hours
+                }
+              }
+            }
+          },
+          {
             urlPattern: /^https:\/\/tile\.openstreetmap\.org\/.*/i,
             handler: 'StaleWhileRevalidate',
             options: {
