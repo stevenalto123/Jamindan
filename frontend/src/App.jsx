@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   BrowserRouter as Router, 
   Routes, 
@@ -103,6 +103,9 @@ let isAudioUnlockedGlobal = false;
 // Main App Layout Wrapper (Resolves titles dynamically to match templates)
 const AppLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // HTML5 Audio Elements for iOS bypass
+  const sirenRef = useRef(null);
+  const chimeRef = useRef(null);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const { user } = useAuth();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -646,6 +649,8 @@ function App() {
 }
 
 export default App;
+
+
 
 
 

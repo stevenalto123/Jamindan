@@ -8,108 +8,38 @@ const NotificationHandler = () => {
   const { user } = useAuth();
   const socketRef = useRef(null);
   const [isRinging, setIsRinging] = useState(false);
-  
-  // Track active oscillators to allow stopping them
-  const activeOscillators = useRef([]);
+  const ringTimeout = useRef(null);
 
   const stopAllAlarms = () => {
-    activeOscillators.current.forEach(osc => {
-      try {
-        osc.stop();
-        osc.disconnect();
-      } catch (e) {}
-    });
-    activeOscillators.current = [];
+    if (window.sirenAudio) {
+      window.sirenAudio.pause();
+      window.sirenAudio.currentTime = 0;
+    }
+    if (window.chimeAudio) {
+      window.chimeAudio.pause();
+      window.chimeAudio.currentTime = 0;
+    }
+    if (ringTimeout.current) clearTimeout(ringTimeout.current);
     setIsRinging(false);
   };
 
-  const getAudioContext = () => {
-    const ctx = window.globalAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx && ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
-    }
-    return ctx;
-  };
-
-  // Synthetic Siren Generator
   const playSiren = () => {
-    stopAllAlarms(); // Clear existing
-    try {
-      const audioCtx = getAudioContext();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-
-      oscillator.type = 'square';
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-
-      const now = audioCtx.currentTime;
-      const duration = 15;
-      
-      oscillator.frequency.setValueAtTime(400, now);
-      
-      for (let i = 0; i < duration; i++) {
-        oscillator.frequency.linearRampToValueAtTime(800, now + i + 0.5);
-        oscillator.frequency.linearRampToValueAtTime(400, now + i + 1.0);
-      }
-
-      gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(0.3, now + 0.1);
-      gainNode.gain.setValueAtTime(0.3, now + (duration - 0.1));
-      gainNode.gain.linearRampToValueAtTime(0, now + duration);
-
-      oscillator.start(now);
-      
-      activeOscillators.current.push(oscillator);
+    stopAllAlarms();
+    if (window.sirenAudio) {
+      window.sirenAudio.currentTime = 0;
+      window.sirenAudio.play().catch(e => console.warn("Siren blocked:", e));
       setIsRinging(true);
-      
-      // Auto-hide stop button after duration
-      setTimeout(() => {
-        setIsRinging(false);
-      }, duration * 1000);
-
-    } catch (e) {
-      console.warn('AudioContext not supported or blocked.', e);
+      ringTimeout.current = setTimeout(() => stopAllAlarms(), 15000); // Stop after 15s
     }
   };
 
   const playChime = () => {
     stopAllAlarms();
-    try {
-      const audioCtx = getAudioContext();
-      
-      const duration = 4.5;
+    if (window.chimeAudio) {
+      window.chimeAudio.currentTime = 0;
+      window.chimeAudio.play().catch(e => console.warn("Chime blocked:", e));
       setIsRinging(true);
-
-      for (let i = 0; i < 3; i++) {
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-
-        osc.type = 'sine';
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-
-        const startTime = audioCtx.currentTime + (i * 1.5);
-        
-        osc.frequency.setValueAtTime(523.25, startTime);
-        osc.frequency.setValueAtTime(659.25, startTime + 0.15);
-        
-        gainNode.gain.setValueAtTime(0, startTime);
-        gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 1.0);
-
-        osc.start(startTime);
-        osc.stop(startTime + 1.0);
-        
-        activeOscillators.current.push(osc);
-      }
-      
-      setTimeout(() => {
-        setIsRinging(false);
-      }, duration * 1000);
-
-    } catch (e) {
-      console.warn('AudioContext not supported or blocked.', e);
+      ringTimeout.current = setTimeout(() => stopAllAlarms(), 5000); // Stop after 5s
     }
   };
 
@@ -182,8 +112,7 @@ const NotificationHandler = () => {
       boxShadow: '0 8px 30px rgba(231,76,60,0.6)',
       cursor: 'pointer',
       fontWeight: 'bold',
-      gap: '10px',
-      animation: 'pulse 1.5s infinite'
+      gap: '10px'
     }} onClick={stopAllAlarms}>
       <BellOff size={20} />
       STOP ALARM
@@ -192,4 +121,3 @@ const NotificationHandler = () => {
 };
 
 export default NotificationHandler;
-
