@@ -19,8 +19,6 @@ import {
   Map,
   PhoneCall,
   UserCheck,
-  BarChart3,
-  Truck,
   HeartPulse
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -158,36 +156,12 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </li>
              <li className="sidebar-item">
                <NavLink to="/incidents" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
-                 <FileText size={18} />
-                 <span>{t('incidentsList')}</span>
-               </NavLink>
-             </li>
-             <li className="sidebar-item">
-               <NavLink to="/report" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                  <AlertTriangle size={18} />
-                 <span>{t('reportIncident')}</span>
+                 <span>{t('incidentsList')}</span>
                </NavLink>
              </li>
 
              <div className="sidebar-section-header">{t('commandCenterTitle')}</div>
-             <li className="sidebar-item">
-               <NavLink to="/command-map" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
-                 <Map size={18} />
-                 <span>Live Command Map</span>
-               </NavLink>
-             </li>
-             <li className="sidebar-item">
-               <NavLink to="/admin-analytics" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
-                 <BarChart3 size={18} />
-                 <span>Analytics & Reports</span>
-               </NavLink>
-             </li>
-             <li className="sidebar-item">
-               <NavLink to="/admin-vehicles" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
-                 <Truck size={18} />
-                 <span>Vehicles & Assets</span>
-               </NavLink>
-             </li>
              <li className="sidebar-item">
                <NavLink to="/evacuation" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleLinkClick}>
                  <Map size={18} />
@@ -278,8 +252,3 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 };
 
 export default Sidebar;
-
-
-
-
-
