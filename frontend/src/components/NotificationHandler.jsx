@@ -84,7 +84,7 @@ const NotificationHandler = () => {
     socketRef.current = socket;
 
     socket.on('new-incident', (data) => {
-      if (user.role === 'Admin' || user.role === 'Responder') {
+      if (user.role === 'Admin') {
         playSiren();
         showNotification('?? URGENT: New Incident', 'A new ' + data.type + ' incident (' + data.code + ') has been reported!');
       }
@@ -92,7 +92,7 @@ const NotificationHandler = () => {
 
     socket.on('responder-dispatched', (data) => {
       if (user.role === 'Responder' && String(data.responderId) === String(user.id)) {
-        playChime();
+        playSiren();
         showNotification('?? Dispatch Alert', 'You have been assigned to Incident ' + data.code + '. Please respond immediately.');
       }
     });
@@ -144,6 +144,7 @@ const NotificationHandler = () => {
 };
 
 export default NotificationHandler;
+
 
 
 
