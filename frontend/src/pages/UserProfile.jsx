@@ -148,7 +148,7 @@ const UserProfile = () => {
                 <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
                   <label className="form-label">{t('fullNameLabel')}</label>
                   <input type="text" className="form-input" value={fullName} onChange={(e) => {
-                    let val = e.target.value.replace(/[^A-Za-z \-]/g, '');
+                    let val = e.target.value.replace(/[^A-Za-z \-\'\.]/g, '');
                     setFullName(val);
                   }} required style={{ width: '100%', minWidth: 0 }} />
                 </div>

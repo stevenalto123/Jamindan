@@ -158,6 +158,13 @@ export const AuthProvider = ({ children }) => {
     // Reload user data
     const res = await axios.get('/api/auth/me');
     setUser(res.data);
+    
+    // Update the cache so it doesn't revert on refresh
+    if (localStorage.getItem('token')) {
+      localStorage.setItem('cached_user', JSON.stringify(res.data));
+    } else if (sessionStorage.getItem('token')) {
+      sessionStorage.setItem('cached_user', JSON.stringify(res.data));
+    }
   };
 
   const changePassword = async (passwordData) => {
