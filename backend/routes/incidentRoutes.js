@@ -148,7 +148,7 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
 
   } catch (error) {
     console.error('Incident creation error:', error);
-    return res.status(500).json({ message: 'Server error while submitting report' });
+    return res.status(500).json({ message: 'Server error while submitting report', errorDetails: error.toString(), stack: error.stack });
   }
 });
 
@@ -577,6 +577,8 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
 });
 
 module.exports = router;
+
+
 
 
 

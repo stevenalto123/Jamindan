@@ -149,7 +149,7 @@ const AppLayout = ({ children }) => {
             }
           }, 800);
         }
-      } catch (err) {
+      } catch (err) { alert(err.response?.data?.errorDetails || err.message);
         console.warn('Audio API failed or blocked:', err);
         interval = setInterval(() => {
           if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200]);
@@ -237,7 +237,7 @@ const AppLayout = ({ children }) => {
     const sendLocation = async (latitude, longitude) => {
       try {
         await axios.put('/api/auth/location', { latitude, longitude });
-      } catch (err) {
+      } catch (err) { alert(err.response?.data?.errorDetails || err.message);
         console.error('Failed to sync live location', err);
       }
     };
@@ -667,6 +667,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

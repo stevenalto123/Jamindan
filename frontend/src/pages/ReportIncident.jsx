@@ -97,7 +97,7 @@ const ReportIncident = () => {
         setSuccess('offline');
         setLoading(false);
       } else {
-        setError(err.response?.data?.message || 'Failed to submit. Please try again.');
+        setError((err.response?.data?.message || 'Failed') + ': ' + (err.response?.data?.errorDetails || err.message));
         setLoading(false);
       }
     }
@@ -436,3 +436,4 @@ const ReportIncident = () => {
 };
 
 export default ReportIncident;
+
