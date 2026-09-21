@@ -11,13 +11,16 @@ const NotificationHandler = () => {
   const ringTimeout = useRef(null);
 
   const stopAllAlarms = () => {
-    if (window.sirenAudio) {
-      window.sirenAudio.pause();
-      window.sirenAudio.currentTime = 0;
+    window.isAlarmStopped = true;
+    const siren = document.getElementById('siren-audio');
+    const chime = document.getElementById('chime-audio');
+    if (siren) {
+      siren.pause();
+      siren.currentTime = 0;
     }
-    if (window.chimeAudio) {
-      window.chimeAudio.pause();
-      window.chimeAudio.currentTime = 0;
+    if (chime) {
+      chime.pause();
+      chime.currentTime = 0;
     }
     if (ringTimeout.current) clearTimeout(ringTimeout.current);
     setIsRinging(false);
@@ -26,13 +29,19 @@ const NotificationHandler = () => {
   const playSiren = () => {
     stopAllAlarms();
     setIsRinging(true);
+    window.isAlarmStopped = false;
 
     const siren = document.getElementById('siren-audio');
     if (siren) {
       siren.volume = 1.0;
       siren.muted = false;
       siren.currentTime = 0;
-      siren.play().catch(e => console.warn("Siren blocked:", e));
+      const playPromise = siren.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          if (window.isAlarmStopped) siren.pause();
+        }).catch(e => console.warn("Siren blocked:", e));
+      }
     }
 
     ringTimeout.current = setTimeout(() => stopAllAlarms(), 15000);
@@ -41,13 +50,19 @@ const NotificationHandler = () => {
   const playChime = () => {
     stopAllAlarms();
     setIsRinging(true);
+    window.isAlarmStopped = false;
 
     const chime = document.getElementById('chime-audio');
     if (chime) {
       chime.volume = 1.0;
       chime.muted = false;
       chime.currentTime = 0;
-      chime.play().catch(e => console.warn("Chime blocked:", e));
+      const playPromise = chime.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          if (window.isAlarmStopped) chime.pause();
+        }).catch(e => console.warn("Chime blocked:", e));
+      }
     }
 
     ringTimeout.current = setTimeout(() => stopAllAlarms(), 5000);
@@ -131,7 +146,3 @@ const NotificationHandler = () => {
 };
 
 export default NotificationHandler;
-
-
-
-
