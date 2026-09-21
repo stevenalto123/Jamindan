@@ -19,21 +19,23 @@ const NotificationHandler = () => {
       gainNode.connect(audioCtx.destination);
 
       const now = audioCtx.currentTime;
-      // Modulate frequency to sound like a siren
+      const duration = 15; // 15 seconds long so they don't miss it
+      
       oscillator.frequency.setValueAtTime(400, now);
-      oscillator.frequency.linearRampToValueAtTime(800, now + 0.5);
-      oscillator.frequency.linearRampToValueAtTime(400, now + 1.0);
-      oscillator.frequency.linearRampToValueAtTime(800, now + 1.5);
-      oscillator.frequency.linearRampToValueAtTime(400, now + 2.0);
+      
+      for (let i = 0; i < duration; i++) {
+        oscillator.frequency.linearRampToValueAtTime(800, now + i + 0.5);
+        oscillator.frequency.linearRampToValueAtTime(400, now + i + 1.0);
+      }
 
       // Volume envelope
       gainNode.gain.setValueAtTime(0, now);
       gainNode.gain.linearRampToValueAtTime(0.3, now + 0.1);
-      gainNode.gain.setValueAtTime(0.3, now + 1.9);
-      gainNode.gain.linearRampToValueAtTime(0, now + 2.0);
+      gainNode.gain.setValueAtTime(0.3, now + (duration - 0.1));
+      gainNode.gain.linearRampToValueAtTime(0, now + duration);
 
       oscillator.start(now);
-      oscillator.stop(now + 2.0);
+      oscillator.stop(now + duration);
     } catch (e) {
       console.warn('AudioContext not supported or blocked by browser policy.', e);
     }
@@ -50,15 +52,22 @@ const NotificationHandler = () => {
       gainNode.connect(audioCtx.destination);
 
       const now = audioCtx.currentTime;
-      oscillator.frequency.setValueAtTime(523.25, now); // C5
-      oscillator.frequency.setValueAtTime(659.25, now + 0.15); // E5
+      const duration = 6; // Rings 3 times over 6 seconds
       
       gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(0.2, now + 0.05);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+
+      for (let i = 0; i < 3; i++) {
+        let t = now + (i * 2);
+        oscillator.frequency.setValueAtTime(523.25, t); // C5
+        oscillator.frequency.setValueAtTime(659.25, t + 0.15); // E5
+        
+        gainNode.gain.setValueAtTime(0, t);
+        gainNode.gain.linearRampToValueAtTime(0.2, t + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
+      }
 
       oscillator.start(now);
-      oscillator.stop(now + 1.0);
+      oscillator.stop(now + duration);
     } catch (e) {
       console.warn('AudioContext not supported or blocked by browser policy.', e);
     }
@@ -131,3 +140,5 @@ const NotificationHandler = () => {
 };
 
 export default NotificationHandler;
+
+
