@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { BARANGAYS } from './Register';
@@ -292,3 +292,4 @@ const UserProfile = () => {
 };
 
 export default UserProfile;
+
