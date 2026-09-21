@@ -44,7 +44,6 @@ const NotificationHandler = () => {
       }
     }
 
-    ringTimeout.current = setTimeout(() => stopAllAlarms(), 15000);
   };
 
   const playChime = () => {
@@ -65,7 +64,6 @@ const NotificationHandler = () => {
       }
     }
 
-    ringTimeout.current = setTimeout(() => stopAllAlarms(), 15000); // Stop after 15s
   };
 
   const showNotification = (title, body) => {
@@ -146,4 +144,5 @@ const NotificationHandler = () => {
 };
 
 export default NotificationHandler;
+
 
