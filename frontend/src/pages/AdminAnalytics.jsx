@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useReactToPrint } from 'react-to-print';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ArrowLeft, TrendingUp, CheckCircle, Clock, Map as MapIcon, BarChart3, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, TrendingUp, CheckCircle, Clock, Map as MapIcon, BarChart3, AlertTriangle, Download } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const AdminAnalytics = () => {
@@ -83,6 +84,12 @@ const AdminAnalytics = () => {
 
   const COLORS = ['#3498db', '#e74c3c', '#f1c40f', '#2ecc71', '#9b59b6', '#e67e22', '#34495e'];
 
+  const printRef = useRef();
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    documentTitle: `Jamindan_Emergency_Report_${new Date().toISOString().split('T')[0]}`,
+  });
+
   if (loading) {
     return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-light)' }}>Loading analytics...</div>;
   }
@@ -90,14 +97,24 @@ const AdminAnalytics = () => {
   return (
     <div className="content-body" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       
-      <div style={{ marginBottom: '24px' }}>
-        <button onClick={() => navigate('/admin')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-main)', display: 'flex', alignItems: 'center' }}>
-          <ArrowLeft size={24} />
+      <div className="no-print" style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <button onClick={() => navigate('/admin')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}>
+          <ArrowLeft size={20} /> Back to Dashboard
+        </button>
+        <button onClick={handlePrint} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Download size={18} /> Download PDF Report
         </button>
       </div>
 
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+      <div ref={printRef} style={{ padding: '10px' }}>
+        <div className="print-only" style={{ display: 'none', marginBottom: '30px', textAlign: 'center' }}>
+          <h2>Jamindan MDRRMO - Official Analytics Report</h2>
+          <p>Generated on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}</p>
+          <hr />
+        </div>
+
+        {/* KPI Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
         
         <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px', borderTop: '4px solid #3498db' }}>
           <TrendingUp size={32} color="#3498db" style={{ marginBottom: '10px' }} />
@@ -171,6 +188,7 @@ const AdminAnalytics = () => {
 
       </div>
 
+      </div>
     </div>
   );
 };

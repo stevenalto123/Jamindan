@@ -1852,3 +1852,11 @@ input[type="date"].form-input { min-width: 0; }
   color: #333 !important;
 }
 
+
+
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  body { background-color: white !important; }
+  .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+}
