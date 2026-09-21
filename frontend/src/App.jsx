@@ -416,20 +416,7 @@ const AppLayout = ({ children }) => {
         toggleSidebar={toggleSidebar} 
       />
       <div className="main-content">
-        {showEmergencyAlert && (
-          <div 
-            onClick={() => {
-              setShowEmergencyAlert(false);
-              if (window.stopGlobalSiren) {
-                window.stopGlobalSiren();
-              }
-              if (navigator.vibrate) navigator.vibrate(0);
-            }}
-            style={{ backgroundColor: 'var(--danger-color)', color: 'white', padding: '15px', textAlign: 'center', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', animation: 'pulse 1s infinite' }}
-          >
-            <span style={{ fontSize: '24px' }}>🚨</span> NEW EMERGENCY DETECTED! CLICK HERE TO MUTE
-          </div>
-        )}
+        
         {isOffline && (
           <div style={{ backgroundColor: '#f39c12', color: 'white', padding: '10px', textAlign: 'center', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <span style={{ fontSize: '18px' }}>⚠️</span> Offline Mode: Showing cached emergency data.
@@ -659,6 +646,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
