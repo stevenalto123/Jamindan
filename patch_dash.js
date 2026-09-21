@@ -1,0 +1,1 @@
+const fs = require("fs"); let data = fs.readFileSync("backend/routes/dashboardRoutes.js", "utf8"); data = data.replace(/await db\.query\(\\\\/g, "await db.query(`"); data = data.replace(/\\\, \[req\.user\.id\]\);/g, "`, [req.user.id]);"); data = data.replace(/LIMIT 5\r?\n\s*\\\);/g, "LIMIT 5\n      `);"); fs.writeFileSync("backend/routes/dashboardRoutes.js", data);
