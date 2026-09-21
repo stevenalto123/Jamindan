@@ -49,6 +49,20 @@ const TrackStatus = () => {
   // Live Stream State
   const [showLiveStream, setShowLiveStream] = useState(false);
 
+  const isStaff = user?.role === 'Admin' || user?.role === 'Responder';
+
+  const [respondersList, setRespondersList] = useState([]);
+  const [selectedResponder, setSelectedResponder] = useState('');
+  const [assigning, setAssigning] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === 'Admin') {
+      axios.get('/api/users?role=Responder&limit=100')
+        .then(res => setRespondersList(res.data.users))
+        .catch(err => console.error(err));
+    }
+  }, [user]);
+
   // Printing State
   const printRef = useRef();
   const handlePrint = useReactToPrint({
@@ -167,20 +181,6 @@ const TrackStatus = () => {
     );
   }
 
-  const isStaff = user?.role === 'Admin' || user?.role === 'Responder';
-
-  const [respondersList, setRespondersList] = useState([]);
-  const [selectedResponder, setSelectedResponder] = useState('');
-  const [assigning, setAssigning] = useState(false);
-
-  useEffect(() => {
-    if (user?.role === 'Admin') {
-      axios.get('/api/users?role=Responder&limit=100')
-        .then(res => setRespondersList(res.data.users))
-        .catch(err => console.error(err));
-    }
-  }, [user]);
-
   const handleAssignResponder = async (e) => {
     e.preventDefault();
     if (!selectedResponder) return;
@@ -267,7 +267,7 @@ const TrackStatus = () => {
 
   // Check if resolved to show closure summary
   const isResolved = incident.status === 'Resolved';
-  const closureComment = isResolved ? [...history].reverse().find(h => h.status === 'Resolved')?.comment : null;
+  const closureComment = isResolved ? [...(history || [])].reverse().find(h => h.status === 'Resolved')?.comment : null;
 
   return (
     <div className="content-body" ref={printRef} style={{ padding: '20px', backgroundColor: '#fff', color: '#000' }}>
@@ -372,7 +372,7 @@ const TrackStatus = () => {
             {incident.photo_path && (
               <div style={{ marginTop: '16px' }}>
                 <img 
-                  src={incident.photo_path.startsWith('http') ? incident.photo_path : `https://jamindan.onrender.com${incident.photo_path}`} 
+                  src={incident.photo_path?.startsWith('http') ? incident.photo_path : `https://jamindan.onrender.com${incident.photo_path}`} 
                   alt="Evidence" 
                   style={{ width: '100%', maxHeight: '300px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }} 
                 />
@@ -384,7 +384,7 @@ const TrackStatus = () => {
               <h3 className="card-title" style={{ fontSize: '15px' }}>Status Timeline</h3>
               
               <div className="track-timeline">
-                {history.map((log, index) => {
+                {(history || []).map((log, index) => {
                   const isActive = log.status === incident.status && index === history.length - 1;
                   return (
                     <div key={log.id} className={`track-timeline-item ${isActive ? 'active' : ''}`}>
@@ -666,5 +666,7 @@ const TrackStatus = () => {
 };
 
 export default TrackStatus;
+
+
 
 
