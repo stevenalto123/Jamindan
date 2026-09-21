@@ -373,9 +373,9 @@ const AppLayout = ({ children }) => {
       const gain = window.globalAudioCtx.createGain();
       osc.connect(gain);
       gain.connect(window.globalAudioCtx.destination);
-      gain.gain.value = 0.01;
+      gain.gain.value = 0.000001;
       osc.start(0);
-      osc.stop(window.globalAudioCtx.currentTime + 0.1);
+      // osc.stop(); removed to keep iOS AudioContext permanently active
       
       setAudioUnlocked(true);
       isAudioUnlockedGlobal = true;
@@ -646,6 +646,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
