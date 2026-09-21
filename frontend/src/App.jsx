@@ -17,6 +17,7 @@ import { Geolocation } from '@capacitor/geolocation';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import MobileBottomNav from './components/MobileBottomNav';
+import NotificationHandler from './components/NotificationHandler';
 
 // Pages
 import Login from './pages/Login';
@@ -317,92 +318,7 @@ const AppLayout = ({ children }) => {
     };
   }, [user]);
 
-  // Global Audio Alarm for New Emergencies (Responders & Admins)
-  const [lastPendingCount, setLastPendingCount] = useState(-1);
-  const [showEmergencyAlert, setShowEmergencyAlert] = useState(false);
-
-  useEffect(() => {
-    const initAudio = () => {
-      if (!globalAudioCtx) {
-        globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (globalAudioCtx.state === 'suspended') {
-        globalAudioCtx.resume();
-      }
-    };
-    window.addEventListener('click', initAudio, { once: true });
-    window.addEventListener('touchstart', initAudio, { once: true });
-    
-    return () => {
-      window.removeEventListener('click', initAudio);
-      window.removeEventListener('touchstart', initAudio);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!user || (user.role !== 'Responder' && user.role !== 'Admin')) return;
-
-    const playSiren = () => {
-      try {
-        if (!globalAudioCtx) {
-          globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (globalAudioCtx.state === 'suspended') {
-          globalAudioCtx.resume().catch(() => console.warn("Cannot resume audio context"));
-        }
-
-        const oscillator = globalAudioCtx.createOscillator();
-        const gainNode = globalAudioCtx.createGain();
-        
-        oscillator.type = 'sawtooth';
-        oscillator.connect(gainNode);
-        gainNode.connect(globalAudioCtx.destination);
-        oscillator.start(0);
-
-        let high = false;
-        const fmInterval = setInterval(() => {
-          try {
-            oscillator.frequency.value = high ? 1100.00 : 750.00;
-            gainNode.gain.value = high ? 1.0 : 0.6;
-          } catch(e){}
-          high = !high;
-        }, 350);
-
-        const vibeInterval = setInterval(() => {
-           if (navigator.vibrate) navigator.vibrate([1000, 300]);
-        }, 1300);
-        
-        window.stopGlobalSiren = () => {
-          try { clearInterval(fmInterval); } catch(e){}
-          try { clearInterval(vibeInterval); } catch(e){}
-          try { oscillator.stop(); } catch(e){}
-          if (navigator.vibrate) navigator.vibrate(0);
-        };
-      } catch (e) {
-        console.warn("Audio Context Error", e);
-      }
-    };
-
-    const checkForEmergencies = async () => {
-      try {
-        const res = await axios.get('/api/incidents');
-        const pending = res.data.filter(inc => inc.status === 'Pending');
-        
-        if (lastPendingCount !== -1 && pending.length > lastPendingCount) {
-          playSiren();
-          setShowEmergencyAlert(true);
-          if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500, 200, 500, 200]); 
-        }
-        setLastPendingCount(pending.length);
-      } catch (err) {
-        console.error("Audio poller failed", err);
-      }
-    };
-
-    const interval = setInterval(checkForEmergencies, 2000); // Poll every 2 seconds
-    return () => clearInterval(interval);
-  }, [user, lastPendingCount]);
-
+    // Global Audio Alarm is now handled by NotificationHandler
   if (path === '/dashboard') {
     pageTitle = "Dashboard";
     pageSubtitle = "Stay safe. We're here to help.";
@@ -589,6 +505,7 @@ const AppLayout = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
+      <NotificationHandler />
       <LanguageProvider>
         <SystemProvider>
           <Router>
@@ -769,6 +686,10 @@ function App() {
 }
 
 export default App;
+
+
+
+
 
 
 

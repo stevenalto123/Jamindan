@@ -159,6 +159,12 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
     });
 
     await db.logAudit(`Incident reported: ${code} (${type})`, req.user.username, req.ip);
+    
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('new-incident', { incidentId, type, code });
+    }
+
     return res.status(201).json({
       message: 'Report submitted successfully!',
       code,
@@ -414,9 +420,9 @@ router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), asy
       
       const io = req.app.get('io');
       if (io) {
-        io.emit('incident-status-updated', { incidentId: id, status });
+        io.emit('incident-status-updated', { incidentId: id, status, reporterId: incident.reporter_id, code: incident.code });
         // Also emit to the specific incident room for residents tracking it
-        io.to(`incident-${id}`).emit('incident-status-updated', { incidentId: id, status });
+        io.to(`incident-${id}`).emit('incident-status-updated', { incidentId: id, status, reporterId: incident.reporter_id, code: incident.code });
       }
 
       return res.json({ message: `Incident status updated to ${status} successfully.` });
@@ -519,25 +525,41 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
   }
 
   try {
+    const [incRows] = await db.query('SELECT reporter_id, code FROM incidents WHERE id = ?', [id]);
+    const incident = incRows[0];
+
+    if (!incident) {
+      return res.status(404).json({ message: 'Incident not found.' });
+    }
+
     const [result] = await db.query(
       'UPDATE incidents SET assigned_responder_id = ?, status = ? WHERE id = ?',
       [responder_id, 'In Progress', id]
     );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Incident not found.' });
-    }
-
     // Log the action
     await db.query(
-      'INSERT INTO incident_updates (incident_id, status, comment, updated_by) VALUES (?, ?, ?, ?)',
+      'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, ?, ?, ?)',
       [id, 'In Progress', `Incident dispatched to responder #${responder_id}`, req.user.id]
     );
     
     // Optionally emit event via socket
     const io = req.app.get('io');
     if (io) {
-      io.emit('incident-updated', { id, status: 'In Progress' });
+      io.emit('responder-dispatched', { 
+        id, 
+        status: 'In Progress', 
+        responderId: responder_id, 
+        reporterId: incident.reporter_id,
+        code: incident.code
+      });
+      // also emit status updated so list updates
+      io.emit('incident-status-updated', { 
+        incidentId: id, 
+        status: 'In Progress', 
+        reporterId: incident.reporter_id, 
+        code: incident.code 
+      });
     }
 
     return res.json({ message: 'Responder assigned successfully' });

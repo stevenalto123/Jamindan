@@ -1,0 +1,17 @@
+
+/* Fix Leaflet Routing Machine Icons & Mobile Size */
+.leaflet-routing-container .leaflet-routing-icon {
+  background-image: url('/leaflet.routing.icons.png') !important;
+}
+.leaflet-routing-icon {
+  background-image: url('/routing-icon.png') !important;
+}
+@media (max-width: 768px) {
+  .leaflet-routing-container {
+    max-height: 30vh !important;
+    overflow-y: auto !important;
+    margin-bottom: 70px !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+}
+
