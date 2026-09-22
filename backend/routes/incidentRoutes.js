@@ -202,10 +202,13 @@ router.get('/', authRequired, async (req, res) => {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    // If Admin/Responder, force Critical-keyword incidents to float to the very top
+    // If Admin/Responder, force Critical-keyword incidents to float to the very top, BUT push 'Resolved' to the bottom
     if (req.user.role !== 'Resident') {
       const keywordRegex = '(unconscious|bleeding|fire|trapped|armed|heart attack|stroke|not breathing|critical|severe|gun|knife|suicide|explosion)';
-      query += ` ORDER BY CASE WHEN i.description REGEXP '${keywordRegex}' THEN 1 ELSE 2 END ASC, i.created_at DESC`;
+      query += ` ORDER BY 
+        CASE WHEN i.status = 'Resolved' THEN 2 ELSE 1 END ASC,
+        CASE WHEN i.description REGEXP '${keywordRegex}' THEN 1 ELSE 2 END ASC, 
+        i.created_at DESC`;
     } else {
       query += ' ORDER BY i.created_at DESC';
     }
