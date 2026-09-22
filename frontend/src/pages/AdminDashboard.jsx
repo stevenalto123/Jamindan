@@ -105,15 +105,37 @@ const AdminDashboard = () => {
         <>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
             <button 
-              onClick={() => {
-                alert('Test initiated. Please MINIMIZE the browser window NOW! The push will arrive in 5 seconds.');
-                setTimeout(async () => {
-                  try {
-                    await axios.get('/api/push/test');
-                  } catch (e) {
-                    console.error('Test push failed', e);
+              onClick={async () => {
+                try {
+                  const registration = await navigator.serviceWorker.ready;
+                  let sub = await registration.pushManager.getSubscription();
+                  if (sub) {
+                    await sub.unsubscribe();
                   }
-                }, 5000);
+                  
+                  const publicVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BJd5fK6r2z9Z39nPfgkV3kKcE9K3K7nvIAC7GFQdgZodVaVz-DRXaCVUoeb3VSjQxQCgJ3jPiDKm6cOI1PuU-oM';
+                  
+                  // Base64 helper
+                  const padding = '='.repeat((4 - publicVapidKey.length % 4) % 4);
+                  const base64 = (publicVapidKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
+                  const rawData = window.atob(base64);
+                  const outputArray = new Uint8Array(rawData.length);
+                  for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
+                  
+                  sub = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: outputArray
+                  });
+                  
+                  await axios.post('/api/push/subscribe', { subscription: sub });
+                  
+                  alert('Resubscribed! Sending push... DO NOT minimize yet. Just wait.');
+                  
+                  await axios.get('/api/push/test');
+                  alert('Backend says it sent the push successfully! Did a pop-up appear?');
+                } catch (e) {
+                  alert('DIAGNOSTIC ERROR: ' + (e.response?.data?.error || e.message));
+                }
               }}
               style={{ background: '#3b82f6', color: 'white', padding: '10px 20px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
