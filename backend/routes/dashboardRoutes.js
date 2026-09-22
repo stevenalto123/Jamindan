@@ -41,13 +41,21 @@ router.get('/stats', requireRole(['Admin', 'Responder']), async (req, res) => {
     }
 
     // Recent incident reports (limit 5)
-    const [recentIncidents] = await db.query(`
+    let recentIncidentsQuery = `
       SELECT i.*, u.full_name as reporter_name, u.barangay as reporter_barangay
       FROM incidents i
       JOIN users u ON i.reporter_id = u.id
-      ORDER BY i.created_at DESC
-      LIMIT 5
-    `);
+    `;
+    let recentIncidentsParams = [];
+
+    if (req.user.role === 'Responder') {
+      recentIncidentsQuery += ` WHERE i.responder_id = ? `;
+      recentIncidentsParams.push(req.user.id);
+    }
+
+    recentIncidentsQuery += ` ORDER BY i.created_at DESC LIMIT 5`;
+
+    const [recentIncidents] = await db.query(recentIncidentsQuery, recentIncidentsParams);
 
     // Recent call logs (limit 10)
     let recentCallLogs = [];
