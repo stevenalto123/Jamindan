@@ -86,7 +86,12 @@ const AdminAnalytics = () => {
 
   const printRef = useRef();
   const handlePrint = () => {
-    window.print();
+    if (mapRef.current) {
+      mapRef.current.invalidateSize();
+    }
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   if (loading) {
