@@ -135,6 +135,12 @@ const ReportIncident = () => {
       }
     };
     const handleOffline = () => setIsOffline(true);
+    
+    // Attempt sync immediately on mount in case the app was suspended or refreshed
+    if (navigator.onLine) {
+      handleOnline();
+    }
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     return () => {
