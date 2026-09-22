@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useReactToPrint } from 'react-to-print';
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -85,10 +85,9 @@ const AdminAnalytics = () => {
   const COLORS = ['#3498db', '#e74c3c', '#f1c40f', '#2ecc71', '#9b59b6', '#e67e22', '#34495e'];
 
   const printRef = useRef();
-  const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    documentTitle: `Jamindan_Emergency_Report_${new Date().toISOString().split('T')[0]}`,
-  });
+  const handlePrint = () => {
+    window.print();
+  };
 
   if (loading) {
     return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-light)' }}>Loading analytics...</div>;

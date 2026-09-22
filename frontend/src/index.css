@@ -1860,3 +1860,25 @@ input[type="date"].form-input { min-width: 0; }
   body { background-color: white !important; }
   .card { box-shadow: none !important; border: 1px solid #ddd !important; }
 }
+
+/* Print Styles */
+@media print {
+  .no-print, .sidebar, .top-header, .mobile-nav, nav, header {
+    display: none !important;
+  }
+  
+  body, .main-content, .layout, .content-body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
