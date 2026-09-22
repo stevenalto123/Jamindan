@@ -112,7 +112,7 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
             const payload = JSON.stringify({
               title: `🚨 URGENT: ${type}`,
               body: `Incident ${code} reported by ${resident ? resident.full_name : 'Resident'} at ${address || 'GPS Location'}!`,
-              icon: '/jamindan-seal.png',
+              icon: '/logo.png',
               url: '/incidents'
             });
             await webpush.sendNotification(subscription, payload);
@@ -532,7 +532,7 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
           const payload = JSON.stringify({
             title: '?? DISPATCH ALERT',
             body: 'You have been assigned to Incident ' + incident.code + '. Please respond immediately!',
-            icon: '/jamindan-seal.png',
+            icon: '/logo.png',
             url: '/incidents/' + id
           });
           await webpush.sendNotification(subscription, payload);

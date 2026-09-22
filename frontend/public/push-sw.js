@@ -4,7 +4,7 @@ self.addEventListener('push', function(event) {
       const data = event.data.json();
       const options = {
         body: data.body || 'New emergency alert received.',
-        icon: data.icon || '/jamindan-seal.png',
+        icon: data.icon || '/logo.png',
         vibrate: [200, 100, 200, 100, 200, 100, 200],
         data: {
           url: data.url || '/'
@@ -19,7 +19,7 @@ self.addEventListener('push', function(event) {
       event.waitUntil(
         self.registration.showNotification('Jamindan Emergency', {
           body: event.data.text(),
-          icon: '/jamindan-seal.png',
+          icon: '/logo.png',
           vibrate: [200, 100, 200]
         })
       );

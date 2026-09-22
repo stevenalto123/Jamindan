@@ -36,4 +36,8 @@ router.post('/subscribe', authRequired, async (req, res) => {
   }
 });
 
+
+
+router.get('/test', authRequired, async (req, res) => { try { const [rows] = await db.query('SELECT push_subscription FROM users WHERE id = ?', [req.user.id]); if (!rows[0] || !rows[0].push_subscription) return res.status(400).json({message:'No sub'}); const webpush = require('web-push'); webpush.setVapidDetails(process.env.VAPID_EMAIL || 'mailto:test@example.com', process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY); await webpush.sendNotification(JSON.parse(rows[0].push_subscription), JSON.stringify({title:'Test', body:'This is a test notification'})); res.json({message:'Sent'}); } catch(e) { console.error(e); res.status(500).json({error: e.message}); } });
+
 module.exports = router;
