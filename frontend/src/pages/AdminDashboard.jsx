@@ -103,50 +103,7 @@ const AdminDashboard = () => {
       {/* Admin Exclusive: Top Metrics */}
       {user?.role === 'Admin' && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px', gap: '10px' }}>
-            <button 
-              onClick={() => {
-                if (Notification.permission === 'granted') {
-                  new Notification('Foreground Test', { body: 'If you see this, Windows allows Chrome notifications!', icon: '/logo.png' });
-                } else {
-                  Notification.requestPermission().then(p => {
-                    if (p === 'granted') new Notification('Foreground Test', { body: 'Permission granted!', icon: '/logo.png' });
-                    else alert('Your browser blocked notifications. Please click the lock icon next to the URL and allow them.');
-                  });
-                }
-              }}
-              style={{ background: '#f59e0b', color: 'white', padding: '10px 20px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <Bell size={18} /> 1. Test Foreground
-            </button>
-            <button 
-              onClick={async () => {
-                try {
-                  const registration = await navigator.serviceWorker.ready;
-                  let sub = await registration.pushManager.getSubscription();
-                  if (sub) await sub.unsubscribe();
-                  
-                  const publicVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BJd5fK6r2z9Z39nPfgkV3kKcE9K3K7nvIAC7GFQdgZodVaVz-DRXaCVUoeb3VSjQxQCgJ3jPiDKm6cOI1PuU-oM';
-                  const padding = '='.repeat((4 - publicVapidKey.length % 4) % 4);
-                  const base64 = (publicVapidKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
-                  const rawData = window.atob(base64);
-                  const outputArray = new Uint8Array(rawData.length);
-                  for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
-                  
-                  sub = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: outputArray });
-                  await axios.post('/api/push/subscribe', { subscription: sub });
-                  
-                  await axios.get('/api/push/test');
-                  alert('Background Push Sent! Check your desktop bottom-right corner.');
-                } catch (e) {
-                  alert('ERROR: ' + (e.response?.data?.error || e.message));
-                }
-              }}
-              style={{ background: '#3b82f6', color: 'white', padding: '10px 20px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <Bell size={18} /> 2. Test Background
-            </button>
-          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         
         {/* Pending */}
