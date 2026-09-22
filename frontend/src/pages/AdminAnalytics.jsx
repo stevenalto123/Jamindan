@@ -62,16 +62,16 @@ const AdminAnalytics = () => {
       
       // Fix leaflet.heat window scope in Vite
       window.L = L;
-      import('leaflet.heat').then(() => {
-        if (L.heatLayer) {
-          heatLayerRef.current = L.heatLayer(heatData, {
-            radius: 25,
-            blur: 15,
-            maxZoom: 17,
-            gradient: { 0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red' }
-          }).addTo(mapRef.current);
-        }
-      }).catch(err => console.error("Failed to load leaflet.heat", err));
+        import('leaflet.heat').then(() => {
+          if (L.heatLayer) {
+            heatLayerRef.current = L.heatLayer(heatData, {
+              radius: 35,
+              blur: 20,
+              maxZoom: 17,
+              gradient: { 0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red' }
+            }).addTo(mapRef.current);
+          }
+        }).catch(err => console.error("Failed to load leaflet.heat", err));
     }
 
     return () => {
@@ -150,8 +150,8 @@ const AdminAnalytics = () => {
             Incidents by Category
           </h3>
           <div style={{ width: '100%', height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={typeData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+            <ResponsiveContainer width="99%" height="100%">
+              <BarChart data={typeData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} />
@@ -180,7 +180,7 @@ const AdminAnalytics = () => {
               Visualizing high-density areas for emergencies to aid in resource allocation.
             </p>
           </div>
-          <div style={{ width: '100%', height: '500px', position: 'relative' }}>
+          <div style={{ width: '100%', height: '400px', position: 'relative' }}>
             <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }}></div>
           </div>
         </div>

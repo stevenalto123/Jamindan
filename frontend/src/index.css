@@ -1882,3 +1882,12 @@ input[type="date"].form-input { min-width: 0; }
     break-inside: avoid !important;
   }
 }
+
+/* Fix Recharts overflowing right edge in print */
+@media print {
+  .recharts-responsive-container {
+    width: 95% !important;
+    height: auto !important;
+    overflow: hidden !important;
+  }
+}
