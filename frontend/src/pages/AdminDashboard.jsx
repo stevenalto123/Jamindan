@@ -102,7 +102,25 @@ const AdminDashboard = () => {
 
       {/* Admin Exclusive: Top Metrics */}
       {user?.role === 'Admin' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+        <>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+            <button 
+              onClick={() => {
+                alert('Test initiated. Please MINIMIZE the browser window NOW! The push will arrive in 5 seconds.');
+                setTimeout(async () => {
+                  try {
+                    await axios.get('/api/push/test');
+                  } catch (e) {
+                    console.error('Test push failed', e);
+                  }
+                }, 5000);
+              }}
+              style={{ background: '#3b82f6', color: 'white', padding: '10px 20px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Bell size={18} /> Test Background Push Notification
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         
         {/* Pending */}
         <div 

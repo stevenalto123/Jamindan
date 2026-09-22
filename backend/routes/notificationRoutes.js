@@ -5,14 +5,17 @@ const { authRequired, requireRole } = require('../middleware/auth');
 const webpush = require('web-push');
 
 try {
-  if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  const pubKey = process.env.VAPID_PUBLIC_KEY || 'BJd5fK6r2z9Z39nPfgkV3kKcE9K3K7nvIAC7GFQdgZodVaVz-DRXaCVUoeb3VSjQxQCgJ3jPiDKm6cOI1PuU-oM';
+  const privKey = process.env.VAPID_PRIVATE_KEY || 'gi6UKdgvY7oL2TkiLWuDJPBtBkk0V4M--mXocHO7cF0';
+  
+  if (pubKey && privKey) {
     webpush.setVapidDetails(
-      process.env.VAPID_EMAIL || 'mailto:test@example.com',
-      process.env.VAPID_PUBLIC_KEY,
-      process.env.VAPID_PRIVATE_KEY
+      process.env.VAPID_EMAIL || 'mailto:admin@jamindan.gov.ph',
+      pubKey,
+      privKey
     );
   } else {
-    console.warn('VAPID keys not set. Push notifications will be disabled.');
+    console.warn('VAPID keys not set in notificationRoutes. Push disabled.');
   }
 } catch (err) {
   console.error('Failed to initialize webpush:', err.message);
