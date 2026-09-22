@@ -14,6 +14,47 @@ const INCIDENT_TYPES = [
   { value: 'Other',    label: 'Other',    icon: HelpCircle,  color: '#7f8c8d', bg: 'rgba(127,140,141,0.08)' },
 ];
 
+// IndexedDB Helper for Offline Sync (supports Images)
+const saveToIndexedDB = (payloadObj) => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('OfflineSyncDB', 1);
+    request.onupgradeneeded = (e) => e.target.result.createObjectStore('incidents', { keyPath: 'id' });
+    request.onsuccess = (e) => {
+      const db = e.target.result;
+      const tx = db.transaction('incidents', 'readwrite');
+      tx.objectStore('incidents').put({ id: 'draft_1', ...payloadObj });
+      tx.oncomplete = () => resolve();
+    };
+    request.onerror = (e) => reject(e);
+  });
+};
+
+const getFromIndexedDB = () => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('OfflineSyncDB', 1);
+    request.onupgradeneeded = (e) => e.target.result.createObjectStore('incidents', { keyPath: 'id' });
+    request.onsuccess = (e) => {
+      const db = e.target.result;
+      const tx = db.transaction('incidents', 'readonly');
+      const getReq = tx.objectStore('incidents').get('draft_1');
+      getReq.onsuccess = () => resolve(getReq.result);
+    };
+    request.onerror = (e) => reject(e);
+  });
+};
+
+const clearIndexedDB = () => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('OfflineSyncDB', 1);
+    request.onsuccess = (e) => {
+      const db = e.target.result;
+      const tx = db.transaction('incidents', 'readwrite');
+      tx.objectStore('incidents').delete('draft_1');
+      tx.oncomplete = () => resolve();
+    };
+  });
+};
+
 const ReportIncident = () => {
   const [type, setType] = useState('');
   const [details, setDetails] = useState({});
@@ -32,6 +73,7 @@ const ReportIncident = () => {
   useEffect(() => {
     const handleOnline = async () => {
       setIsOffline(false);
+      // Legacy fallback
       const savedPayload = localStorage.getItem('offline_incident_payload');
       if (savedPayload) {
         try {
@@ -40,9 +82,30 @@ const ReportIncident = () => {
           localStorage.removeItem('offline_incident_payload');
           alert('Your offline report has been successfully auto-submitted! (Code: ' + res.data.code + ')');
           window.location.href = '/incidents/' + res.data.incidentId;
-        } catch (err) {
-          console.error('Failed to sync offline report', err);
+          return;
+        } catch (err) { console.error('Failed to sync legacy offline report', err); }
+      }
+
+      // New IndexedDB logic
+      try {
+        const savedData = await getFromIndexedDB();
+        if (savedData) {
+          const formData = new FormData();
+          formData.append('type', savedData.type);
+          formData.append('description', savedData.description);
+          formData.append('location_lat', savedData.location_lat);
+          formData.append('location_lng', savedData.location_lng);
+          formData.append('location_address', savedData.location_address);
+          if (savedData.details) formData.append('details', savedData.details);
+          if (savedData.photo) formData.append('photo', savedData.photo);
+          
+          const res = await axios.post('/api/incidents', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+          await clearIndexedDB();
+          alert('Your offline report (with photo) has been successfully auto-submitted! (Code: ' + res.data.code + ')');
+          window.location.href = '/incidents/' + res.data.incidentId;
         }
+      } catch (err) {
+        console.error('Failed to sync IndexedDB offline report', err);
       }
     };
     const handleOffline = () => setIsOffline(true);
@@ -117,7 +180,19 @@ const ReportIncident = () => {
       setTimeout(() => navigate(`/incidents/${res.data.incidentId}`), 2000);
     } catch (err) {
       if (!navigator.onLine || err.message === 'Network Error') {
-        if (!isMultipart) localStorage.setItem('offline_incident_payload', JSON.stringify(payload));
+        const offlineData = {
+          type,
+          description: `[Location Details: ${locationText.trim()}] ${description.trim()}`,
+          location_lat: lat,
+          location_lng: lng,
+          location_address: address,
+          details: Object.keys(details).length > 0 ? JSON.stringify(details) : null,
+          photo: photo || null
+        };
+        
+        // Save to IndexedDB to support large image blobs offline
+        saveToIndexedDB(offlineData).catch(e => console.error('IDB Save failed', e));
+
         setSuccess('offline');
         setLoading(false);
         alert("No Internet Connection.\n\nYour report has been saved as an Offline Draft! It will automatically submit to the Command Center as soon as your phone reconnects to the internet.");
