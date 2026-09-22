@@ -120,6 +120,8 @@ const ReportIncident = () => {
         if (!isMultipart) localStorage.setItem('offline_incident_payload', JSON.stringify(payload));
         setSuccess('offline');
         setLoading(false);
+        alert("No Internet Connection.\n\nYour report has been saved as an Offline Draft! It will automatically submit to the Command Center as soon as your phone reconnects to the internet.");
+        document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setError((err.response?.data?.message || 'Failed') + ': ' + (err.response?.data?.errorDetails || err.message));
