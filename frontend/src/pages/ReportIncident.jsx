@@ -246,14 +246,18 @@ const ReportIncident = () => {
     }
   };
 
-  const handleCopySms = () => {
+  const generateSmsText = () => {
     let detailsText = '';
     if (Object.keys(details).length > 0) {
       detailsText = Object.entries(details)
         .map(([k, v]) => `\n- ${k.replace('_', ' ')}: ${v}`)
         .join('');
     }
-    const smsText = `JAMINDAN SOS REPORT:\nType: ${type || 'Not selected'}\nCoords: ${lat.toFixed(5)}, ${lng.toFixed(5)}\nLocation: ${locationText || 'Pinned on map'}\nDescription: ${description || 'None'}${detailsText}`;
+    return `JAMINDAN SOS REPORT:\nType: ${type || 'Not selected'}\nCoords: ${Number(lat || 0).toFixed(5)}, ${Number(lng || 0).toFixed(5)}\nLocation: ${locationText || 'Pinned on map'}\nDescription: ${description || 'None'}${detailsText}`;
+  };
+
+  const handleCopySms = () => {
+    const smsText = generateSmsText();
     navigator.clipboard.writeText(smsText);
     setSmsCopied(true);
     setTimeout(() => setSmsCopied(false), 3000);
@@ -566,9 +570,9 @@ const ReportIncident = () => {
         </p>
         <textarea
           className="form-input"
-          value={`JAMINDAN SOS REPORT:\nType: ${type || 'Not selected'}\nCoords: ${lat.toFixed(5)}, ${lng.toFixed(5)}\nLocation: ${locationText || 'Pinned on map'}\nDetails: ${description || 'No description provided'}`}
+          value={generateSmsText()}
           readOnly
-          rows={5}
+          rows={6}
           style={{ fontFamily: 'monospace', fontSize: '12px', cursor: 'default', resize: 'none', marginBottom: '10px' }}
         />
         <button
