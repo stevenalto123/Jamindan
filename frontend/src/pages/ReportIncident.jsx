@@ -90,7 +90,7 @@ const ReportIncident = () => {
     const formData = new FormData();
     let address = locationText;
     try {
-      const geoRes = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+      const geoRes = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`, { timeout: 3000 });
       if (geoRes.data && geoRes.data.display_name) address = geoRes.data.display_name.split(',').slice(0, 3).join(', ');
     } catch (e) { console.warn('Reverse geocode failed', e); }
 
@@ -102,14 +102,16 @@ const ReportIncident = () => {
     if (Object.keys(details).length > 0) formData.append('details', JSON.stringify(details));
     if (photo) { formData.append('photo', photo); isMultipart = true; }
 
+    let payload = formData;
+    let config = { headers: { 'Content-Type': 'multipart/form-data' } };
+    
+    if (!isMultipart) {
+      payload = { type, description: `[Location Details: ${locationText.trim()}] ${description.trim()}`, location_lat: lat, location_lng: lng, location_address: address };
+      if (Object.keys(details).length > 0) payload.details = JSON.stringify(details);
+      config = {};
+    }
+
     try {
-      let payload = formData;
-      let config = { headers: { 'Content-Type': 'multipart/form-data' } };
-      if (!isMultipart) {
-        payload = { type, description: `[Location Details: ${locationText.trim()}] ${description.trim()}`, location_lat: lat, location_lng: lng, location_address: address };
-        if (Object.keys(details).length > 0) payload.details = JSON.stringify(details);
-        config = {};
-      }
       const res = await axios.post('/api/incidents', payload, config);
       setSuccess(`Report submitted! Code: ${res.data.code}`);
       setTimeout(() => navigate(`/incidents/${res.data.incidentId}`), 2000);
