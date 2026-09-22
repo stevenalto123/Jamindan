@@ -15,6 +15,24 @@ const INCIDENT_TYPES = [
 ];
 
 // IndexedDB Helper for Offline Sync (supports Images)
+const fileToBase64 = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = error => reject(error);
+});
+
+const dataURItoBlob = (dataURI) => {
+  const byteString = atob(dataURI.split(',')[1]);
+  const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+  }
+  return new Blob([ab], {type: mimeString});
+};
+
 const saveToIndexedDB = (payloadObj) => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('OfflineSyncDB', 1);
@@ -97,8 +115,11 @@ const ReportIncident = () => {
           formData.append('location_lng', savedData.location_lng);
           formData.append('location_address', savedData.location_address);
           if (savedData.details) formData.append('details', savedData.details);
-          if (savedData.photo) {
-            // Ensure the File blob has a filename, otherwise multer may reject it
+          
+          if (savedData.photoBase64) {
+            const blob = dataURItoBlob(savedData.photoBase64);
+            formData.append('photo', blob, 'offline_photo.jpg');
+          } else if (savedData.photo) {
             const fileName = savedData.photo.name || 'offline_photo.jpg';
             formData.append('photo', savedData.photo, fileName);
           }
@@ -109,6 +130,7 @@ const ReportIncident = () => {
           window.location.href = '/incidents/' + res.data.incidentId;
         }
       } catch (err) {
+        alert('Failed to auto-submit offline report: ' + err.message);
         console.error('Failed to sync IndexedDB offline report', err);
       }
     };
@@ -184,18 +206,27 @@ const ReportIncident = () => {
       setTimeout(() => navigate(`/incidents/${res.data.incidentId}`), 2000);
     } catch (err) {
       if (!navigator.onLine || err.message === 'Network Error') {
-        const offlineData = {
-          type,
-          description: `[Location Details: ${locationText.trim()}] ${description.trim()}`,
-          location_lat: lat,
-          location_lng: lng,
-          location_address: address,
-          details: Object.keys(details).length > 0 ? JSON.stringify(details) : null,
-          photo: photo || null
+        const prepareAndSave = async () => {
+          try {
+            let base64Photo = null;
+            if (photo) {
+              base64Photo = await fileToBase64(photo);
+            }
+            const offlineData = {
+              type,
+              description: `[Location Details: ${locationText.trim()}] ${description.trim()}`,
+              location_lat: lat,
+              location_lng: lng,
+              location_address: address,
+              details: Object.keys(details).length > 0 ? JSON.stringify(details) : null,
+              photoBase64: base64Photo
+            };
+            await saveToIndexedDB(offlineData);
+          } catch (e) {
+            console.error('IDB Save failed', e);
+          }
         };
-        
-        // Save to IndexedDB to support large image blobs offline
-        saveToIndexedDB(offlineData).catch(e => console.error('IDB Save failed', e));
+        prepareAndSave();
 
         setSuccess('offline');
         setLoading(false);
