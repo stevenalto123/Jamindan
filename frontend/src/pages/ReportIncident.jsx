@@ -97,7 +97,11 @@ const ReportIncident = () => {
           formData.append('location_lng', savedData.location_lng);
           formData.append('location_address', savedData.location_address);
           if (savedData.details) formData.append('details', savedData.details);
-          if (savedData.photo) formData.append('photo', savedData.photo);
+          if (savedData.photo) {
+            // Ensure the File blob has a filename, otherwise multer may reject it
+            const fileName = savedData.photo.name || 'offline_photo.jpg';
+            formData.append('photo', savedData.photo, fileName);
+          }
           
           const res = await axios.post('/api/incidents', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
           await clearIndexedDB();
