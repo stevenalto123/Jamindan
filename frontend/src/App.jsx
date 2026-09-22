@@ -411,6 +411,9 @@ const AppLayout = ({ children }) => {
   if (user && (user.role === 'Admin' || user.role === 'Responder') && !audioUnlocked) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-color)', padding: '20px', textAlign: 'center', zIndex: 9999 }}>
+        {/* Render audio elements hidden so refs are populated for unlock */}
+        <audio id="siren-audio" ref={sirenRef} src="/siren.wav" preload="auto" loop style={{display: "none"}}></audio>
+        <audio id="chime-audio" ref={chimeRef} src="/chime.wav" preload="auto" loop style={{display: "none"}}></audio>
         <div style={{ background: 'var(--card-bg)', padding: '40px 30px', borderRadius: '24px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', maxWidth: '400px', width: '100%' }}>
           <div style={{ width: '80px', height: '80px', background: 'rgba(231, 76, 60, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
             <span style={{ fontSize: '40px' }}>🔔</span>
