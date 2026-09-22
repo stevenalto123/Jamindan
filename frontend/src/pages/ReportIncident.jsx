@@ -247,7 +247,13 @@ const ReportIncident = () => {
   };
 
   const handleCopySms = () => {
-    const smsText = `JAMINDAN SOS REPORT:\nType: ${type || 'Not selected'}\nCoords: ${lat.toFixed(5)}, ${lng.toFixed(5)}\nLocation: ${locationText || 'Pinned on map'}\nDetails: ${description || 'No description provided'}`;
+    let detailsText = '';
+    if (Object.keys(details).length > 0) {
+      detailsText = Object.entries(details)
+        .map(([k, v]) => `\n- ${k.replace('_', ' ')}: ${v}`)
+        .join('');
+    }
+    const smsText = `JAMINDAN SOS REPORT:\nType: ${type || 'Not selected'}\nCoords: ${lat.toFixed(5)}, ${lng.toFixed(5)}\nLocation: ${locationText || 'Pinned on map'}\nDescription: ${description || 'None'}${detailsText}`;
     navigator.clipboard.writeText(smsText);
     setSmsCopied(true);
     setTimeout(() => setSmsCopied(false), 3000);
