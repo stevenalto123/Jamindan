@@ -86,7 +86,7 @@ const AdminViewUser = () => {
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <button 
-          onClick={() => navigate('/admin/users')}
+          onClick={() => navigate('/users')}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', color: 'var(--text-main)', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'transform 0.2s' }}
           onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
           onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
