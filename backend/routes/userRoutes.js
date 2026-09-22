@@ -116,7 +116,7 @@ router.get('/', requireRole(['Admin', 'Responder']), async (req, res) => {
 
     // Get paginated users
     const dataQuery = `
-      SELECT id, username, role, agency_type, full_name, phone, barangay, avatar, is_active, is_on_duty, current_lat, current_lng, created_at, id_photo_path, selfie_photo_path, id_type
+      SELECT id, username, role, agency_type, full_name, age, date_of_birth, phone, barangay, avatar, is_active, is_on_duty, current_lat, current_lng, created_at, id_photo_path, selfie_photo_path, id_type
       ${baseQuery}
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
