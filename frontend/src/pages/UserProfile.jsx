@@ -138,13 +138,15 @@ const UserProfile = () => {
             {t('profileDetails')}
           </h3>
           <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-            <div style={{ padding: '10px 12px', backgroundColor: '#eef2ff', color: '#4338ca', borderRadius: '6px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', lineHeight: '1.4' }}>
-              <ShieldCheck size={20} style={{ flexShrink: 0 }} />
-              <div>
-                <strong style={{ display: 'block', marginBottom: '2px' }}>Identity Locked</strong>
-                Identity fields are secured. Please visit the Jamindan Municipal Hall or your local Barangay Hall to request corrections to your account.
+            {user?.role !== 'Admin' && (
+              <div style={{ padding: '10px 12px', backgroundColor: '#eef2ff', color: '#4338ca', borderRadius: '6px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', lineHeight: '1.4' }}>
+                <ShieldCheck size={20} style={{ flexShrink: 0 }} />
+                <div>
+                  <strong style={{ display: 'block', marginBottom: '2px' }}>Identity Locked</strong>
+                  Identity fields are secured. Please visit the Jamindan Municipal Hall or your local Barangay Hall to request corrections to your account.
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="form-group" style={{ margin: 0, flex: 1 }}>
               <label className="form-label">
@@ -156,9 +158,9 @@ const UserProfile = () => {
               <div style={{ display: "flex", gap: "12px", marginBottom: "12px", flexWrap: 'wrap' }}>
                 <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
                   <label className="form-label">
-                    {t('fullNameLabel')} <Lock size={12} style={{ marginLeft: '4px', color: '#888', display: 'inline-block', verticalAlign: 'middle' }} />
+                    {t('fullNameLabel')} {user?.role !== 'Admin' && <Lock size={12} style={{ marginLeft: '4px', color: '#888', display: 'inline-block', verticalAlign: 'middle' }} />}
                   </label>
-                  <input type="text" className="form-input" value={fullName} disabled style={{ backgroundColor: '#f0f2f0', color: '#666', cursor: 'not-allowed', width: '100%', minWidth: 0 }} />
+                  <input type="text" className="form-input" value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={user?.role !== 'Admin'} style={{ backgroundColor: user?.role !== 'Admin' ? '#f0f2f0' : 'white', color: user?.role !== 'Admin' ? '#666' : 'inherit', cursor: user?.role !== 'Admin' ? 'not-allowed' : 'text', width: '100%', minWidth: 0 }} />
                 </div>
 
                 <div className="form-group" style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>
@@ -176,24 +178,32 @@ const UserProfile = () => {
               <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={{ width: '100%', minWidth: 0 }} />
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 90px", gap: "10px" }}>
-              <div className="form-group" style={{ margin: 0, overflow: 'hidden' }}>
-                <label className="form-label">
-                  Date of Birth <Lock size={12} style={{ marginLeft: '4px', color: '#888', display: 'inline-block', verticalAlign: 'middle' }} />
-                </label>
-                <input 
-                  type="date" 
-                  className="form-input" 
-                  style={{ width: '100%', minWidth: 0, paddingLeft: '8px', paddingRight: '8px', backgroundColor: '#f0f2f0', color: '#666', cursor: 'not-allowed' }}
-                  value={dateOfBirth} 
-                  disabled
-                />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 90px", gap: "10px" }}>
+                <div className="form-group" style={{ margin: 0, overflow: 'hidden' }}>
+                  <label className="form-label">
+                    Date of Birth {user?.role !== 'Admin' && <Lock size={12} style={{ marginLeft: '4px', color: '#888', display: 'inline-block', verticalAlign: 'middle' }} />}
+                  </label>
+                  <input 
+                    type="date" 
+                    className="form-input" 
+                    style={{ width: '100%', minWidth: 0, paddingLeft: '8px', paddingRight: '8px', backgroundColor: user?.role !== 'Admin' ? '#f0f2f0' : 'white', color: user?.role !== 'Admin' ? '#666' : 'inherit', cursor: user?.role !== 'Admin' ? 'not-allowed' : 'text' }}
+                    value={dateOfBirth} 
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    disabled={user?.role !== 'Admin'}
+                  />
+                </div>
+                <div className="form-group" style={{ margin: 0, overflow: 'hidden' }}>
+                  <label className="form-label">Age</label>
+                  <input 
+                    type="number" 
+                    className="form-input" 
+                    style={{ width: '100%', minWidth: 0, paddingLeft: '8px', paddingRight: '8px', backgroundColor: user?.role !== 'Admin' ? '#f0f2f0' : 'white', color: user?.role !== 'Admin' ? '#666' : 'inherit', cursor: user?.role !== 'Admin' ? 'not-allowed' : 'text' }}
+                    value={age}
+                    onChange={(e) => setAge(e.target.value)}
+                    disabled={user?.role !== 'Admin'}
+                  />
+                </div>
               </div>
-              <div className="form-group" style={{ margin: 0, overflow: 'hidden' }}>
-                <label className="form-label">Age</label>
-                <input type="number" className="form-input" value={age} readOnly style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-muted)', width: '100%', minWidth: 0, paddingLeft: '8px', paddingRight: '8px' }} />
-              </div>
-            </div>
 
             {user?.role === 'Resident' && (
               <>
