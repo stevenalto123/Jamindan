@@ -114,7 +114,7 @@ const TrackStatus = () => {
 
   // Track Responder's own location
   useEffect(() => {
-    if (user?.role === 'Responder' || user?.role === 'Admin') {
+    if (user?.role === 'Responder') {
       const getLoc = () => {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
