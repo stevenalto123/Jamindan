@@ -14,16 +14,15 @@ const SosPanicButton = () => {
   const navigate = useNavigate();
   const { settings } = useSystem();
 
+  const isHoldingRef = useRef(false);
+
   // Helper to trigger haptic vibration
   const triggerVibrate = async (pattern) => {
     try {
       if (window.Capacitor) {
-        // Native phone haptics
-        // If it is a pattern array, take the first duration, else use raw number
         const duration = Array.isArray(pattern) ? pattern[0] : pattern;
         await Haptics.vibrate({ duration: duration || 200 });
       } else if (navigator.vibrate) {
-        // Browser fallback (Android Chrome only)
         navigator.vibrate(pattern);
       }
     } catch (e) {
@@ -32,54 +31,64 @@ const SosPanicButton = () => {
   };
 
   useEffect(() => {
-    // Cleanup timer on unmount
     return () => {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
   }, []);
 
   const startHold = async (e) => {
-    e.preventDefault();
-    if (loading || isHolding) return;
+    if (e.cancelable) e.preventDefault();
+    if (loading || isHoldingRef.current) return;
 
+    isHoldingRef.current = true;
     setIsHolding(true);
     setHoldProgress(0);
-    await triggerVibrate(80); // Initial click vibration
+    triggerVibrate(80); // Fire and forget so we don't await and block
 
-    const holdDuration = 3000; // 3 seconds hold required
+    const holdDuration = 3000;
     const stepMs = 50; 
     let elapsed = 0;
 
-    progressIntervalRef.current = setInterval(async () => {
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+
+    progressIntervalRef.current = setInterval(() => {
       elapsed += stepMs;
       const progress = Math.min((elapsed / holdDuration) * 100, 100);
       setHoldProgress(progress);
 
-      // Light haptic heartbeat pulse every 1 second
       if (elapsed % 1000 === 0 && progress < 100) {
-        await triggerVibrate(60);
+        triggerVibrate(60);
       }
 
       if (elapsed >= holdDuration) {
         clearInterval(progressIntervalRef.current);
-        triggerSosDispatch();
+        if (isHoldingRef.current) {
+          triggerSosDispatch();
+        }
       }
     }, stepMs);
   };
 
   const endHold = async () => {
-    if (!isHolding || loading) return;
-
-    setIsHolding(false);
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
     }
+    
+    if (!isHoldingRef.current || loading) return;
 
-    if (holdProgress < 100) {
-      // User let go early - cancel trigger
-      setHoldProgress(0);
-      await triggerVibrate([40, 40]); // Double pulse cancel warning
-    }
+    isHoldingRef.current = false;
+    setIsHolding(false);
+
+    // Give state time to sync, then clear progress if it was abandoned
+    setTimeout(() => {
+      setHoldProgress(prev => {
+        if (prev < 100) {
+          triggerVibrate([40, 40]);
+          return 0;
+        }
+        return prev;
+      });
+    }, 10);
   };
 
   const triggerSosDispatch = async () => {
