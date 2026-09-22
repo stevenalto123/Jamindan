@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import html2pdf from 'html2pdf.js';
+import { useReactToPrint } from 'react-to-print';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -85,26 +85,10 @@ const AdminAnalytics = () => {
   const COLORS = ['#3498db', '#e74c3c', '#f1c40f', '#2ecc71', '#9b59b6', '#e67e22', '#34495e'];
 
   const printRef = useRef();
-  const handlePrint = () => {
-    const element = printRef.current;
-    
-    // Show print-only elements temporarily for the PDF layout
-    const printOnlyElements = element.querySelectorAll('.print-only');
-    printOnlyElements.forEach(el => el.style.display = 'block');
-
-    const opt = {
-      margin:       10,
-      filename:     `Jamindan_Emergency_Report_${new Date().toISOString().split('T')[0]}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(element).save().then(() => {
-      // Hide print-only elements again
-      printOnlyElements.forEach(el => el.style.display = 'none');
-    });
-  };
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    documentTitle: `Jamindan_Emergency_Report_${new Date().toISOString().split('T')[0]}`,
+  });
 
   if (loading) {
     return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-light)' }}>Loading analytics...</div>;
@@ -161,20 +145,20 @@ const AdminAnalytics = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '30px' }}>
         
         {/* Charts Row */}
-        <div className="card">
+        <div className="card" style={{ marginBottom: '30px', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
           <h3 style={{ marginTop: 0, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
             <BarChart3 size={20} color="var(--primary-color)" />
             Incidents by Category
           </h3>
           <div style={{ width: '100%', height: '300px' }}>
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={typeData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                <XAxis dataKey="name" stroke="var(--text-light)" />
-                <YAxis stroke="var(--text-light)" allowDecimals={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }} 
-                  itemStyle={{ color: 'var(--primary-color)' }}
+                  cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                 />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                   {typeData.map((entry, index) => (
@@ -187,7 +171,7 @@ const AdminAnalytics = () => {
         </div>
 
         {/* Heatmap Row */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
           <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
               <MapIcon size={20} color="#e74c3c" />
