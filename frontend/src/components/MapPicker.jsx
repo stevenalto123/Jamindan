@@ -73,13 +73,13 @@ const MapPicker = ({ lat, lng, onChange }) => {
               if (res.data && res.data.latitude && res.data.longitude) {
                 onChange(res.data.latitude, res.data.longitude);
                 if (mapRef.current && markerRef.current) {
-                  mapRef.current.setView([res.data.latitude, res.data.longitude], 16);
+                  mapRef.current.setView([res.data.latitude, res.data.longitude], 14);
                   markerRef.current.setLatLng([res.data.latitude, res.data.longitude]);
                 }
               }
             })
-            .catch(ipErr => console.warn("IP Fallback failed", ipErr));
-        });
+            .catch(e => console.warn("IP Geolocation failed", e));
+        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
       }
 
       // Add OpenStreetMap tiles
