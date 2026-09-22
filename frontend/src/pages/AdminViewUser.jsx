@@ -127,6 +127,18 @@ const AdminViewUser = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-main)' }}>
               <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)' }}>
+                <User size={18} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-light)', fontWeight: '600' }}>Age & Date of Birth</span>
+                <span style={{ fontWeight: '600' }}>
+                  {profile.age || 'N/A'} yrs old {profile.date_of_birth ? `(${new Date(profile.date_of_birth).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })})` : ''}
+                </span>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-main)' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)' }}>
                 <Phone size={18} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
