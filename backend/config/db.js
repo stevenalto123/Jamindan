@@ -44,6 +44,14 @@ const initializeDatabase = async () => {
 
     console.log('MySQL Database connection pool established.');
 
+    // One-time cleanup for the spam SOS Panic bug
+    try {
+      const [cleanupResult] = await pool.query("DELETE FROM incidents WHERE type = 'SOS Panic' AND status = 'Pending'");
+      console.log(`Cleaned up ${cleanupResult.affectedRows} pending SOS Panic spam requests.`);
+    } catch (cleanupError) {
+      console.error('Error cleaning up SOS spam:', cleanupError);
+    }
+
     // Compatibility check: Recreate tables if incompatible 'users' table exists from another project
     let needsClean = false;
     try {
