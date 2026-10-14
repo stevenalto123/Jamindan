@@ -70,12 +70,20 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
       console.warn("Failed to stringify details");
     }
 
+    let finalLeadAgency = req.body.lead_agency || null;
+    if (!finalLeadAgency) {
+      if (type === 'Fire') finalLeadAgency = 'BFP';
+      else if (type === 'Medical') finalLeadAgency = 'RHU';
+      else if (type === 'Crime') finalLeadAgency = 'PNP';
+      else finalLeadAgency = 'MDRRMO';
+    }
+
     const incidentId = await db.transaction(async (conn) => {
       // 1. Create Incident
       const [incidentResult] = await conn.execute(`
-        INSERT INTO incidents (code, reporter_id, type, description, details, photo_path, location_lat, location_lng, location_address, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
-      `, [code, req.user.id, type, description, detailsJson, photo_path, lat, lng, address]);
+        INSERT INTO incidents (code, reporter_id, type, lead_agency, description, details, photo_path, location_lat, location_lng, location_address, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')
+      `, [code, req.user.id, type, finalLeadAgency, description, detailsJson, photo_path, lat, lng, address]);
 
       const insId = incidentResult.insertId;
 
@@ -149,7 +157,7 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
 
 // List Incidents
 router.get('/', authRequired, async (req, res) => {
-  const { status, type, search } = req.query;
+  const { status, type, search, agency } = req.query;
 
   try {
     let query = `
@@ -163,13 +171,25 @@ router.get('/', authRequired, async (req, res) => {
     const params = [];
     const conditions = [];
 
-    // Filter by ownership
+    // Filter by ownership / role
     if (req.user.role === 'Resident') {
       conditions.push('i.reporter_id = ?');
       params.push(req.user.id);
     } else if (req.user.role === 'Responder') {
-      conditions.push('i.responder_id = ?');
-      params.push(req.user.id);
+      if (req.user.agency_type) {
+        // Responders see incidents dispatched to them OR unassigned active incidents for their agency
+        conditions.push('(i.responder_id = ? OR (i.lead_agency = ? AND (i.responder_id IS NULL OR i.status != "Resolved")))');
+        params.push(req.user.id, req.user.agency_type);
+      } else {
+        conditions.push('i.responder_id = ?');
+        params.push(req.user.id);
+      }
+    }
+
+    // Filter by agency
+    if (agency) {
+      conditions.push('i.lead_agency = ?');
+      params.push(agency);
     }
 
     // Filter by status
@@ -426,6 +446,43 @@ router.delete('/:id', authRequired, requireRole(['Admin']), async (req, res) => 
   } catch (error) {
     console.error('Delete incident error:', error);
     return res.status(500).json({ message: 'Server error while deleting incident' });
+  }
+});
+
+// Update Incident Lead Agency and Agency Notes (Admin / Responder)
+router.put('/:id/agency', authRequired, requireRole(['Admin', 'Responder']), async (req, res) => {
+  const { id } = req.params;
+  const { lead_agency, agency_notes } = req.body;
+
+  try {
+    const [incRows] = await db.query('SELECT code, lead_agency FROM incidents WHERE id = ?', [id]);
+    const incident = incRows[0];
+    if (!incident) {
+      return res.status(404).json({ message: 'Incident not found' });
+    }
+
+    await db.query(
+      'UPDATE incidents SET lead_agency = COALESCE(?, lead_agency), agency_notes = COALESCE(?, agency_notes) WHERE id = ?',
+      [lead_agency || null, agency_notes || null, id]
+    );
+
+    const logDetail = `Agency update: Lead [${lead_agency || incident.lead_agency}]. Notes: ${agency_notes || 'None'}`;
+    await db.query(
+      'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, (SELECT status FROM incidents WHERE id = ?), ?, ?)',
+      [id, id, logDetail, req.user.id]
+    );
+
+    await db.logAudit(`Agency coordination updated for ${incident.code}: ${lead_agency || 'Updated'}`, req.user.username, req.ip);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('incident-status-updated', { incidentId: id });
+    }
+
+    return res.json({ message: 'Agency coordination updated successfully.' });
+  } catch (error) {
+    console.error('Update agency error:', error);
+    return res.status(500).json({ message: 'Server error while updating agency' });
   }
 });
 

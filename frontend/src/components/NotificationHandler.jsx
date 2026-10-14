@@ -47,23 +47,14 @@ const NotificationHandler = () => {
   };
 
   const playChime = () => {
-    stopAllAlarms();
-    setIsRinging(true);
-    window.isAlarmStopped = false;
-
     const chime = document.getElementById('chime-audio');
     if (chime) {
-      chime.volume = 1.0;
+      chime.loop = false;
+      chime.volume = 0.85;
       chime.muted = false;
       chime.currentTime = 0;
-      const playPromise = chime.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          if (window.isAlarmStopped) chime.pause();
-        }).catch(e => console.warn("Chime blocked:", e));
-      }
+      chime.play().catch(e => console.warn("Chime blocked:", e));
     }
-
   };
 
   const showNotification = (title, body) => {
@@ -86,20 +77,21 @@ const NotificationHandler = () => {
     socket.on('new-incident', (data) => {
       if (user.role === 'Admin') {
         playSiren();
-        showNotification('?? URGENT: New Incident', 'A new ' + data.type + ' incident (' + data.code + ') has been reported!');
+        showNotification('🚨 URGENT: New Incident', 'A new ' + data.type + ' incident (' + data.code + ') has been reported!');
       }
     });
 
     socket.on('responder-dispatched', (data) => {
       if (user.role === 'Responder' && String(data.responderId) === String(user.id)) {
         playSiren();
-        showNotification('?? Dispatch Alert', 'You have been assigned to Incident ' + data.code + '. Please respond immediately.');
+        showNotification('🚨 Dispatch Alert', 'You have been assigned to Incident ' + data.code + '. Please respond immediately.');
       }
     });
 
     socket.on('incident-status-updated', (data) => {
       if (user.role === 'Resident' && String(data.reporterId) === String(user.id)) {
-        let message = 'Your incident ' + data.code + ' status was updated to ' + data.status + '.';
+        playChime(); // Gentle distinctive chime for resident status updates
+        let message = 'Your incident ' + (data.code || '') + ' status was updated to ' + data.status + '.';
         if (data.status === 'In Progress') {
           message = 'Help is on the way! Responders have been dispatched to your location for ' + data.code + '.';
         } else if (data.status === 'Resolved') {

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { FileText, Search, PlusCircle, Eye, Trash2, Download, Printer, Flame, HeartPulse, Droplets, Car, ShieldAlert, HelpCircle, MapPin, Clock, ChevronRight, AlertTriangle, Filter } from 'lucide-react';
+import { FileText, Search, PlusCircle, Eye, Trash2, Download, Printer, Flame, HeartPulse, Droplets, Car, ShieldAlert, HelpCircle, MapPin, Clock, ChevronRight, AlertTriangle, Filter, Shield } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export const INCIDENT_TYPES = ['Fire', 'Medical', 'Flood', 'Crime', 'Accident', 'Other', 'Landslide'];
@@ -34,6 +34,7 @@ const IncidentList = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [agencyFilter, setAgencyFilter] = useState('');
   const [search, setSearch] = useState('');
   
   // Pagination State
@@ -53,6 +54,7 @@ const IncidentList = () => {
       const params = {};
       if (statusFilter) params.status = statusFilter;
       if (typeFilter) params.type = typeFilter;
+      if (agencyFilter) params.agency = agencyFilter;
       if (search) params.search = search;
       const res = await axios.get('/api/incidents', { params });
       setIncidents(res.data);
@@ -67,7 +69,7 @@ const IncidentList = () => {
     fetchIncidents(false);
     const interval = setInterval(() => fetchIncidents(true), 3000);
     return () => clearInterval(interval);
-  }, [statusFilter, typeFilter]);
+  }, [statusFilter, typeFilter, agencyFilter]);
 
   useEffect(() => {
     const socketUrl = axios.defaults.baseURL || '';
@@ -85,7 +87,7 @@ const IncidentList = () => {
 
   useEffect(() => {
     setCurrentPage(1); // Reset page on filter changes
-  }, [statusFilter, typeFilter, search, incidents.length]);
+  }, [statusFilter, typeFilter, agencyFilter, search, incidents.length]);
 
   const handleExportCSV = () => {
     if (!incidents || incidents.length === 0) { alert(t('noReportsExport')); return; }
@@ -169,6 +171,21 @@ const IncidentList = () => {
             </select>
             <Filter size={18} className="input-icon-left" style={{ left: '14px', color: 'var(--text-muted)' }} />
           </div>
+          <div className="input-icon-wrapper" style={{ flex: 1, minWidth: '130px' }}>
+            <select
+              className="form-select"
+              style={{ height: '44px', paddingLeft: '40px', fontSize: '14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-color)' }}
+              value={agencyFilter}
+              onChange={(e) => setAgencyFilter(e.target.value)}
+            >
+              <option value="">All Agencies</option>
+              <option value="MDRRMO">MDRRMO</option>
+              <option value="BFP">BFP (Fire)</option>
+              <option value="RHU">RHU (Medical)</option>
+              <option value="PNP">PNP (Police)</option>
+            </select>
+            <Shield size={18} className="input-icon-left" style={{ left: '14px', color: 'var(--text-muted)' }} />
+          </div>
         </div>
 
         {/* Report Cards */}
@@ -225,6 +242,16 @@ const IncidentList = () => {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '700', fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>{incident.code}</span>
+                          <span style={{ 
+                            fontSize: '11px', 
+                            fontWeight: '800', 
+                            padding: '2px 8px', 
+                            borderRadius: '6px', 
+                            backgroundColor: incident.lead_agency === 'BFP' ? '#fee2e2' : incident.lead_agency === 'RHU' ? '#ecfdf5' : incident.lead_agency === 'PNP' ? '#f3e8ff' : '#eff6ff', 
+                            color: incident.lead_agency === 'BFP' ? '#dc2626' : incident.lead_agency === 'RHU' ? '#059669' : incident.lead_agency === 'PNP' ? '#7c3aed' : '#2563eb' 
+                          }}>
+                            {incident.lead_agency || 'MDRRMO'}
+                          </span>
                           {getStatusBadge(incident.status)}
                         </div>
                       </div>
@@ -357,6 +384,21 @@ const IncidentList = () => {
                 </select>
                 <Filter size={18} className="input-icon-left" style={{ left: '14px', color: 'var(--text-muted)' }} />
               </div>
+              <div className="input-icon-wrapper" style={{ minWidth: '180px' }}>
+                <select
+                  className="form-select"
+                  style={{ height: '44px', paddingLeft: '40px', fontSize: '14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white' }}
+                  value={agencyFilter}
+                  onChange={(e) => setAgencyFilter(e.target.value)}
+                >
+                  <option value="">All Agencies</option>
+                  <option value="MDRRMO">MDRRMO</option>
+                  <option value="BFP">BFP (Fire)</option>
+                  <option value="RHU">RHU (Medical)</option>
+                  <option value="PNP">PNP (Police)</option>
+                </select>
+                <Shield size={18} className="input-icon-left" style={{ left: '14px', color: 'var(--text-muted)' }} />
+              </div>
             </div>
           </div>
         </div>
@@ -405,6 +447,7 @@ const IncidentList = () => {
                   <tr>
                     <th style={{ padding: '0 16px', textAlign: 'left', fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '0.5px' }}>{t('colCode')}</th>
                     <th style={{ padding: '0 16px', textAlign: 'left', fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '0.5px' }}>Type</th>
+                    <th style={{ padding: '0 16px', textAlign: 'left', fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '0.5px' }}>Agency</th>
                     <th style={{ padding: '0 16px', textAlign: 'left', fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '0.5px', width: '25%' }}>{t('colDesc')}</th>
                     <th style={{ padding: '0 16px', textAlign: 'left', fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '0.5px' }}>{t('colReporter')}</th>
                     <th style={{ padding: '0 16px', textAlign: 'left', fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '0.5px', width: '20%' }}>Location</th>
@@ -442,6 +485,18 @@ const IncidentList = () => {
                               </span>
                             )}
                           </div>
+                        </td>
+                        <td style={{ padding: '16px' }}>
+                          <span style={{ 
+                            fontSize: '11px', 
+                            fontWeight: '800', 
+                            padding: '3px 8px', 
+                            borderRadius: '6px', 
+                            backgroundColor: incident.lead_agency === 'BFP' ? '#fee2e2' : incident.lead_agency === 'RHU' ? '#ecfdf5' : incident.lead_agency === 'PNP' ? '#f3e8ff' : '#eff6ff', 
+                            color: incident.lead_agency === 'BFP' ? '#dc2626' : incident.lead_agency === 'RHU' ? '#059669' : incident.lead_agency === 'PNP' ? '#7c3aed' : '#2563eb' 
+                          }}>
+                            {incident.lead_agency || 'MDRRMO'}
+                          </span>
                         </td>
                         <td style={{ padding: '16px' }}>
                           <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-main)', fontWeight: '500', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>

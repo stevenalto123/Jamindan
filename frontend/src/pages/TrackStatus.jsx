@@ -22,7 +22,8 @@ import {
   Video,
   Copy,
   CheckCircle2,
-  Users
+  Users,
+  Shield
 } from 'lucide-react';
 import { STATUSES } from './IncidentList';
 
@@ -55,10 +56,15 @@ const TrackStatus = () => {
   const [selectedResponder, setSelectedResponder] = useState('');
   const [assigning, setAssigning] = useState(false);
 
+  // Agency Coordination State
+  const [leadAgency, setLeadAgency] = useState('MDRRMO');
+  const [agencyNotes, setAgencyNotes] = useState('');
+  const [savingAgency, setSavingAgency] = useState(false);
+
   useEffect(() => {
     if (user?.role === 'Admin') {
       axios.get('/api/users?role=Responder&limit=100')
-        .then(res => setRespondersList(res.data.users))
+        .then(res => setRespondersList(res.data.users || []))
         .catch(err => console.error(err));
     }
   }, [user]);
@@ -76,6 +82,8 @@ const TrackStatus = () => {
       setIncident(res.data.incident);
       setHistory(res.data.history);
       setHousehold(res.data.reporterHousehold || []);
+      setLeadAgency(res.data.incident.lead_agency || 'MDRRMO');
+      setAgencyNotes(res.data.incident.agency_notes || '');
       // Wait to ensure the status isn't incorrectly mapped if it's an old one
       const oldStatus = res.data.incident.status;
       setNewStatus(STATUSES.includes(oldStatus) ? oldStatus : 'Acknowledged');
@@ -194,6 +202,24 @@ const TrackStatus = () => {
       alert(err.response?.data?.message || 'Failed to assign responder.');
     } finally {
       setAssigning(false);
+    }
+  };
+
+  const handleUpdateAgency = async (e) => {
+    e.preventDefault();
+    setSavingAgency(true);
+    try {
+      await axios.put(`/api/incidents/${id}/agency`, {
+        lead_agency: leadAgency,
+        agency_notes: agencyNotes
+      });
+      alert('Agency coordination updated successfully!');
+      await fetchIncidentDetail();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to update agency coordination.');
+    } finally {
+      setSavingAgency(false);
     }
   };
 
@@ -340,6 +366,19 @@ const TrackStatus = () => {
                 <h2 style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: '700' }}>
                   {incident.type} {incident.location_address ? `- ${incident.location_address}` : (incident.location_lat ? '- GPS Location Only' : `in Barangay ${incident.reporter_barangay}`)}
                 </h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                  <span style={{ 
+                    padding: '3px 10px', 
+                    borderRadius: '8px', 
+                    fontSize: '11px', 
+                    fontWeight: '800', 
+                    backgroundColor: incident.lead_agency === 'BFP' ? '#fee2e2' : incident.lead_agency === 'RHU' ? '#ecfdf5' : incident.lead_agency === 'PNP' ? '#f3e8ff' : '#eff6ff', 
+                    color: incident.lead_agency === 'BFP' ? '#dc2626' : incident.lead_agency === 'RHU' ? '#059669' : incident.lead_agency === 'PNP' ? '#7c3aed' : '#2563eb',
+                    border: '1px solid currentColor'
+                  }}>
+                    Lead Agency: {incident.lead_agency || 'MDRRMO'}
+                  </span>
+                </div>
                 <span style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px', display: 'block' }}>
                   {new Date(incident.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </span>
@@ -367,6 +406,56 @@ const TrackStatus = () => {
                   </div>
                 </div>
               )}
+
+              {/* Inter-Agency Coordination & Notes */}
+              <div style={{ marginTop: '16px', backgroundColor: 'var(--bg-color)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                  <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: 'var(--text-main)', margin: 0, fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Shield size={15} color="var(--primary-color)" /> Inter-Agency Operational Coordination
+                  </h4>
+                  <span style={{ fontSize: '11px', fontWeight: '800', color: 'var(--primary-color)' }}>
+                    {incident.lead_agency || 'MDRRMO'} Assigned Lead
+                  </span>
+                </div>
+                <p style={{ fontSize: '13px', color: incident.agency_notes ? 'var(--text-main)' : 'var(--text-muted)', margin: '0 0 12px 0', lineHeight: '1.5' }}>
+                  {incident.agency_notes ? incident.agency_notes : 'No specific inter-agency handoff notes recorded yet.'}
+                </p>
+
+                {isStaff && (
+                  <form onSubmit={handleUpdateAgency} style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px' }}>
+                      <div>
+                        <label style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-light)', display: 'block', marginBottom: '4px' }}>Lead Agency</label>
+                        <select 
+                          value={leadAgency} 
+                          onChange={e => setLeadAgency(e.target.value)}
+                          className="form-select"
+                          style={{ height: '36px', fontSize: '13px' }}
+                        >
+                          <option value="MDRRMO">MDRRMO (Rescue)</option>
+                          <option value="BFP">BFP (Fire)</option>
+                          <option value="RHU">RHU (Medical)</option>
+                          <option value="PNP">PNP (Police)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-light)', display: 'block', marginBottom: '4px' }}>Agency Handoff Notes</label>
+                        <input 
+                          type="text" 
+                          value={agencyNotes} 
+                          onChange={e => setAgencyNotes(e.target.value)}
+                          placeholder="e.g. BFP requesting RHU ambulance for triage..."
+                          className="form-input"
+                          style={{ height: '36px', fontSize: '13px' }}
+                        />
+                      </div>
+                    </div>
+                    <button type="submit" disabled={savingAgency} className="btn btn-primary" style={{ height: '34px', fontSize: '12px', padding: '0 14px', alignSelf: 'flex-end', fontWeight: '700' }}>
+                      {savingAgency ? 'Updating...' : 'Save Agency Coordination'}
+                    </button>
+                  </form>
+                )}
+              </div>
             </div>
 
             {incident.photo_path && (
@@ -483,7 +572,7 @@ const TrackStatus = () => {
               ) : (
                 <form onSubmit={handleAssignResponder}>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="responderSelect">Select Responder to Dispatch</label>
+                    <label className="form-label" htmlFor="responderSelect">Select Responder to Dispatch (By Agency)</label>
                     <select
                       id="responderSelect"
                       className="form-select"
@@ -491,10 +580,35 @@ const TrackStatus = () => {
                       onChange={(e) => setSelectedResponder(e.target.value)}
                       required
                     >
-                      <option value="">-- Choose Responder --</option>
-                      {respondersList.map(r => (
-                        <option key={r.id} value={r.id}>{r.full_name} ({r.agency_type || 'Responder'})</option>
-                      ))}
+                      <option value="">-- Choose Responder by Agency --</option>
+                      {respondersList.filter(r => r.agency_type === 'BFP').length > 0 && (
+                        <optgroup label="🚒 Bureau of Fire Protection (BFP)">
+                          {respondersList.filter(r => r.agency_type === 'BFP').map(r => (
+                            <option key={r.id} value={r.id}>{r.full_name} (BFP Firefighter)</option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {respondersList.filter(r => r.agency_type === 'RHU').length > 0 && (
+                        <optgroup label="🚑 Rural Health Unit / Medical (RHU)">
+                          {respondersList.filter(r => r.agency_type === 'RHU').map(r => (
+                            <option key={r.id} value={r.id}>{r.full_name} (RHU Paramedic)</option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {respondersList.filter(r => r.agency_type === 'PNP' || r.agency_type === 'Police').length > 0 && (
+                        <optgroup label="🛡️ Philippine National Police (PNP)">
+                          {respondersList.filter(r => r.agency_type === 'PNP' || r.agency_type === 'Police').map(r => (
+                            <option key={r.id} value={r.id}>{r.full_name} (Police Unit)</option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {respondersList.filter(r => !['BFP', 'RHU', 'PNP', 'Police'].includes(r.agency_type)).length > 0 && (
+                        <optgroup label="🏛️ Jamindan Response Unit (MDRRMO)">
+                          {respondersList.filter(r => !['BFP', 'RHU', 'PNP', 'Police'].includes(r.agency_type)).map(r => (
+                            <option key={r.id} value={r.id}>{r.full_name} ({r.agency_type || 'MDRRMO'})</option>
+                          ))}
+                        </optgroup>
+                      )}
                     </select>
                   </div>
                   <button type="submit" className="btn btn-primary btn-full" disabled={assigning || !selectedResponder} style={{ height: '40px' }}>

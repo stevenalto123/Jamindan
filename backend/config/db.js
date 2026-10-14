@@ -1,13 +1,34 @@
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 
-const dbConfig = process.env.DB_URL || {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'jamindan_emergency',
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
+const getDbConfig = () => {
+  if (process.env.DB_URL) {
+    try {
+      const parsed = new URL(process.env.DB_URL);
+      return {
+        host: parsed.hostname,
+        port: parsed.port ? parseInt(parsed.port) : 3306,
+        user: decodeURIComponent(parsed.username),
+        password: decodeURIComponent(parsed.password),
+        database: parsed.pathname ? parsed.pathname.replace(/^\//, '') : 'defaultdb',
+        ssl: { rejectUnauthorized: false }
+      };
+    } catch (e) {
+      return process.env.DB_URL;
+    }
+  }
+  return {
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'jamindan_emergency',
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
+  };
 };
+
+const dbConfig = getDbConfig();
 
 let pool;
 
@@ -17,11 +38,17 @@ const initializeDatabase = async () => {
     // If using a cloud DB URL (like Aiven), the DB usually already exists.
     const connectionConfig = typeof dbConfig === 'string' 
       ? dbConfig 
-      : { host: dbConfig.host, user: dbConfig.user, password: dbConfig.password, ssl: dbConfig.ssl };
+      : { 
+          host: dbConfig.host, 
+          port: dbConfig.port || 3306,
+          user: dbConfig.user, 
+          password: dbConfig.password, 
+          ssl: dbConfig.ssl 
+        };
       
     const connection = await mysql.createConnection(connectionConfig);
 
-    if (typeof dbConfig !== 'string') {
+    if (typeof dbConfig !== 'string' && (!process.env.DB_URL || dbConfig.host === 'localhost' || dbConfig.host === '127.0.0.1')) {
       console.log(`Checking database "${dbConfig.database}"...`);
       await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
     } else {
@@ -132,6 +159,18 @@ const initializeDatabase = async () => {
       } catch (e) {
         // Column already exists or table doesn't exist yet, which is fine
       }
+      try {
+        await pool.query('ALTER TABLE incidents ADD COLUMN lead_agency VARCHAR(50) NULL AFTER type');
+        console.log('Successfully injected lead_agency column into existing incidents table.');
+      } catch (e) {
+        // Column already exists or table doesn't exist yet, which is fine
+      }
+      try {
+        await pool.query('ALTER TABLE incidents ADD COLUMN agency_notes TEXT NULL AFTER response_notes');
+        console.log('Successfully injected agency_notes column into existing incidents table.');
+      } catch (e) {
+        // Column already exists or table doesn't exist yet, which is fine
+      }
     }
 
     // 3. Create Tables
@@ -213,6 +252,7 @@ const initializeDatabase = async () => {
         reporter_id INT NOT NULL,
         responder_id INT NULL,
         type VARCHAR(50) NOT NULL, -- 'Fire', 'Medical', 'Flood', 'Crime', 'Accident', 'Other', 'Landslide'
+        lead_agency VARCHAR(50) NULL, -- 'MDRRMO', 'BFP', 'RHU', 'PNP'
         description TEXT NOT NULL,
         details JSON NULL,
         photo_path VARCHAR(255) NULL,
@@ -222,6 +262,7 @@ const initializeDatabase = async () => {
         status VARCHAR(20) DEFAULT 'Pending', -- 'Pending', 'Under Review', 'In Progress', 'Resolved'
         triage_tag VARCHAR(20) NULL, -- 'Red', 'Yellow', 'Green', 'Black'
         response_notes TEXT NULL,
+        agency_notes TEXT NULL,
         resources_used TEXT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -343,19 +384,34 @@ const initializeDatabase = async () => {
       const residentHash = bcrypt.hashSync('ResidentPass123!', salt);
 
       const [adminResult] = await pool.query(`
-        INSERT INTO users (username, password_hash, role, full_name, phone, barangay, is_verified)
-        VALUES (?, ?, 'Admin', ?, ?, ?, 1)
-      `, ['admin', adminHash, 'Platform Administrator', '09171234567', 'Poblacion']);
+        INSERT INTO users (username, email, password_hash, role, agency_type, full_name, phone, barangay, is_verified)
+        VALUES (?, ?, ?, 'Admin', 'MDRRMO', ?, ?, ?, 1)
+      `, ['admin', 'admin@jamindan.gov.ph', adminHash, 'Platform Administrator', '09171234567', 'Poblacion']);
 
       await pool.query(`
-        INSERT INTO users (username, password_hash, role, full_name, phone, barangay, is_verified)
-        VALUES (?, ?, 'Responder', ?, ?, ?, 1)
-      `, ['responder', responderHash, 'Jamindan Municipal Responder', '09187654321', 'Lucero']);
+        INSERT INTO users (username, email, password_hash, role, agency_type, full_name, phone, barangay, is_verified)
+        VALUES (?, ?, ?, 'Responder', 'MDRRMO', ?, ?, ?, 1)
+      `, ['responder', 'responder@jamindan.gov.ph', responderHash, 'MDRRMO Rescue Lead', '09187654321', 'Lucero']);
 
       await pool.query(`
-        INSERT INTO users (username, password_hash, role, full_name, phone, barangay, is_verified)
-        VALUES (?, ?, 'Resident', ?, ?, ?, 1)
-      `, ['resident', residentHash, 'Juan Dela Cruz', '09199876543', 'Agloloway']);
+        INSERT INTO users (username, email, password_hash, role, agency_type, full_name, phone, barangay, is_verified)
+        VALUES (?, ?, ?, 'Responder', 'BFP', ?, ?, ?, 1)
+      `, ['bfp_responder', 'bfp@jamindan.gov.ph', responderHash, 'BFP Firefighter Officer', '09106964585', 'Poblacion']);
+
+      await pool.query(`
+        INSERT INTO users (username, email, password_hash, role, agency_type, full_name, phone, barangay, is_verified)
+        VALUES (?, ?, ?, 'Responder', 'RHU', ?, ?, ?, 1)
+      `, ['rhu_medic', 'rhu@jamindan.gov.ph', responderHash, 'RHU Paramedic Team', '09304562011', 'Poblacion']);
+
+      await pool.query(`
+        INSERT INTO users (username, email, password_hash, role, agency_type, full_name, phone, barangay, is_verified)
+        VALUES (?, ?, ?, 'Responder', 'PNP', ?, ?, ?, 1)
+      `, ['pnp_officer', 'pnp@jamindan.gov.ph', responderHash, 'PNP Patrol Unit', '09086415589', 'Poblacion']);
+
+      await pool.query(`
+        INSERT INTO users (username, email, password_hash, role, full_name, phone, barangay, is_verified)
+        VALUES (?, ?, ?, 'Resident', ?, ?, ?, 1)
+      `, ['resident', 'resident@gmail.com', residentHash, 'Juan Dela Cruz', '09199876543', 'Agloloway']);
 
       console.log('Default users seeded.');
 

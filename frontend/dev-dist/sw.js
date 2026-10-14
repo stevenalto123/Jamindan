@@ -67,7 +67,7 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-b1bafff1'], (function (workbox) { 'use strict';
+define(['./workbox-d4b19f11'], (function (workbox) { 'use strict';
 
   importScripts("/push-sw.js");
   self.skipWaiting();
@@ -79,7 +79,7 @@ define(['./workbox-b1bafff1'], (function (workbox) { 'use strict';
    */
   workbox.precacheAndRoute([{
     "url": "index.html",
-    "revision": "0.1o429bgauko"
+    "revision": "0.ue3ij69cg58"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
@@ -103,10 +103,15 @@ define(['./workbox-b1bafff1'], (function (workbox) { 'use strict';
       statuses: [0, 200]
     })]
   }), 'GET');
-  workbox.registerRoute(/^https:\/\/tile\.openstreetmap\.org\/.*/i, new workbox.StaleWhileRevalidate({
+  workbox.registerRoute(/\/api\/incidents/i, new workbox.NetworkOnly({
+    plugins: [new workbox.BackgroundSyncPlugin("incident-queue", {
+      maxRetentionTime: 1440
+    })]
+  }), 'POST');
+  workbox.registerRoute(/^https:\/\/(?:[a-z]\.)?tile\.openstreetmap\.org\/.*/i, new workbox.StaleWhileRevalidate({
     "cacheName": "map-tiles-cache",
     plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 100,
+      maxEntries: 150,
       maxAgeSeconds: 2592000
     }), new workbox.CacheableResponsePlugin({
       statuses: [0, 200]

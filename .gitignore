@@ -41,3 +41,6 @@ desktop.ini
 *.njsproj
 *.sln
 *.sw?
+*.log
+*.zip
+*.exe

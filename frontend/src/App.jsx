@@ -112,53 +112,70 @@ const AppLayout = ({ children }) => {
   const [audioUnlocked, setAudioUnlocked] = useState(isAudioUnlockedGlobal);
 
   const [installPrompt, setInstallPrompt] = useState(null);
-  const [activeEvacuation, setActiveEvacuation] = useState(null);
+  const [activeBroadcast, setActiveBroadcast] = useState(null);
   
-  // Continuous alarm for evacuation
+  // Continuous nonstop siren for Mass Broadcasts & Evacuation Alerts
   useEffect(() => {
     let interval;
     let audioCtx;
     let osc;
+    const sirenEl = document.getElementById('siren-audio');
 
-    if (activeEvacuation) {
+    if (activeBroadcast) {
+      // 1. Play HTML5 Audio Siren continuously in loop
+      if (sirenEl) {
+        sirenEl.volume = 1.0;
+        sirenEl.muted = false;
+        sirenEl.currentTime = 0;
+        sirenEl.loop = true;
+        sirenEl.play().catch(err => console.warn('HTML5 Siren error:', err));
+      }
+
+      // 2. Play Web Audio API Siren synthesis as dual-redundant backup
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (AudioContext) {
           audioCtx = new AudioContext();
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
           
           osc = audioCtx.createOscillator();
           const gainNode = audioCtx.createGain();
           
-          osc.type = 'square';
+          osc.type = 'sawtooth';
           osc.connect(gainNode);
           gainNode.connect(audioCtx.destination);
           
-          // Start the siren
           osc.frequency.setValueAtTime(800, audioCtx.currentTime);
           osc.start();
-          gainNode.gain.value = 0.3; // 30% volume to prevent blowing out speakers
+          gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
 
           let isHigh = true;
           interval = setInterval(() => {
-            if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200]);
-            
-            if (osc) {
-              isHigh = !isHigh;
-              // Toggle between 800Hz and 1200Hz (European emergency siren style)
-              osc.frequency.setValueAtTime(isHigh ? 800 : 1200, audioCtx.currentTime);
+            if (navigator.vibrate) {
+              navigator.vibrate([600, 200, 600, 200]);
             }
-          }, 800);
+            if (osc && audioCtx.state !== 'closed') {
+              isHigh = !isHigh;
+              osc.frequency.setValueAtTime(isHigh ? 1100 : 700, audioCtx.currentTime);
+            }
+          }, 600);
         }
       } catch (err) {
         console.warn('Audio API failed or blocked:', err);
         interval = setInterval(() => {
-          if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200]);
-        }, 1500);
+          if (navigator.vibrate) navigator.vibrate([600, 200, 600, 200]);
+        }, 1200);
       }
     }
     
     return () => {
       if (interval) clearInterval(interval);
+      if (sirenEl) {
+        sirenEl.pause();
+        sirenEl.currentTime = 0;
+      }
       if (osc) {
         try {
           osc.stop();
@@ -169,8 +186,23 @@ const AppLayout = ({ children }) => {
         audioCtx.close().catch(e => console.warn(e));
       }
     };
-  }, [activeEvacuation]);
+  }, [activeBroadcast]);
   
+  // Universal audio unlock on first user click or touch anywhere
+  useEffect(() => {
+    const unlockOnFirstInteraction = () => {
+      if (!isAudioUnlockedGlobal) {
+        handleUnlockAudio();
+      }
+    };
+    window.addEventListener('click', unlockOnFirstInteraction, { once: true });
+    window.addEventListener('touchstart', unlockOnFirstInteraction, { once: true });
+    return () => {
+      window.removeEventListener('click', unlockOnFirstInteraction);
+      window.removeEventListener('touchstart', unlockOnFirstInteraction);
+    };
+  }, []);
+
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
@@ -187,22 +219,16 @@ const AppLayout = ({ children }) => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Listen for global mass broadcasts to show an in-app popup and vibrate
+    // Listen for global mass broadcasts to sound nonstop siren and show emergency modal
     const socketUrl = axios.defaults.baseURL || '';
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
 
     socket.on('new-broadcast', (data) => {
-      // Don't trigger the alarm for Admin or Responder accounts
-      if (user?.role === 'Admin' || user?.role === 'Responder') return;
+      // Don't trigger the resident alarm for Admin accounts (Admin is the sender)
+      if (user?.role === 'Admin') return;
 
-      if (data.type === 'evacuation') {
-        setActiveEvacuation(data);
-      } else {
-        if (navigator.vibrate) {
-          navigator.vibrate([200, 100, 200, 100, 200]); // Normal vibration
-        }
-        window.alert(`📢 LGU BROADCAST\n\n${data.title}\n${data.message}`);
-      }
+      // Trigger nonstop emergency siren alert
+      setActiveBroadcast(data);
     });
     
     return () => {
@@ -211,7 +237,7 @@ const AppLayout = ({ children }) => {
       window.removeEventListener('offline', handleOffline);
       socket.disconnect();
     };
-  }, []);
+  }, [user]);
 
   const handleInstallClick = async () => {
     if (!installPrompt) return;
@@ -469,17 +495,97 @@ const AppLayout = ({ children }) => {
           className="menu-toggle"
         />
       )}
-      </div><MobileBottomNav />{activeEvacuation && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(192, 57, 43, 0.95)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center', color: 'white', animation: 'pulse 1s infinite' }}>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '20px' }}>⚠️ EVACUATION ALERT ⚠️</h1>
-          <h2 style={{ fontSize: '22px', marginBottom: '15px' }}>{activeEvacuation.title}</h2>
-          <p style={{ fontSize: '16px', marginBottom: '40px', maxWidth: '400px' }}>{activeEvacuation.message}</p>
-          <button 
-            onClick={() => setActiveEvacuation(null)}
-            style={{ padding: '16px 32px', fontSize: '16px', fontWeight: 'bold', backgroundColor: 'white', color: '#c0392b', border: 'none', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }}
-          >
-            ACKNOWLEDGE & STOP ALARM
-          </button>
+      </div><MobileBottomNav />{activeBroadcast && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.92)',
+          zIndex: 999999,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+          textAlign: 'center',
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div style={{
+            maxWidth: '480px',
+            width: '100%',
+            backgroundColor: 'var(--card-bg, #ffffff)',
+            borderRadius: '24px',
+            padding: '32px 24px',
+            boxShadow: '0 25px 60px rgba(220, 38, 38, 0.4), 0 0 0 3px #dc2626',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '16px',
+            animation: 'pulse 1.5s infinite ease-in-out'
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              backgroundColor: '#fee2e2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '42px',
+              boxShadow: '0 0 25px rgba(239, 68, 68, 0.5)'
+            }}>
+              🚨
+            </div>
+
+            <div style={{
+              backgroundColor: '#dc2626',
+              color: 'white',
+              fontSize: '11px',
+              fontWeight: '900',
+              padding: '6px 14px',
+              borderRadius: '20px',
+              letterSpacing: '1.2px',
+              textTransform: 'uppercase'
+            }}>
+              LGU Emergency Broadcast • Nonstop Siren Active
+            </div>
+
+            <h2 style={{ fontSize: '22px', fontWeight: '800', margin: '4px 0 0', color: 'var(--text-main, #0f172a)', lineHeight: '1.3' }}>
+              {activeBroadcast.title || 'CRITICAL EMERGENCY ADVISORY'}
+            </h2>
+
+            <p style={{ fontSize: '15px', color: 'var(--text-light, #475569)', margin: '0', lineHeight: '1.6', maxHeight: '180px', overflowY: 'auto' }}>
+              {activeBroadcast.message}
+            </p>
+
+            <button 
+              onClick={() => setActiveBroadcast(null)}
+              style={{
+                width: '100%',
+                padding: '16px 20px',
+                fontSize: '16px',
+                fontWeight: '900',
+                backgroundColor: '#dc2626',
+                color: 'white',
+                border: 'none',
+                borderRadius: '14px',
+                cursor: 'pointer',
+                boxShadow: '0 8px 25px rgba(220, 38, 38, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                marginTop: '8px'
+              }}
+            >
+              <span>🔕</span> ACKNOWLEDGE & SILENCE SIREN
+            </button>
+            <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+              Tap button to silence alarm and dismiss broadcast.
+            </span>
+          </div>
         </div>
       )}
     </>

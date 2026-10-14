@@ -1854,6 +1854,10 @@ input[type="date"].form-input { min-width: 0; }
 
 
 
+.print-only {
+  display: none !important;
+}
+
 @media print {
   .no-print { display: none !important; }
   .print-only { display: block !important; }
