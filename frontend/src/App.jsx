@@ -246,6 +246,28 @@ const AppLayout = ({ children }) => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    // Check if there is an unread emergency broadcast sent while user had cleared tabs
+    let checkActiveBroadcast = null;
+    if (user && user.role !== 'Admin') {
+      checkActiveBroadcast = async () => {
+        try {
+          const res = await axios.get('/api/notifications/active-broadcast');
+          if (res.data?.active && res.data.broadcast) {
+            setActiveBroadcast({
+              id: res.data.broadcast.id,
+              title: res.data.broadcast.title,
+              message: res.data.broadcast.message,
+              timestamp: res.data.broadcast.created_at
+            });
+          }
+        } catch (err) {
+          console.warn('Failed to check active broadcast:', err);
+        }
+      };
+      checkActiveBroadcast();
+      window.addEventListener('focus', checkActiveBroadcast);
+    }
+
     // Listen for global mass broadcasts to sound nonstop siren and show emergency modal
     const socketUrl = axios.defaults.baseURL || '';
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
@@ -262,9 +284,23 @@ const AppLayout = ({ children }) => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      if (checkActiveBroadcast) {
+        window.removeEventListener('focus', checkActiveBroadcast);
+      }
       socket.disconnect();
     };
   }, [user]);
+
+  const handleAcknowledgeBroadcast = async () => {
+    if (activeBroadcast?.id) {
+      try {
+        await axios.put(`/api/notifications/${activeBroadcast.id}/read`);
+      } catch (err) {
+        console.warn('Failed to mark broadcast as read:', err);
+      }
+    }
+    setActiveBroadcast(null);
+  };
 
   const handleInstallClick = async () => {
     if (!installPrompt) return;
@@ -588,7 +624,7 @@ const AppLayout = ({ children }) => {
             </p>
 
             <button 
-              onClick={() => setActiveBroadcast(null)}
+              onClick={handleAcknowledgeBroadcast}
               style={{
                 width: '100%',
                 padding: '16px 20px',

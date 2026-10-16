@@ -38,6 +38,27 @@ router.get('/', async (req, res) => {
     console.error('Fetch notifications error:', error);
     return res.status(500).json({ message: 'Server error while fetching notifications' });
   }
+// Get latest active unread broadcast for current user (within last 4 hours)
+router.get('/active-broadcast', async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT * FROM notifications 
+      WHERE user_id = ? 
+      AND reference_type = 'broadcast' 
+      AND is_read = 0 
+      AND created_at >= NOW() - INTERVAL 4 HOUR
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `, [req.user.id]);
+    
+    if (rows && rows.length > 0) {
+      return res.json({ active: true, broadcast: rows[0] });
+    }
+    return res.json({ active: false, broadcast: null });
+  } catch (error) {
+    console.error('Fetch active broadcast error:', error);
+    return res.status(500).json({ message: 'Server error while checking active broadcast' });
+  }
 });
 
 // Mark single notification as read
