@@ -19,7 +19,7 @@ const JAMINDAN_BARANGAYS = [
   'Poblacion', 'San Jose', 'San Juan', 'San Roque', 'San Vicente', 'Santa Cruz', 'Santa Fe'
 ];
 
-const AGENCIES = ['All', 'MDRRMO', 'BFP', 'RHU', 'PNP'];
+const AGENCIES = ['All', 'MDRRMO', 'BFP', 'RHU'];
 
 const AdminAnalytics = () => {
   const { t } = useLanguage();
@@ -540,7 +540,7 @@ const AdminAnalytics = () => {
                     <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>{new Date(log.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
                     <td style={{ padding: '10px 12px', fontWeight: '700' }}>{log.type}</td>
                     <td style={{ padding: '10px 12px' }}>
-                      <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800', backgroundColor: log.lead_agency === 'BFP' ? '#fee2e2' : log.lead_agency === 'RHU' ? '#ecfdf5' : log.lead_agency === 'PNP' ? '#f3e8ff' : '#eff6ff', color: log.lead_agency === 'BFP' ? '#dc2626' : log.lead_agency === 'RHU' ? '#059669' : log.lead_agency === 'PNP' ? '#7c3aed' : '#2563eb' }}>
+                      <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800', backgroundColor: log.lead_agency === 'BFP' ? '#fee2e2' : log.lead_agency === 'RHU' ? '#ecfdf5' : '#eff6ff', color: log.lead_agency === 'BFP' ? '#dc2626' : log.lead_agency === 'RHU' ? '#059669' : '#2563eb' }}>
                         {log.lead_agency || 'MDRRMO'}
                       </span>
                     </td>
@@ -631,7 +631,7 @@ const AdminAnalytics = () => {
         <div className="card" style={{ padding: '20px', borderRadius: '16px' }}>
           <div style={{ marginBottom: '16px' }}>
             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Concerned Entity & Agency Dispatch Report</h3>
-            <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-light)' }}>Inter-agency monitoring for MDRRMO, BFP, RHU, and PNP response performance.</p>
+            <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-light)' }}>Inter-agency monitoring for MDRRMO, BFP, and RHU response performance.</p>
           </div>
 
           <div style={{ overflowX: 'auto' }}>
@@ -653,7 +653,6 @@ const AdminAnalytics = () => {
                       <Shield size={16} color="var(--primary-color)" />
                       {a.agency === 'BFP' ? 'Bureau of Fire Protection (BFP)' : 
                        a.agency === 'RHU' ? 'Rural Health Unit / Paramedics (RHU)' : 
-                       a.agency === 'PNP' ? 'Jamindan Police Station (PNP)' : 
                        'Jamindan Response Unit (MDRRMO)'}
                     </td>
                     <td style={{ padding: '12px', textAlign: 'center', fontWeight: '900', color: 'var(--primary-color)' }}>{a.total_incidents}</td>

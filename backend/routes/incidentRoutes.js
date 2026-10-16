@@ -71,10 +71,8 @@ router.post('/', authRequired, requireRole(['Resident']), upload.single('photo')
     }
 
     let finalLeadAgency = req.body.lead_agency || null;
-    if (!finalLeadAgency) {
       if (type === 'Fire') finalLeadAgency = 'BFP';
       else if (type === 'Medical') finalLeadAgency = 'RHU';
-      else if (type === 'Crime') finalLeadAgency = 'PNP';
       else finalLeadAgency = 'MDRRMO';
     }
 

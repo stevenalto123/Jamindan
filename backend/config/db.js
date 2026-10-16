@@ -404,11 +404,6 @@ const initializeDatabase = async () => {
       `, ['rhu_medic', 'rhu@jamindan.gov.ph', responderHash, 'RHU Paramedic Team', '09304562011', 'Poblacion']);
 
       await pool.query(`
-        INSERT INTO users (username, email, password_hash, role, agency_type, full_name, phone, barangay, is_verified)
-        VALUES (?, ?, ?, 'Responder', 'PNP', ?, ?, ?, 1)
-      `, ['pnp_officer', 'pnp@jamindan.gov.ph', responderHash, 'PNP Patrol Unit', '09086415589', 'Poblacion']);
-
-      await pool.query(`
         INSERT INTO users (username, email, password_hash, role, full_name, phone, barangay, is_verified)
         VALUES (?, ?, ?, 'Resident', ?, ?, ?, 1)
       `, ['resident', 'resident@gmail.com', residentHash, 'Juan Dela Cruz', '09199876543', 'Agloloway']);

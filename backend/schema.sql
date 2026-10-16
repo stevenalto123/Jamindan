@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `incidents` (
   `location_lat` DOUBLE NULL,
   `location_lng` DOUBLE NULL,
   `status` VARCHAR(20) DEFAULT 'Pending', -- 'Pending', 'Under Review', 'In Progress', 'Resolved'
-  `lead_agency` VARCHAR(50) DEFAULT 'MDRRMO', -- 'MDRRMO', 'BFP', 'RHU', 'PNP'
+  `lead_agency` VARCHAR(50) DEFAULT 'MDRRMO', -- 'MDRRMO', 'BFP', 'RHU'
   `agency_notes` TEXT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

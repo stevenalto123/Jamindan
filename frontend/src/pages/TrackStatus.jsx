@@ -372,8 +372,8 @@ const TrackStatus = () => {
                     borderRadius: '8px', 
                     fontSize: '11px', 
                     fontWeight: '800', 
-                    backgroundColor: incident.lead_agency === 'BFP' ? '#fee2e2' : incident.lead_agency === 'RHU' ? '#ecfdf5' : incident.lead_agency === 'PNP' ? '#f3e8ff' : '#eff6ff', 
-                    color: incident.lead_agency === 'BFP' ? '#dc2626' : incident.lead_agency === 'RHU' ? '#059669' : incident.lead_agency === 'PNP' ? '#7c3aed' : '#2563eb',
+                    backgroundColor: incident.lead_agency === 'BFP' ? '#fee2e2' : incident.lead_agency === 'RHU' ? '#ecfdf5' : '#eff6ff', 
+                    color: incident.lead_agency === 'BFP' ? '#dc2626' : incident.lead_agency === 'RHU' ? '#059669' : '#2563eb',
                     border: '1px solid currentColor'
                   }}>
                     Lead Agency: {incident.lead_agency || 'MDRRMO'}
@@ -435,7 +435,6 @@ const TrackStatus = () => {
                           <option value="MDRRMO">MDRRMO (Rescue)</option>
                           <option value="BFP">BFP (Fire)</option>
                           <option value="RHU">RHU (Medical)</option>
-                          <option value="PNP">PNP (Police)</option>
                         </select>
                       </div>
                       <div>
@@ -595,16 +594,9 @@ const TrackStatus = () => {
                           ))}
                         </optgroup>
                       )}
-                      {respondersList.filter(r => r.agency_type === 'PNP' || r.agency_type === 'Police').length > 0 && (
-                        <optgroup label="🛡️ Philippine National Police (PNP)">
-                          {respondersList.filter(r => r.agency_type === 'PNP' || r.agency_type === 'Police').map(r => (
-                            <option key={r.id} value={r.id}>{r.full_name} (Police Unit)</option>
-                          ))}
-                        </optgroup>
-                      )}
-                      {respondersList.filter(r => !['BFP', 'RHU', 'PNP', 'Police'].includes(r.agency_type)).length > 0 && (
+                      {respondersList.filter(r => !['BFP', 'RHU'].includes(r.agency_type)).length > 0 && (
                         <optgroup label="🏛️ Jamindan Response Unit (MDRRMO)">
-                          {respondersList.filter(r => !['BFP', 'RHU', 'PNP', 'Police'].includes(r.agency_type)).map(r => (
+                          {respondersList.filter(r => !['BFP', 'RHU'].includes(r.agency_type)).map(r => (
                             <option key={r.id} value={r.id}>{r.full_name} ({r.agency_type || 'MDRRMO'})</option>
                           ))}
                         </optgroup>

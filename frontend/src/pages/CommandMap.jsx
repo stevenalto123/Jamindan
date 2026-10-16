@@ -27,8 +27,7 @@ const CommandMap = ({ isWidget = false }) => {
     const ag = (agency || 'MDRRMO').toUpperCase();
     if (ag.includes('BFP') || ag.includes('FIRE')) return { bg: 'rgba(249, 115, 22, 0.2)', text: '#fb923c', border: '#ea580c', label: 'BFP FIRE' };
     if (ag.includes('RHU') || ag.includes('HEALTH') || ag.includes('MEDIC')) return { bg: 'rgba(16, 185, 129, 0.2)', text: '#34d399', border: '#059669', label: 'RHU MEDICAL' };
-    if (ag.includes('PNP') || ag.includes('POLICE')) return { bg: 'rgba(59, 130, 246, 0.2)', text: '#60a5fa', border: '#2563eb', label: 'PNP POLICE' };
-    return { bg: 'rgba(168, 85, 247, 0.2)', text: '#c084fc', border: '#9333ea', label: 'MDRRMO' };
+    return { bg: 'rgba(56, 189, 248, 0.2)', text: '#38bdf8', border: '#0284c7', label: 'MDRRMO' };
   };
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapStyle, setMapStyle] = useState('street');
@@ -195,7 +194,6 @@ const CommandMap = ({ isWidget = false }) => {
     const ag = (resp.agency_type || '').toUpperCase();
     if (agencyFilter === 'BFP') return ag === 'BFP' || ag === 'FIRE';
     if (agencyFilter === 'RHU') return ag === 'RHU' || ag === 'MEDICAL' || ag === 'HEALTH';
-    if (agencyFilter === 'PNP') return ag === 'PNP' || ag === 'POLICE';
     if (agencyFilter === 'MDRRMO') return ag === 'MDRRMO' || ag === 'RESCUE' || !ag;
     return true;
   });
@@ -236,13 +234,13 @@ const CommandMap = ({ isWidget = false }) => {
     });
 
     filteredResponders.forEach(resp => {
-      const isPolice = resp.agency_type === 'PNP' || resp.agency_type === 'Police';
       const isFire = resp.agency_type === 'BFP' || resp.agency_type === 'Fire';
+      const isMedical = resp.agency_type === 'RHU' || resp.agency_type === 'Medical';
       
-      let color = '#3b82f6'; // Blue
-      let iconHtml = '🛡️';
+      let color = '#38bdf8'; // Sky Blue (MDRRMO)
+      let iconHtml = '🏛️';
       if (isFire) { color = '#f97316'; iconHtml = '🔥'; }
-      else if (!isPolice) { color = '#10b981'; iconHtml = '⚕️'; } // Medical
+      else if (isMedical) { color = '#10b981'; iconHtml = '⚕️'; }
       
       const customIcon = L.divIcon({
         className: 'custom-div-icon',
@@ -587,7 +585,6 @@ const CommandMap = ({ isWidget = false }) => {
                 <option value="MDRRMO">🚨 MDRRMO Command</option>
                 <option value="BFP">🔥 BFP Fire Protection</option>
                 <option value="RHU">⚕️ RHU Medical & Health</option>
-                <option value="PNP">🛡️ PNP Police</option>
               </select>
             </div>
           
@@ -652,9 +649,9 @@ const CommandMap = ({ isWidget = false }) => {
                 <div style={{ color: '#64748b', fontSize: '13px', textAlign: 'center', padding: '20px 0', fontWeight: '600' }}>No responders currently active</div>
               ) : (
                 filteredResponders.map(resp => {
-                  const isPolice = resp.agency_type === 'PNP' || resp.agency_type === 'Police';
                   const isFire = resp.agency_type === 'BFP' || resp.agency_type === 'Fire';
-                  const agencyColor = isPolice ? '#3b82f6' : isFire ? '#f97316' : '#10b981';
+                  const isMedical = resp.agency_type === 'RHU' || resp.agency_type === 'Medical';
+                  const agencyColor = isFire ? '#f97316' : isMedical ? '#10b981' : '#38bdf8';
                   
                   return (
                     <div 

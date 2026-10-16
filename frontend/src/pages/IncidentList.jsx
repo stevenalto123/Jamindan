@@ -182,7 +182,6 @@ const IncidentList = () => {
               <option value="MDRRMO">MDRRMO</option>
               <option value="BFP">BFP (Fire)</option>
               <option value="RHU">RHU (Medical)</option>
-              <option value="PNP">PNP (Police)</option>
             </select>
             <Shield size={18} className="input-icon-left" style={{ left: '14px', color: 'var(--text-muted)' }} />
           </div>
@@ -247,8 +246,8 @@ const IncidentList = () => {
                             fontWeight: '800', 
                             padding: '2px 8px', 
                             borderRadius: '6px', 
-                            backgroundColor: incident.lead_agency === 'BFP' ? '#fee2e2' : incident.lead_agency === 'RHU' ? '#ecfdf5' : incident.lead_agency === 'PNP' ? '#f3e8ff' : '#eff6ff', 
-                            color: incident.lead_agency === 'BFP' ? '#dc2626' : incident.lead_agency === 'RHU' ? '#059669' : incident.lead_agency === 'PNP' ? '#7c3aed' : '#2563eb' 
+                            backgroundColor: incident.lead_agency === 'BFP' ? '#fee2e2' : incident.lead_agency === 'RHU' ? '#ecfdf5' : '#eff6ff', 
+                            color: incident.lead_agency === 'BFP' ? '#dc2626' : incident.lead_agency === 'RHU' ? '#059669' : '#2563eb' 
                           }}>
                             {incident.lead_agency || 'MDRRMO'}
                           </span>
@@ -395,7 +394,6 @@ const IncidentList = () => {
                   <option value="MDRRMO">MDRRMO</option>
                   <option value="BFP">BFP (Fire)</option>
                   <option value="RHU">RHU (Medical)</option>
-                  <option value="PNP">PNP (Police)</option>
                 </select>
                 <Shield size={18} className="input-icon-left" style={{ left: '14px', color: 'var(--text-muted)' }} />
               </div>
@@ -492,8 +490,8 @@ const IncidentList = () => {
                             fontWeight: '800', 
                             padding: '3px 8px', 
                             borderRadius: '6px', 
-                            backgroundColor: incident.lead_agency === 'BFP' ? '#fee2e2' : incident.lead_agency === 'RHU' ? '#ecfdf5' : incident.lead_agency === 'PNP' ? '#f3e8ff' : '#eff6ff', 
-                            color: incident.lead_agency === 'BFP' ? '#dc2626' : incident.lead_agency === 'RHU' ? '#059669' : incident.lead_agency === 'PNP' ? '#7c3aed' : '#2563eb' 
+                            backgroundColor: incident.lead_agency === 'BFP' ? '#fee2e2' : incident.lead_agency === 'RHU' ? '#ecfdf5' : '#eff6ff', 
+                            color: incident.lead_agency === 'BFP' ? '#dc2626' : incident.lead_agency === 'RHU' ? '#059669' : '#2563eb' 
                           }}>
                             {incident.lead_agency || 'MDRRMO'}
                           </span>
