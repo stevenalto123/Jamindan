@@ -122,55 +122,82 @@ const AppLayout = ({ children }) => {
     const sirenEl = document.getElementById('siren-audio');
 
     if (activeBroadcast) {
-      // 1. Play HTML5 Audio Siren continuously in loop
+      window.isBroadcastActive = true;
+      let htmlAudioPlaying = false;
+
+      // Start looping vibration pulse on mobile
+      if (navigator.vibrate) {
+        navigator.vibrate([600, 250, 600, 250]);
+      }
+      interval = setInterval(() => {
+        if (navigator.vibrate) {
+          navigator.vibrate([600, 250, 600, 250]);
+        }
+      }, 1500);
+
+      // Web Audio API Synthesizer (ONLY as a fallback if HTML5 audio fails)
+      const playSyntheticFallback = () => {
+        if (htmlAudioPlaying) return; // Do not start if HTML5 audio is already playing
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') {
+              audioCtx.resume();
+            }
+            
+            osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'sawtooth';
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.start();
+            gainNode.gain.setValueAtTime(0.35, audioCtx.currentTime);
+
+            let isHigh = true;
+            const oscInterval = setInterval(() => {
+              if (osc && audioCtx && audioCtx.state !== 'closed') {
+                isHigh = !isHigh;
+                osc.frequency.setValueAtTime(isHigh ? 1100 : 700, audioCtx.currentTime);
+              } else {
+                clearInterval(oscInterval);
+              }
+            }, 600);
+          }
+        } catch (err) {
+          console.warn('Synthetic Audio fallback failed or blocked:', err);
+        }
+      };
+
+      // 1. Play HTML5 Audio Siren (/siren.wav)
       if (sirenEl) {
         sirenEl.volume = 1.0;
         sirenEl.muted = false;
         sirenEl.currentTime = 0;
         sirenEl.loop = true;
-        sirenEl.play().catch(err => console.warn('HTML5 Siren error:', err));
-      }
-
-      // 2. Play Web Audio API Siren synthesis as dual-redundant backup
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-          audioCtx = new AudioContext();
-          if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-          }
-          
-          osc = audioCtx.createOscillator();
-          const gainNode = audioCtx.createGain();
-          
-          osc.type = 'sawtooth';
-          osc.connect(gainNode);
-          gainNode.connect(audioCtx.destination);
-          
-          osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-          osc.start();
-          gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
-
-          let isHigh = true;
-          interval = setInterval(() => {
-            if (navigator.vibrate) {
-              navigator.vibrate([600, 200, 600, 200]);
-            }
-            if (osc && audioCtx.state !== 'closed') {
-              isHigh = !isHigh;
-              osc.frequency.setValueAtTime(isHigh ? 1100 : 700, audioCtx.currentTime);
-            }
-          }, 600);
+        const playPromise = sirenEl.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            htmlAudioPlaying = true;
+          }).catch(err => {
+            console.warn('HTML5 Siren error, activating Web Audio fallback:', err);
+            playSyntheticFallback();
+          });
+        } else {
+          htmlAudioPlaying = true;
         }
-      } catch (err) {
-        console.warn('Audio API failed or blocked:', err);
-        interval = setInterval(() => {
-          if (navigator.vibrate) navigator.vibrate([600, 200, 600, 200]);
-        }, 1200);
+      } else {
+        playSyntheticFallback();
       }
+    } else {
+      window.isBroadcastActive = false;
     }
     
     return () => {
+      window.isBroadcastActive = false;
       if (interval) clearInterval(interval);
       if (sirenEl) {
         sirenEl.pause();

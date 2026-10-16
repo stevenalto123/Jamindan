@@ -36,16 +36,21 @@ const NotificationBell = () => {
     // Normal non-looping chime for regular notification additions
     if (unread > prevUnreadCount.current) {
       const freshNotifs = unreadNotifications.slice(0, unread - prevUnreadCount.current);
-      const hasPanicSOS = freshNotifs.some(n => 
-        (n.title && n.title.toLowerCase().includes('emergency')) || 
-        (n.message && n.message.toLowerCase().includes('sos'))
+      const isEmergencyOrBroadcast = freshNotifs.some(n => 
+        n.reference_type === 'broadcast' ||
+        (n.title && (n.title.toLowerCase().includes('emergency') || n.title.toLowerCase().includes('broadcast') || n.title.toLowerCase().includes('evacuation') || n.title.toLowerCase().includes('alert'))) || 
+        (n.message && (n.message.toLowerCase().includes('sos') || n.message.toLowerCase().includes('evacuate') || n.message.toLowerCase().includes('siren')))
       );
+
+      // Do NOT play chime if a mass broadcast siren is active or if this is an emergency alert
+      if (window.isBroadcastActive || isEmergencyOrBroadcast) {
+        prevUnreadCount.current = unread;
+        return;
+      }
 
       const isResponderOrAdmin = user && (user.role === 'Responder' || user.role === 'Admin');
 
-      // Play normal chime if it's not an SOS, OR if they are a resident 
-      // (Because Admins/Responders already get a global SOS siren from App.jsx)
-      if (!hasPanicSOS || !isResponderOrAdmin) {
+      if (!isResponderOrAdmin) {
         try {
           const AudioContextClass = window.AudioContext || window.webkitAudioContext;
           if (AudioContextClass) {
