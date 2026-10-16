@@ -251,8 +251,8 @@ const initializeDatabase = async () => {
         code VARCHAR(50) UNIQUE NOT NULL, -- Format: #YYYY-MM-XXXX
         reporter_id INT NOT NULL,
         responder_id INT NULL,
-        type VARCHAR(50) NOT NULL, -- 'Fire', 'Medical', 'Flood', 'Crime', 'Accident', 'Other', 'Landslide'
-        lead_agency VARCHAR(50) NULL, -- 'MDRRMO', 'BFP', 'RHU', 'PNP'
+        type VARCHAR(50) NOT NULL, -- 'Fire', 'Medical', 'Flood', 'Accident', 'Other', 'Landslide'
+        lead_agency VARCHAR(50) NULL, -- 'MDRRMO', 'BFP', 'RHU'
         description TEXT NOT NULL,
         details JSON NULL,
         photo_path VARCHAR(255) NULL,
