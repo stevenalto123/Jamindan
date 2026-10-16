@@ -454,6 +454,56 @@ const TrackStatus = () => {
                     </button>
                   </form>
                 )}
+
+                {/* External Law Enforcement / PNP Notification Module */}
+                {isStaff && (
+                  <div style={{ marginTop: '14px', padding: '12px 14px', backgroundColor: 'rgba(2, 132, 199, 0.08)', border: '1px dashed #0284c7', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '800', color: '#0369a1' }}>
+                        <span>🚓 External Law Enforcement Coordination (Jamindan PNP)</span>
+                      </div>
+                      <span style={{ fontSize: '12px', fontWeight: '800', color: '#0284c7', fontFamily: 'monospace' }}>
+                        Hotline: 0908-641-5589
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-main)', lineHeight: '1.4' }}>
+                      MDRRMO informs the local police station when incident scene security, perimeter control, traffic management, or investigation is required.
+                    </p>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
+                      <a 
+                        href="tel:09086415589" 
+                        className="btn" 
+                        style={{ padding: '6px 12px', fontSize: '11px', fontWeight: '700', backgroundColor: '#0284c7', color: 'white', textDecoration: 'none', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                      >
+                        <Phone size={13} /> Call Jamindan PNP
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const alertMsg = `[MDRRMO EMERGENCY ALERT] Incident #${incident.code} (${incident.type}) at ${incident.barangay ? `Brgy. ${incident.barangay}` : incident.location_address || 'Jamindan'}. Details: ${incident.description}. Requesting PNP assistance / scene control.`;
+                          navigator.clipboard.writeText(alertMsg);
+                          alert('Copied alert dispatch details to clipboard! You can paste and send via SMS to Jamindan PNP (0908-641-5589).');
+                        }}
+                        className="btn"
+                        style={{ padding: '6px 12px', fontSize: '11px', fontWeight: '700', backgroundColor: 'var(--card-bg, #fff)', border: '1px solid #0284c7', color: '#0284c7', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                      >
+                        <Copy size={13} /> Copy SMS Dispatch for PNP
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                          const pnpEntry = `[PNP Referral] MDRRMO notified Jamindan PNP Station (0908-641-5589) for police/traffic assistance at ${timeStr}.`;
+                          setAgencyNotes(prev => prev ? `${prev} | ${pnpEntry}` : pnpEntry);
+                        }}
+                        className="btn"
+                        style={{ padding: '6px 12px', fontSize: '11px', fontWeight: '700', backgroundColor: 'rgba(2, 132, 199, 0.15)', border: '1px solid rgba(2, 132, 199, 0.3)', color: '#0369a1', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                      >
+                        ⚡ Log PNP Referral into Notes
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
