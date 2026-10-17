@@ -641,16 +641,16 @@ const ReportIncident = () => {
               {isOffline && (
                 <>
                   <a 
-                    href="tel:911"
+                    href={`tel:${getTargetHotline()}`}
                     className="btn"
                     style={{
                       width: '100%', height: '48px', fontSize: '14px', fontWeight: '800',
-                      backgroundColor: '#e11d48', color: 'white', border: 'none', borderRadius: '12px',
+                      backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '12px',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none',
-                      animation: 'pulse 2s infinite'
+                      boxShadow: '0 4px 14px rgba(220, 38, 38, 0.3)'
                     }}
                   >
-                    <PhoneCall size={18} /> Call 911 (Free)
+                    <PhoneCall size={18} /> Call {getTargetAgencyName()} Directly
                   </a>
                   <a 
                     href={getSmsUri()}

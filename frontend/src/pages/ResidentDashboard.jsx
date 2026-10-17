@@ -56,10 +56,6 @@ const ResidentDashboard = () => {
     return name.substring(0, 2).toUpperCase();
   };
 
-  if (loading) {
-    return <div className="content-body" style={{ color: 'var(--text-light)', padding: '20px' }}>Loading...</div>;
-  }
-
   const activeAlertsCount = stats?.latestAdvisories?.length || 0;
   const latestAdvisory = stats?.latestAdvisories?.[0];
 
@@ -103,7 +99,12 @@ const ResidentDashboard = () => {
           <span style={{ fontWeight: 'bold', fontSize: '16px', color: 'var(--text-main)' }}>{t('announcements')}</span>
           <Link to="/news" style={{ color: 'var(--info-color)', fontSize: '14px', textDecoration: 'none', fontWeight: '500' }}>{t('viewAll')}</Link>
         </div>
-        {latestAdvisory ? (
+        {loading && !latestAdvisory ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-light)', fontSize: '13px', padding: '8px 0' }}>
+            <div style={{ width: '16px', height: '16px', border: '2px solid var(--border-color)', borderTopColor: 'var(--primary-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+            <span>Loading advisories...</span>
+          </div>
+        ) : latestAdvisory ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={{ fontWeight: '700', fontSize: '14px', color: 'var(--primary-color)' }}>{latestAdvisory.title}</span>
             <p style={{ margin: '0', color: 'var(--text-main)', fontSize: '13px', fontWeight: '500', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>

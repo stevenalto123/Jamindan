@@ -1129,7 +1129,7 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--card-bg);
   border-top: 1px solid var(--border-color);
   z-index: 1000;
-  padding-bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
 }
 
@@ -1166,7 +1166,7 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .main-content {
-    margin-bottom: 80px; /* Increased space for mobile bottom nav + safe area */
+    margin-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); /* Increased space for mobile bottom nav + safe area */
   }
 
   /* Responsive Data Tables */
@@ -1200,7 +1200,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .leaflet-routing-collapse-btn:after {
-    content: '?' !important; /* Explicitly set the X character */
+    content: '\00d7' !important; /* Explicitly set the X character */
     color: white !important;
     font-size: 16px !important;
     font-weight: bold !important;
@@ -1352,6 +1352,7 @@ h1, h2, h3, h4, h5, h6 {
   right: 0;
   margin-top: 8px;
   width: 320px;
+  max-width: calc(100vw - 32px);
   background-color: var(--card-bg);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
