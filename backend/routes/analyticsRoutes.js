@@ -4,7 +4,7 @@ const db = require('../config/db');
 const { authRequired, requireRole } = require('../middleware/auth');
 
 // Dashboard requires Admin role
-router.use(authRequired, requireRole('Admin'));
+router.use(authRequired, requireRole(['Admin']));
 
 // Helper for date & scope filtering
 const buildFilterConditions = (query, tableAlias = 'i') => {

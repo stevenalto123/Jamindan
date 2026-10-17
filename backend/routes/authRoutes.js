@@ -480,7 +480,7 @@ async function sendEmail({ to, subject, html, text }) {
   }
 };
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', authLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ message: 'Email is required.' });
 
@@ -502,8 +502,24 @@ router.post('/forgot-password', async (req, res) => {
 
     await db.execute('INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)', [email, token, expiresAt]);
 
-    // Dynamically build the link so it works on mobile via Pinggy/Cloudflare
-    const clientUrl = req.headers.origin || process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+    // Securely determine client URL against whitelist to avoid Host/Origin header injection
+    const defaultOrigin = process.env.CLIENT_ORIGIN || 'https://jamindan-emergency.vercel.app';
+    let clientUrl = defaultOrigin;
+    if (req.headers.origin) {
+      try {
+        const originUrl = new URL(req.headers.origin);
+        if (
+          originUrl.hostname === 'localhost' ||
+          originUrl.hostname === '127.0.0.1' ||
+          originUrl.hostname.endsWith('.vercel.app') ||
+          (process.env.CLIENT_ORIGIN && originUrl.origin === new URL(process.env.CLIENT_ORIGIN).origin)
+        ) {
+          clientUrl = originUrl.origin;
+        }
+      } catch (e) {
+        // Fallback to defaultOrigin on malformed origin
+      }
+    }
     const resetLink = `${clientUrl}/reset-password/${token}`;
 
     const info = await sendEmail({
@@ -531,7 +547,7 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', authLimiter, async (req, res) => {
   const { token, newPassword } = req.body;
   
   if (!token || !newPassword) {

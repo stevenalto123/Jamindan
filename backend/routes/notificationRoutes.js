@@ -108,22 +108,30 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
       url: '/'
     });
 
-    for (const u of users) {
-      if (u.push_subscription) {
-        try {
-          const subscription = JSON.parse(u.push_subscription);
-          await webpush.sendNotification(subscription, payload);
-          sentCount++;
-        } catch (err) {
-          console.warn(`Failed to push to user ${u.id}`);
-        }
-      }
-      
-      // Also save to database notifications table for them to see in-app
-      await db.execute(
-        'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES (?, ?, ?, ?, ?)',
-        [u.id, title, message, 'broadcast', null]
+    if (users.length > 0) {
+      // Bulk insert notifications for all active users in a single query
+      const insertValues = users.map(u => [u.id, title, message, 'broadcast', null]);
+      await db.query(
+        'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES ?',
+        [insertValues]
       );
+
+      // Dispatch Web Push in parallel
+      const pushPromises = users
+        .filter(u => u.push_subscription)
+        .map(async (u) => {
+          try {
+            const subscription = JSON.parse(u.push_subscription);
+            await webpush.sendNotification(subscription, payload);
+            return true;
+          } catch (err) {
+            console.warn(`Failed to push to user ${u.id}:`, err.message);
+            return false;
+          }
+        });
+
+      const pushResults = await Promise.allSettled(pushPromises);
+      sentCount = pushResults.filter(r => r.status === 'fulfilled' && r.value === true).length;
     }
 
     const io = req.app.get('io');
@@ -170,20 +178,30 @@ router.post('/broadcast-evacuation', requireRole(['Admin']), async (req, res) =>
       url: '/'
     });
 
-    for (const u of users) {
-      // Create in-app notification
-      await db.execute('INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)', [u.id, title, message]);
-      
-      // Send WebPush notification
-      if (u.push_subscription) {
-        try {
-          const subscription = JSON.parse(u.push_subscription);
-          await webpush.sendNotification(subscription, payload);
-          sentCount++;
-        } catch (err) {
-          console.warn(`Failed to push to user ${u.id}`);
-        }
-      }
+    if (users.length > 0) {
+      // Bulk insert notifications for all users in geofence
+      const insertValues = users.map(u => [u.id, title, message, 'evacuation', null]);
+      await db.query(
+        'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES ?',
+        [insertValues]
+      );
+
+      // Dispatch WebPush in parallel
+      const pushPromises = users
+        .filter(u => u.push_subscription)
+        .map(async (u) => {
+          try {
+            const subscription = JSON.parse(u.push_subscription);
+            await webpush.sendNotification(subscription, payload);
+            return true;
+          } catch (err) {
+            console.warn(`Failed to push to user ${u.id}:`, err.message);
+            return false;
+          }
+        });
+
+      const pushResults = await Promise.allSettled(pushPromises);
+      sentCount = pushResults.filter(r => r.status === 'fulfilled' && r.value === true).length;
     }
 
     await db.logAudit(`Broadcasted evacuation alert to ${users.length} users in geofence`, req.user.username, req.ip);

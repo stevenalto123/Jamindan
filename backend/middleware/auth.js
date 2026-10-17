@@ -16,7 +16,7 @@ const authRequired = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
     
     // Verify user still exists and is active in DB
-    const [rows] = await db.execute('SELECT id, username, role, is_active FROM users WHERE id = ?', [decoded.id]);
+    const [rows] = await db.execute('SELECT id, username, role, agency_type, is_active FROM users WHERE id = ?', [decoded.id]);
     const user = rows[0];
 
     if (!user) {
@@ -29,7 +29,8 @@ const authRequired = async (req, res, next) => {
     req.user = {
       id: user.id,
       username: user.username,
-      role: user.role
+      role: user.role,
+      agency_type: user.agency_type
     };
     next();
   } catch (error) {
@@ -39,11 +40,12 @@ const authRequired = async (req, res, next) => {
 };
 
 const requireRole = (allowedRoles) => {
+  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    if (!allowedRoles.includes(req.user.role)) {
+    if (!roles.includes(req.user.role)) {
       return res.status(403).json({ message: 'Access denied: insufficient permissions' });
     }
     next();

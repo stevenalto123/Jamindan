@@ -17,7 +17,7 @@ router.get('/stats', requireRole(['Admin', 'Responder']), async (req, res) => {
     const [activeIncidentsRows] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE status NOT IN ('Pending', 'Resolved')");
     const activeIncidents = activeIncidentsRows[0].count;
 
-    const [respondersOnDutyRows] = await db.query("SELECT COUNT(*) as count FROM users WHERE role = 'Responder' AND is_active = 1");
+    const [respondersOnDutyRows] = await db.query("SELECT COUNT(*) as count FROM users WHERE role = 'Responder' AND is_active = 1 AND is_on_duty = 1");
     const respondersOnDuty = respondersOnDutyRows[0].count;
 
     const [pendingReportsRows] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE status = 'Pending'");

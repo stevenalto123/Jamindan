@@ -15,7 +15,7 @@ router.get('/', authRequired, requireRole(['Admin', 'Responder']), async (req, r
 });
 
 // Add a new vehicle (Admin only)
-router.post('/', authRequired, requireRole('Admin'), async (req, res) => {
+router.post('/', authRequired, requireRole(['Admin']), async (req, res) => {
   const { name, type, agency } = req.body;
   if (!name || !type || !agency) {
     return res.status(400).json({ message: 'Name, type, and agency are required.' });
@@ -35,7 +35,7 @@ router.post('/', authRequired, requireRole('Admin'), async (req, res) => {
 });
 
 // Update vehicle status (Admin only)
-router.put('/:id/status', authRequired, requireRole('Admin'), async (req, res) => {
+router.put('/:id/status', authRequired, requireRole(['Admin']), async (req, res) => {
   const { status } = req.body;
   const { id } = req.params;
   
@@ -57,7 +57,7 @@ router.put('/:id/status', authRequired, requireRole('Admin'), async (req, res) =
 });
 
 // Delete a vehicle (Admin only)
-router.delete('/:id', authRequired, requireRole('Admin'), async (req, res) => {
+router.delete('/:id', authRequired, requireRole(['Admin']), async (req, res) => {
   const { id } = req.params;
   try {
     const [result] = await db.query('DELETE FROM vehicles WHERE id = ?', [id]);
