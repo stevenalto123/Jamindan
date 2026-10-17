@@ -641,27 +641,39 @@ const ReportIncident = () => {
               {isOffline && (
                 <>
                   <a 
-                    href={`tel:${getTargetHotline()}`}
+                    href="tel:911"
                     className="btn"
                     style={{
                       width: '100%', height: '48px', fontSize: '14px', fontWeight: '800',
                       backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '12px',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none',
-                      boxShadow: '0 4px 14px rgba(220, 38, 38, 0.3)'
+                      boxShadow: '0 4px 14px rgba(220, 38, 38, 0.3)',
+                      animation: 'pulse 2s infinite'
                     }}
                   >
-                    <PhoneCall size={18} /> Call {getTargetAgencyName()} Directly
+                    <PhoneCall size={18} /> Call 911 (Toll-Free • Zero Load Required)
+                  </a>
+                  <a 
+                    href={`tel:${getTargetHotline()}`}
+                    className="btn"
+                    style={{
+                      width: '100%', height: '44px', fontSize: '13px', fontWeight: '700',
+                      backgroundColor: '#1e293b', color: 'white', border: 'none', borderRadius: '12px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none'
+                    }}
+                  >
+                    <PhoneCall size={16} /> Call {getTargetAgencyName()} (Direct Local Line)
                   </a>
                   <a 
                     href={getSmsUri()}
                     className="btn"
                     style={{
-                      width: '100%', height: '48px', fontSize: '14px', fontWeight: '700',
-                      backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '12px',
+                      width: '100%', height: '44px', fontSize: '13px', fontWeight: '700',
+                      backgroundColor: '#334155', color: 'white', border: 'none', borderRadius: '12px',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none'
                     }}
                   >
-                    <Signal size={18} /> Send via SMS to {getTargetAgencyName()}
+                    <Signal size={16} /> Send via SMS to {getTargetAgencyName()}
                   </a>
                 </>
               )}
@@ -689,7 +701,7 @@ const ReportIncident = () => {
           </span>
         </div>
         <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '12px', lineHeight: '1.5' }}>
-          No internet or low data signal? Open in your phone SMS app or copy this complete pre-formatted emergency report directly to <strong>{getTargetAgencyName()}</strong>:
+          No internet or low data signal? Open in your phone SMS app or copy this complete pre-formatted emergency report directly to <strong>{getTargetAgencyName()}</strong> (requires prepaid SMS load/promo; if you have ₱0 load balance, dial <strong>911</strong> directly):
         </p>
         <textarea
           className="form-input"
