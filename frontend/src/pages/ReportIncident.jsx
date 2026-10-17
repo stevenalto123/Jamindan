@@ -4,6 +4,7 @@ import axios from 'axios';
 import MapPicker from '../components/MapPicker';
 import { AlertTriangle, Upload, Check, MapPin, Flame, HeartPulse, Droplets, WifiOff, Car, ShieldAlert, HelpCircle, Copy, Signal, PhoneCall } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 const INCIDENT_TYPES = [
   { value: 'Fire',     label: 'Fire',     icon: Flame,       color: '#e74c3c', bg: 'rgba(231,76,60,0.08)'   },
@@ -151,6 +152,7 @@ const ReportIncident = () => {
 
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user } = useAuth();
 
   
 
@@ -246,14 +248,73 @@ const ReportIncident = () => {
     }
   };
 
+  const getTargetHotline = () => {
+    if (type === 'Fire') return '09106964585'; // Jamindan BFP
+    if (type === 'Medical') return '09304562011'; // Jamindan RHU
+    return '09485224345'; // Jamindan MDRRMO
+  };
+
+  const getTargetAgencyName = () => {
+    if (type === 'Fire') return 'BFP Fire (0910-696-4585)';
+    if (type === 'Medical') return 'RHU Medic (0930-456-2011)';
+    return 'MDRRMO (0948-522-4345)';
+  };
+
   const generateSmsText = () => {
-    let detailsText = '';
-    if (Object.keys(details).length > 0) {
-      detailsText = Object.entries(details)
-        .map(([k, v]) => `\n- ${k.replace('_', ' ')}: ${v}`)
-        .join('');
+    let specificDetails = [];
+    if (type === 'Fire') {
+      if (details.structures_affected) {
+        specificDetails.push(`Structures Affected: ${details.structures_affected}`);
+      }
+      if (details.visible_fire) {
+        specificDetails.push(`Visible Fire/Smoke: ${details.visible_fire}`);
+      }
+      if (details.trapped_persons) {
+        specificDetails.push(`Possible Trapped Persons: ${details.trapped_persons}`);
+      }
+    } else if (type === 'Medical' || type === 'Accident') {
+      if (details.victims) {
+        specificDetails.push(`Victims/Patients: ${details.victims}`);
+      }
+      if (details.injuries) {
+        specificDetails.push(`Condition/Injuries: ${details.injuries}`);
+      }
+      if (details.vehicles_involved) {
+        specificDetails.push(`Vehicles Involved: ${details.vehicles_involved}`);
+      }
+      if (details.road_obstruction) {
+        specificDetails.push(`Road Blocked: ${details.road_obstruction}`);
+      }
+    } else if (type === 'Flood') {
+      if (details.water_level) {
+        specificDetails.push(`Water Level: ${details.water_level}`);
+      }
+      if (details.households_affected) {
+        specificDetails.push(`Affected Households: ${details.households_affected}`);
+      }
+      if (details.people_needing_rescue) {
+        specificDetails.push(`People Needing Rescue: ${details.people_needing_rescue}`);
+      }
+    } else if (Object.keys(details).length > 0) {
+      Object.entries(details).forEach(([k, v]) => {
+        if (v) specificDetails.push(`${k.replace(/_/g, ' ')}: ${v}`);
+      });
     }
-    return `JAMINDAN SOS REPORT:\nType: ${type || 'Not selected'}\nCoords: ${Number(lat || 0).toFixed(5)}, ${Number(lng || 0).toFixed(5)}\nLocation: ${locationText || 'Pinned on map'}\nDescription: ${description || 'None'}${detailsText}`;
+
+    const detailsBlock = specificDetails.length > 0 
+      ? `\nSpecifics:\n${specificDetails.map(d => `- ${d}`).join('\n')}` 
+      : '';
+
+    const reporterInfo = user ? `\nReporter: ${user.full_name || user.username} (${user.phone || 'No phone'})` : '';
+    const coordsInfo = (lat && lng) ? `\nGPS: ${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}` : '';
+
+    return `EMERGENCY REPORT\nType: ${type || 'Emergency'}\nLocation: ${locationText || 'Jamindan'}${coordsInfo}${detailsBlock}\nDetails: ${description || 'Immediate emergency response requested.'}${reporterInfo}`;
+  };
+
+  const getSmsUri = () => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const separator = isIOS ? '&' : '?';
+    return `sms:${getTargetHotline()}${separator}body=${encodeURIComponent(generateSmsText())}`;
   };
 
   const handleCopySms = () => {
@@ -273,11 +334,22 @@ const ReportIncident = () => {
             </h4>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Structures Affected</label>
-              <input type="number" className="form-input" placeholder="e.g. 2" min="0" onChange={(e) => handleDetailChange('structures_affected', e.target.value)} />
+              <input 
+                type="number" 
+                className="form-input" 
+                placeholder="e.g. 2" 
+                min="0" 
+                value={details.structures_affected || ''} 
+                onChange={(e) => handleDetailChange('structures_affected', e.target.value)} 
+              />
             </div>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Visible Fire / Smoke?</label>
-              <select className="form-select" onChange={(e) => handleDetailChange('visible_fire', e.target.value)}>
+              <select 
+                className="form-select" 
+                value={details.visible_fire || ''} 
+                onChange={(e) => handleDetailChange('visible_fire', e.target.value)}
+              >
                 <option value="">Select...</option>
                 <option value="Yes">Yes</option>
                 <option value="No">No</option>
@@ -285,7 +357,11 @@ const ReportIncident = () => {
             </div>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Possible Trapped Persons?</label>
-              <select className="form-select" onChange={(e) => handleDetailChange('trapped_persons', e.target.value)}>
+              <select 
+                className="form-select" 
+                value={details.trapped_persons || ''} 
+                onChange={(e) => handleDetailChange('trapped_persons', e.target.value)}
+              >
                 <option value="">Select...</option>
                 <option value="Yes">Yes</option>
                 <option value="No">No</option>
@@ -303,22 +379,46 @@ const ReportIncident = () => {
             </h4>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Number of Victims / Patients</label>
-              <input type="number" className="form-input" placeholder="e.g. 2" min="0" onChange={(e) => handleDetailChange('victims', e.target.value)} />
+              <input 
+                type="number" 
+                className="form-input" 
+                placeholder="e.g. 2" 
+                min="0" 
+                value={details.victims || ''} 
+                onChange={(e) => handleDetailChange('victims', e.target.value)} 
+              />
             </div>
             {type === 'Accident' && (
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Vehicles Involved</label>
-                <input type="number" className="form-input" placeholder="e.g. 2" min="0" onChange={(e) => handleDetailChange('vehicles_involved', e.target.value)} />
+                <input 
+                  type="number" 
+                  className="form-input" 
+                  placeholder="e.g. 2" 
+                  min="0" 
+                  value={details.vehicles_involved || ''} 
+                  onChange={(e) => handleDetailChange('vehicles_involved', e.target.value)} 
+                />
               </div>
             )}
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Condition / Injuries</label>
-              <input type="text" className="form-input" placeholder="e.g. Unconscious, bleeding" onChange={(e) => handleDetailChange('injuries', e.target.value)} />
+              <input 
+                type="text" 
+                className="form-input" 
+                placeholder="e.g. Unconscious, bleeding" 
+                value={details.injuries || ''} 
+                onChange={(e) => handleDetailChange('injuries', e.target.value)} 
+              />
             </div>
             {type === 'Accident' && (
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Road Obstruction?</label>
-                <select className="form-select" onChange={(e) => handleDetailChange('road_obstruction', e.target.value)}>
+                <select 
+                  className="form-select" 
+                  value={details.road_obstruction || ''} 
+                  onChange={(e) => handleDetailChange('road_obstruction', e.target.value)}
+                >
                   <option value="">Select...</option>
                   <option value="Yes">Yes</option>
                   <option value="No">No</option>
@@ -335,7 +435,11 @@ const ReportIncident = () => {
             </h4>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Approximate Water Level</label>
-              <select className="form-select" onChange={(e) => handleDetailChange('water_level', e.target.value)}>
+              <select 
+                className="form-select" 
+                value={details.water_level || ''} 
+                onChange={(e) => handleDetailChange('water_level', e.target.value)}
+              >
                 <option value="">Select...</option>
                 <option value="Ankle Deep">Ankle Deep</option>
                 <option value="Knee Deep">Knee Deep</option>
@@ -345,11 +449,25 @@ const ReportIncident = () => {
             </div>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Affected Households</label>
-              <input type="number" className="form-input" placeholder="e.g. 5" min="0" onChange={(e) => handleDetailChange('households_affected', e.target.value)} />
+              <input 
+                type="number" 
+                className="form-input" 
+                placeholder="e.g. 5" 
+                min="0" 
+                value={details.households_affected || ''} 
+                onChange={(e) => handleDetailChange('households_affected', e.target.value)} 
+              />
             </div>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">People Needing Rescue</label>
-              <input type="number" className="form-input" placeholder="e.g. 3" min="0" onChange={(e) => handleDetailChange('people_needing_rescue', e.target.value)} />
+              <input 
+                type="number" 
+                className="form-input" 
+                placeholder="e.g. 3" 
+                min="0" 
+                value={details.people_needing_rescue || ''} 
+                onChange={(e) => handleDetailChange('people_needing_rescue', e.target.value)} 
+              />
             </div>
           </div>
         );
@@ -535,7 +653,7 @@ const ReportIncident = () => {
                     <PhoneCall size={18} /> Call 911 (Free)
                   </a>
                   <a 
-                    href={`sms:09123456789?body=${encodeURIComponent(`EMERGENCY REPORT\nType: ${type || 'Unknown'}\nLocation: ${locationText || 'Unknown'}\nDetails: ${description || 'None'}`)}`}
+                    href={getSmsUri()}
                     className="btn"
                     style={{
                       width: '100%', height: '48px', fontSize: '14px', fontWeight: '700',
@@ -543,7 +661,7 @@ const ReportIncident = () => {
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none'
                     }}
                   >
-                    <Signal size={18} /> Send via SMS (Requires Load)
+                    <Signal size={18} /> Send via SMS to {getTargetAgencyName()}
                   </a>
                 </>
               )}
@@ -562,27 +680,41 @@ const ReportIncident = () => {
 
       {/* Offline SMS Generator Panel */}
       <div className="glass-card" style={{ marginTop: '20px', padding: '20px', borderLeft: '4px solid var(--warning-color, #f39c12)' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Signal size={16} color="var(--warning-color, #f39c12)" /> Offline SMS Backup
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Signal size={16} color="var(--warning-color, #f39c12)" /> Offline SMS Backup
+          </h3>
+          <span style={{ fontSize: '12px', fontWeight: '800', color: 'var(--primary-color)' }}>
+            Target: {getTargetAgencyName()}
+          </span>
+        </div>
         <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '12px', lineHeight: '1.5' }}>
-          No internet? Copy this template and send via SMS to the Municipal Hotline: <strong>0917-987-6543</strong>
+          No internet or low data signal? Open in your phone SMS app or copy this complete pre-formatted emergency report directly to <strong>{getTargetAgencyName()}</strong>:
         </p>
         <textarea
           className="form-input"
           value={generateSmsText()}
           readOnly
-          rows={6}
+          rows={7}
           style={{ fontFamily: 'monospace', fontSize: '12px', cursor: 'default', resize: 'none', marginBottom: '10px' }}
         />
-        <button
-          type="button"
-          className="btn btn-secondary"
-          style={{ width: '100%', height: '38px', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', backgroundColor: smsCopied ? 'rgba(39,174,96,0.1)' : undefined, color: smsCopied ? '#27ae60' : undefined, transition: 'all 0.3s' }}
-          onClick={handleCopySms}
-        >
-          {smsCopied ? <><Check size={15} /> Copied!</> : <><Copy size={15} /> Copy SMS Template</>}
-        </button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <a
+            href={getSmsUri()}
+            className="btn btn-primary"
+            style={{ height: '40px', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textDecoration: 'none', fontWeight: '700' }}
+          >
+            <Signal size={15} /> Open in SMS App
+          </a>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ height: '40px', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', backgroundColor: smsCopied ? 'rgba(39,174,96,0.1)' : undefined, color: smsCopied ? '#27ae60' : undefined, transition: 'all 0.3s' }}
+            onClick={handleCopySms}
+          >
+            {smsCopied ? <><Check size={15} /> Copied!</> : <><Copy size={15} /> Copy SMS Template</>}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -140,7 +140,7 @@ const SosPanicButton = () => {
   };
 
   const triggerSmsFallback = (lat, lng) => {
-    const hotline = settings?.emergency_hotline || '09171234567';
+    const hotline = settings?.emergency_hotline || '09485224345';
     let message = 'SOS EMERGENCY! I need help immediately.';
     if (lat && lng) {
       message += ` My location: https://maps.google.com/?q=${lat},${lng}`;
