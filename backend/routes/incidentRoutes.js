@@ -177,8 +177,14 @@ router.get('/', authRequired, async (req, res) => {
     } else if (req.user.role === 'Responder') {
       if (req.user.agency_type) {
         // Responders see incidents dispatched to them OR unassigned active incidents for their agency
-        conditions.push('(i.responder_id = ? OR (i.lead_agency = ? AND (i.responder_id IS NULL OR i.status != "Resolved")))');
-        params.push(req.user.id, req.user.agency_type);
+        let targetAgencies = [req.user.agency_type];
+        if (req.user.agency_type === 'Fire') targetAgencies.push('BFP');
+        if (req.user.agency_type === 'BFP') targetAgencies.push('Fire');
+        if (req.user.agency_type === 'Medical') targetAgencies.push('RHU');
+        if (req.user.agency_type === 'RHU') targetAgencies.push('Medical');
+
+        conditions.push('(i.responder_id = ? OR (i.lead_agency IN (?, ?) AND (i.responder_id IS NULL OR i.status != "Resolved")))');
+        params.push(req.user.id, targetAgencies[0], targetAgencies[1] || targetAgencies[0]);
       } else {
         conditions.push('i.responder_id = ?');
         params.push(req.user.id);

@@ -146,7 +146,10 @@ const UserManagement = () => {
     setAge(u.age || '');
     setBarangay(u.barangay);
     setRole(u.role);
-    setAgencyType(u.agency_type || 'MDRRMO');
+    let normalizedAgency = u.agency_type;
+    if (normalizedAgency === 'Fire') normalizedAgency = 'BFP';
+    if (normalizedAgency === 'Medical') normalizedAgency = 'RHU';
+    setAgencyType(normalizedAgency || 'MDRRMO');
     setIdPhoto(null);
     setSelfiePhoto(null);
     setShowModal(true);
@@ -652,9 +655,9 @@ const UserManagement = () => {
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">Agency / Department</label>
                         <select className="form-select" value={agencyType} onChange={(e) => setAgencyType(e.target.value)} required style={{ background: '#f8fafc' }}>
-                          <option value="MDRRMO">MDRRMO / General Rescue</option>
-                          <option value="Fire">BFP / Fire Department</option>
-                          <option value="Medical">Medical / Ambulance</option>
+                          <option value="MDRRMO">MDRRMO (Disaster & Rescue)</option>
+                          <option value="BFP">BFP (Bureau of Fire Protection)</option>
+                          <option value="RHU">RHU (Rural Health Unit / Medical)</option>
                         </select>
                       </div>
                     )}

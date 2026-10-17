@@ -12,7 +12,7 @@ const AdminVehicles = () => {
   
   // Add modal state
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newVehicle, setNewVehicle] = useState({ name: '', type: 'Ambulance', agency: 'Medical' });
+  const [newVehicle, setNewVehicle] = useState({ name: '', type: 'Ambulance', agency: 'RHU' });
   const [adding, setAdding] = useState(false);
 
   const fetchVehicles = async () => {
@@ -39,7 +39,7 @@ const AdminVehicles = () => {
       await axios.post('/api/vehicles', newVehicle);
       alert('Vehicle added successfully');
       setShowAddModal(false);
-      setNewVehicle({ name: '', type: 'Ambulance', agency: 'Medical' });
+      setNewVehicle({ name: '', type: 'Ambulance', agency: 'RHU' });
       fetchVehicles();
     } catch (err) {
       console.error(err);
@@ -227,7 +227,7 @@ const AdminVehicles = () => {
                 >
                   <option value="Ambulance">Ambulance</option>
                   <option value="Firetruck">Firetruck</option>
-                  <option value="Police Cruiser">Police Cruiser</option>
+                  <option value="Rescue Truck">Rescue Truck</option>
                   <option value="Rescue Boat">Rescue Boat</option>
                   <option value="Service Vehicle">Service Vehicle</option>
                 </select>
@@ -240,9 +240,9 @@ const AdminVehicles = () => {
                   value={newVehicle.agency}
                   onChange={e => setNewVehicle({...newVehicle, agency: e.target.value})}
                 >
-                  <option value="Medical">Medical / Health Center</option>
-                  <option value="Fire">BFP (Fire)</option>
                   <option value="MDRRMO">MDRRMO</option>
+                  <option value="BFP">BFP (Bureau of Fire Protection)</option>
+                  <option value="RHU">RHU (Rural Health Unit / Medical)</option>
                   <option value="General">General / Municipal</option>
                 </select>
               </div>

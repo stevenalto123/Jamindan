@@ -117,9 +117,28 @@ const AppLayout = ({ children }) => {
   // Continuous nonstop siren for Mass Broadcasts & Evacuation Alerts
   useEffect(() => {
     let interval;
-    let audioCtx;
-    let osc;
+    let audioCtx = null;
+    let osc = null;
+    let oscInterval = null;
     const sirenEl = document.getElementById('siren-audio');
+
+    const stopSynthetic = () => {
+      if (oscInterval) {
+        clearInterval(oscInterval);
+        oscInterval = null;
+      }
+      if (osc) {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch(e) {}
+        osc = null;
+      }
+      if (audioCtx && audioCtx.state !== 'closed') {
+        audioCtx.close().catch(e => console.warn(e));
+        audioCtx = null;
+      }
+    };
 
     if (activeBroadcast) {
       window.isBroadcastActive = true;
@@ -137,7 +156,7 @@ const AppLayout = ({ children }) => {
 
       // Web Audio API Synthesizer (ONLY as a fallback if HTML5 audio fails)
       const playSyntheticFallback = () => {
-        if (htmlAudioPlaying) return; // Do not start if HTML5 audio is already playing
+        if (htmlAudioPlaying || osc) return; // Do not start if HTML5 audio is already playing or synth already active
         try {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
           if (AudioContext) {
@@ -158,7 +177,7 @@ const AppLayout = ({ children }) => {
             gainNode.gain.setValueAtTime(0.35, audioCtx.currentTime);
 
             let isHigh = true;
-            const oscInterval = setInterval(() => {
+            oscInterval = setInterval(() => {
               if (osc && audioCtx && audioCtx.state !== 'closed') {
                 isHigh = !isHigh;
                 osc.frequency.setValueAtTime(isHigh ? 1100 : 700, audioCtx.currentTime);
@@ -182,35 +201,34 @@ const AppLayout = ({ children }) => {
         if (playPromise !== undefined) {
           playPromise.then(() => {
             htmlAudioPlaying = true;
+            stopSynthetic(); // STOP synth immediately so 2 alarms never overlap
           }).catch(err => {
-            console.warn('HTML5 Siren error, activating Web Audio fallback:', err);
+            console.warn('HTML5 Siren error or blocked, activating Web Audio fallback:', err);
             playSyntheticFallback();
           });
         } else {
           htmlAudioPlaying = true;
+          stopSynthetic();
         }
       } else {
         playSyntheticFallback();
       }
     } else {
       window.isBroadcastActive = false;
+      stopSynthetic();
+      if (sirenEl) {
+        sirenEl.pause();
+        sirenEl.currentTime = 0;
+      }
     }
     
     return () => {
       window.isBroadcastActive = false;
       if (interval) clearInterval(interval);
+      stopSynthetic();
       if (sirenEl) {
         sirenEl.pause();
         sirenEl.currentTime = 0;
-      }
-      if (osc) {
-        try {
-          osc.stop();
-          osc.disconnect();
-        } catch(e){}
-      }
-      if (audioCtx && audioCtx.state !== 'closed') {
-        audioCtx.close().catch(e => console.warn(e));
       }
     };
   }, [activeBroadcast]);
@@ -247,26 +265,26 @@ const AppLayout = ({ children }) => {
     window.addEventListener('offline', handleOffline);
 
     // Check if there is an unread emergency broadcast sent while user had cleared tabs
-    let checkActiveBroadcast = null;
-    if (user && user.role !== 'Admin') {
-      checkActiveBroadcast = async () => {
-        try {
-          const res = await axios.get('/api/notifications/active-broadcast');
-          if (res.data?.active && res.data.broadcast) {
-            setActiveBroadcast({
-              id: res.data.broadcast.id,
-              title: res.data.broadcast.title,
-              message: res.data.broadcast.message,
-              timestamp: res.data.broadcast.created_at
-            });
-          }
-        } catch (err) {
-          console.warn('Failed to check active broadcast:', err);
+    const checkActiveBroadcast = async () => {
+      if (user?.role === 'Admin') return;
+      try {
+        const res = await axios.get('/api/notifications/active-broadcast');
+        if (res.data?.active && res.data.broadcast) {
+          setActiveBroadcast({
+            id: res.data.broadcast.id,
+            title: res.data.broadcast.title,
+            message: res.data.broadcast.message,
+            timestamp: res.data.broadcast.created_at
+          });
         }
-      };
-      checkActiveBroadcast();
-      window.addEventListener('focus', checkActiveBroadcast);
-    }
+      } catch (err) {
+        console.warn('Failed to check active broadcast:', err);
+      }
+    };
+
+    // Check immediately on mount, on focus, or if url has broadcast flag
+    checkActiveBroadcast();
+    window.addEventListener('focus', checkActiveBroadcast);
 
     // Listen for global mass broadcasts to sound nonstop siren and show emergency modal
     const socketUrl = axios.defaults.baseURL || '';

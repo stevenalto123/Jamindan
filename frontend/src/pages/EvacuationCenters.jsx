@@ -676,10 +676,8 @@ const EvacuationCenters = () => {
           {/* Safer LGU Advisory Box */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', backgroundColor: '#ebf5fb', border: '1px solid #d4e6f1', borderRadius: '12px', padding: '16px' }}>
             <ShieldAlert size={20} style={{ color: '#2980b9', flexShrink: 0, marginTop: '2px' }} />
-            <div style={{ fontSize: '12px', color: '#1b4f72', lineHeight: '1.5' }}>
-              <strong>{t('lguAdvisory').split(':')[0]}:</strong> 
-              {t('lguAdvisory').substring(t('lguAdvisory').indexOf(':') + 1).replace('Full', '')}
-              <strong>{t('statusFull')}</strong>.
+            <div style={{ fontSize: '13px', color: '#1b4f72', lineHeight: '1.5' }}>
+              {t('lguAdvisory') || 'LGU Advisory: Shelters operate on a first-come, first-served basis. If a center is marked as Full, please locate the next nearest open center on the map or contact MDRRMO.'}
             </div>
           </div>
         </div>

@@ -17,7 +17,8 @@ import {
   Activity,
   X,
   Map,
-  ClipboardList
+  ClipboardList,
+  CheckCircle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -443,7 +444,7 @@ const AdminDashboard = () => {
 
       {/* Premium Glassmorphic Broadcast Modal */}
       {showBroadcastModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: 'var(--card-bg)', width: '90%', maxWidth: '440px', padding: '32px', borderRadius: '24px', boxShadow: '0 24px 48px rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
@@ -510,13 +511,5 @@ const AdminDashboard = () => {
     </div>
   );
 };
-
-// Mock CheckCircle since it wasn't originally imported but we use it for the stats
-const CheckCircle = ({ size, color }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-  </svg>
-);
 
 export default AdminDashboard;
