@@ -9,6 +9,15 @@ self.addEventListener('push', function(event) {
       const fallbackUrl = `/?broadcast=1&title=${encodeURIComponent(bTitle)}&msg=${encodeURIComponent(bBody)}&severity=${encodeURIComponent(bSeverity)}&area=${encodeURIComponent(bArea)}`;
       const targetUrl = data.url || fallbackUrl;
 
+      // Extended nonstop vibration pattern for emergency lockscreen alerts (4s on, 800ms off, continuous cycles)
+      const nonstopVibratePattern = [
+        4000, 800, 3000, 800, 3000, 800, 3000, 800, 3000, 800,
+        3000, 800, 3000, 800, 3000, 800, 3000, 800, 3000, 800,
+        4000, 800, 4000, 800, 4000, 800, 4000, 800, 4000, 800,
+        4000, 800, 4000, 800, 4000, 800, 4000, 800, 4000, 800,
+        4000, 800, 4000, 800, 4000, 800, 4000, 800, 4000, 800
+      ];
+
       const options = {
         body: bBody,
         icon: data.icon || '/logo.png',
@@ -18,7 +27,7 @@ self.addEventListener('push', function(event) {
         channel_id: 'emergency_alert_channel',
         renotify: true,
         requireInteraction: true,
-        vibrate: [4000, 1000, 2000, 1000, 2000, 1000],
+        vibrate: nonstopVibratePattern,
         data: {
           url: targetUrl
         },
@@ -34,6 +43,10 @@ self.addEventListener('push', function(event) {
       // Fallback for plain text push
       const rawText = event.data.text();
       const fallbackUrl = `/?broadcast=1&title=${encodeURIComponent('🚨 EMERGENCY ALERT: EXTREME')}&msg=${encodeURIComponent(rawText)}&severity=extreme&area=Municipality%20of%20Jamindan`;
+      const fallbackNonstopVibe = [
+        4000, 800, 3000, 800, 3000, 800, 3000, 800, 3000, 800,
+        4000, 800, 4000, 800, 4000, 800, 4000, 800, 4000, 800
+      ];
       event.waitUntil(
         self.registration.showNotification('🚨 EMERGENCY ALERT: EXTREME', {
           body: rawText,
@@ -44,7 +57,7 @@ self.addEventListener('push', function(event) {
           channel_id: 'emergency_alert_channel',
           renotify: true,
           requireInteraction: true,
-          vibrate: [4000, 1000, 2000, 1000, 2000, 1000],
+          vibrate: fallbackNonstopVibe,
           data: { url: fallbackUrl },
           actions: [
             { action: 'open_siren', title: '🚨 VIEW EMERGENCY ALERT' }
