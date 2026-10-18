@@ -124,7 +124,34 @@ const AppLayout = ({ children }) => {
     let oscInterval = null;
     const sirenEl = document.getElementById('siren-audio');
 
+    const unlockAudio = () => {
+      try {
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(e => console.warn(e));
+        }
+        if (window.globalAudioCtx && window.globalAudioCtx.state === 'suspended') {
+          window.globalAudioCtx.resume().catch(e => console.warn(e));
+        }
+        if (sirenEl && sirenEl.paused) {
+          sirenEl.volume = 1.0;
+          sirenEl.currentTime = 0;
+          sirenEl.loop = true;
+          sirenEl.play().catch(e => console.warn(e));
+        }
+      } catch (e) {
+        console.warn('Unlock audio on user gesture failed:', e);
+      }
+    };
+
+    window.unlockBroadcastAudio = unlockAudio;
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio);
+
     const stopAudio = () => {
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+      window.unlockBroadcastAudio = null;
+
       if (oscInterval) {
         clearInterval(oscInterval);
         oscInterval = null;
@@ -175,9 +202,11 @@ const AppLayout = ({ children }) => {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
           if (!AudioContext) return;
 
-          audioCtx = new AudioContext();
+          audioCtx = window.globalAudioCtx || new AudioContext();
+          window.globalAudioCtx = audioCtx;
+
           if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
+            audioCtx.resume().catch(e => console.warn('AudioContext resume pending gesture:', e));
           }
 
           gainNode = audioCtx.createGain();
@@ -208,6 +237,14 @@ const AppLayout = ({ children }) => {
 
             osc1.start();
             osc2.start();
+          }
+
+          // Also trigger HTML5 audio in parallel as double guarantee
+          if (sirenEl) {
+            sirenEl.volume = 1.0;
+            sirenEl.currentTime = 0;
+            sirenEl.loop = true;
+            sirenEl.play().catch(e => console.warn('HTML5 siren deferred until interaction:', e));
           }
 
           // Pulsed attention cadence (800ms ON / 200ms OFF)
@@ -327,10 +364,7 @@ const AppLayout = ({ children }) => {
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
 
     socket.on('new-broadcast', (data) => {
-      // Don't trigger the resident alarm for Admin accounts (Admin is the sender)
-      if (user?.role === 'Admin') return;
-
-      // Trigger nonstop emergency alert
+      // Trigger nonstop emergency alert for all connected devices
       setActiveBroadcast({
         id: 'live_' + Date.now(),
         title: data.title,
@@ -660,7 +694,10 @@ const AppLayout = ({ children }) => {
         };
 
         return (
-          <div style={{
+          <div 
+            onClick={() => window.unlockBroadcastAudio && window.unlockBroadcastAudio()}
+            onTouchStart={() => window.unlockBroadcastAudio && window.unlockBroadcastAudio()}
+            style={{
             position: 'fixed',
             top: 0,
             left: 0,
@@ -676,7 +713,12 @@ const AppLayout = ({ children }) => {
             textAlign: 'center',
             backdropFilter: 'blur(12px)'
           }}>
-            <div style={{
+            <div 
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.unlockBroadcastAudio) window.unlockBroadcastAudio();
+              }}
+              style={{
               maxWidth: '490px',
               width: '100%',
               backgroundColor: 'var(--card-bg, #ffffff)',
@@ -770,6 +812,31 @@ const AppLayout = ({ children }) => {
                 whiteSpace: 'pre-line'
               }}>
                 {displayMessage}
+              </div>
+
+              {/* Audio Touch-Unlock Prompt Banner */}
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.unlockBroadcastAudio) window.unlockBroadcastAudio();
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  backgroundColor: isExtreme ? '#fee2e2' : '#ffedd5',
+                  border: `1.5px dashed ${accentColor}`,
+                  borderRadius: '12px',
+                  color: accentColor,
+                  fontWeight: '800',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>🔊</span> Tap anywhere if siren is muted
               </div>
 
               {/* Big Acknowledge / Silence Siren Button */}

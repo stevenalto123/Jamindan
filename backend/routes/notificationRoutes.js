@@ -100,7 +100,7 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
   }
 
   try {
-    const [users] = await db.query('SELECT id, push_subscription FROM users WHERE is_active = 1 AND id != ?', [req.user.id]);
+    const [users] = await db.query('SELECT id, push_subscription FROM users WHERE is_active = 1');
     
     let sentCount = 0;
     const alertPrefix = severity === 'extreme' 
