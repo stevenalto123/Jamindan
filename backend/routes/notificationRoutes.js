@@ -25,15 +25,19 @@ try {
 router.get('/active-broadcast', async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT id, title, message, created_at FROM notifications 
-      WHERE reference_type = 'broadcast' 
+      SELECT id, title, message, reference_type, created_at FROM notifications 
+      WHERE reference_type LIKE 'broadcast%' 
       AND created_at >= NOW() - INTERVAL 4 HOUR
       ORDER BY created_at DESC 
       LIMIT 1
     `);
     
     if (rows && rows.length > 0) {
-      return res.json({ active: true, broadcast: rows[0] });
+      const b = rows[0];
+      const severity = b.reference_type && b.reference_type.includes(':') 
+        ? b.reference_type.split(':')[1] 
+        : 'extreme';
+      return res.json({ active: true, broadcast: { ...b, severity } });
     }
     return res.json({ active: false, broadcast: null });
   } catch (error) {
@@ -88,9 +92,9 @@ router.put('/read-all', async (req, res) => {
   }
 });
 
-// ADMIN ONLY: Mass Broadcast Notification
+// ADMIN ONLY: Mass Broadcast Notification (supports NDRRMC Extreme, Severe, and Advisory)
 router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
-  const { title, message } = req.body;
+  const { title, message, severity = 'extreme', target_area = 'Municipality of Jamindan (All Barangays)' } = req.body;
   if (!title || !message) {
     return res.status(400).json({ message: 'Title and message are required' });
   }
@@ -99,16 +103,22 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
     const [users] = await db.query('SELECT id, push_subscription FROM users WHERE is_active = 1 AND id != ?', [req.user.id]);
     
     let sentCount = 0;
+    const alertPrefix = severity === 'extreme' 
+      ? '🚨 NDRRMC EMERGENCY ALERT: EXTREME' 
+      : (severity === 'severe' ? '⚠️ EMERGENCY ALERT: SEVERE' : '📢 MUNICIPAL ADVISORY');
+
+    const formattedBody = `[${target_area}] ${message}`;
+
     const payload = JSON.stringify({
-      title: title,
-      body: message,
+      title: `${alertPrefix} - ${title}`,
+      body: formattedBody,
       icon: '/jamindan-seal.png',
-      url: `/?broadcast=1&title=${encodeURIComponent(title)}&msg=${encodeURIComponent(message)}`
+      url: `/?broadcast=1&title=${encodeURIComponent(title)}&msg=${encodeURIComponent(message)}&severity=${encodeURIComponent(severity)}&area=${encodeURIComponent(target_area)}`
     });
 
     if (users.length > 0) {
       // Bulk insert notifications for all active users in a single query
-      const insertValues = users.map(u => [u.id, title, message, 'broadcast', null]);
+      const insertValues = users.map(u => [u.id, title, formattedBody, `broadcast:${severity}`, null]);
       await db.query(
         'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES ?',
         [insertValues]
@@ -134,7 +144,13 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
 
     const io = req.app.get('io');
     if (io) {
-      io.emit('new-broadcast', { title, message });
+      io.emit('new-broadcast', { 
+        title, 
+        message, 
+        severity, 
+        target_area, 
+        created_at: new Date().toISOString() 
+      });
     }
 
     return res.json({ message: `Broadcast sent to ${sentCount} devices successfully.` });

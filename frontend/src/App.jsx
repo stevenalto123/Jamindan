@@ -114,122 +114,135 @@ const AppLayout = ({ children }) => {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [activeBroadcast, setActiveBroadcast] = useState(null);
   
-  // Continuous nonstop siren for Mass Broadcasts & Evacuation Alerts
+  // Authentic NDRRMC Two-Tone Audio Alarm & Cell-Broadcast Vibration
   useEffect(() => {
-    let interval;
+    let interval = null;
     let audioCtx = null;
-    let osc = null;
+    let osc1 = null;
+    let osc2 = null;
+    let gainNode = null;
     let oscInterval = null;
     const sirenEl = document.getElementById('siren-audio');
 
-    const stopSynthetic = () => {
+    const stopAudio = () => {
       if (oscInterval) {
         clearInterval(oscInterval);
         oscInterval = null;
       }
-      if (osc) {
-        try {
-          osc.stop();
-          osc.disconnect();
-        } catch(e) {}
-        osc = null;
+      if (osc1) {
+        try { osc1.stop(); osc1.disconnect(); } catch(e) {}
+        osc1 = null;
+      }
+      if (osc2) {
+        try { osc2.stop(); osc2.disconnect(); } catch(e) {}
+        osc2 = null;
+      }
+      if (gainNode) {
+        try { gainNode.disconnect(); } catch(e) {}
+        gainNode = null;
       }
       if (audioCtx && audioCtx.state !== 'closed') {
         audioCtx.close().catch(e => console.warn(e));
         audioCtx = null;
       }
+      if (sirenEl) {
+        sirenEl.pause();
+        sirenEl.currentTime = 0;
+      }
     };
 
     if (activeBroadcast) {
       window.isBroadcastActive = true;
-      let htmlAudioPlaying = false;
+      const severity = activeBroadcast.severity || 'extreme';
 
-      // Start looping vibration pulse on mobile
+      // 1. Official NDRRMC Cell-Broadcast Vibration Cadence (4s on, 1s off, 2s on, 1s off, 2s on)
+      const vibPattern = severity === 'advisory' 
+        ? [500, 300, 500] 
+        : [4000, 1000, 2000, 1000, 2000, 1000];
+
       if (navigator.vibrate) {
-        navigator.vibrate([600, 250, 600, 250]);
+        navigator.vibrate(vibPattern);
       }
       interval = setInterval(() => {
         if (navigator.vibrate) {
-          navigator.vibrate([600, 250, 600, 250]);
+          navigator.vibrate(vibPattern);
         }
-      }, 1500);
+      }, 11000);
 
-      // Web Audio API Synthesizer (ONLY as a fallback if HTML5 audio fails)
-      const playSyntheticFallback = () => {
-        if (htmlAudioPlaying || osc) return; // Do not start if HTML5 audio is already playing or synth already active
+      // 2. Synthesize Official NDRRMC Dual-Frequency Attention Signal (853 Hz + 960 Hz pure sines)
+      const playNdrrmcTwoTone = () => {
         try {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
-          if (AudioContext) {
-            audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') {
-              audioCtx.resume();
-            }
-            
-            osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            
-            osc.type = 'sawtooth';
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            osc.start();
-            gainNode.gain.setValueAtTime(0.35, audioCtx.currentTime);
+          if (!AudioContext) return;
 
-            let isHigh = true;
-            oscInterval = setInterval(() => {
-              if (osc && audioCtx && audioCtx.state !== 'closed') {
-                isHigh = !isHigh;
-                osc.frequency.setValueAtTime(isHigh ? 1100 : 700, audioCtx.currentTime);
-              } else {
-                clearInterval(oscInterval);
-              }
-            }, 600);
+          audioCtx = new AudioContext();
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
           }
+
+          gainNode = audioCtx.createGain();
+          const maxGain = severity === 'advisory' ? 0.25 : 0.45;
+          gainNode.gain.setValueAtTime(maxGain, audioCtx.currentTime);
+          gainNode.connect(audioCtx.destination);
+
+          if (severity === 'advisory') {
+            // Municipal chime for advisory notices
+            osc1 = audioCtx.createOscillator();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(660, audioCtx.currentTime);
+            osc1.connect(gainNode);
+            osc1.start();
+          } else {
+            // Authentic WEA / NDRRMC Dual Tone: Simultaneous 853 Hz & 960 Hz pure sines
+            osc1 = audioCtx.createOscillator();
+            osc2 = audioCtx.createOscillator();
+
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(853, audioCtx.currentTime);
+
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(960, audioCtx.currentTime);
+
+            osc1.connect(gainNode);
+            osc2.connect(gainNode);
+
+            osc1.start();
+            osc2.start();
+          }
+
+          // Pulsed attention cadence (800ms ON / 200ms OFF)
+          let isPulseOn = true;
+          oscInterval = setInterval(() => {
+            if (audioCtx && audioCtx.state !== 'closed' && gainNode) {
+              isPulseOn = !isPulseOn;
+              const now = audioCtx.currentTime;
+              gainNode.gain.cancelScheduledValues(now);
+              gainNode.gain.setValueAtTime(isPulseOn ? maxGain : 0.001, now);
+            } else {
+              clearInterval(oscInterval);
+            }
+          }, 800);
         } catch (err) {
-          console.warn('Synthetic Audio fallback failed or blocked:', err);
+          console.warn('NDRRMC audio synthesis error or blocked:', err);
+          if (sirenEl) {
+            sirenEl.volume = 1.0;
+            sirenEl.currentTime = 0;
+            sirenEl.loop = true;
+            sirenEl.play().catch(e => console.warn(e));
+          }
         }
       };
 
-      // 1. Play HTML5 Audio Siren (/siren.wav)
-      if (sirenEl) {
-        sirenEl.volume = 1.0;
-        sirenEl.muted = false;
-        sirenEl.currentTime = 0;
-        sirenEl.loop = true;
-        const playPromise = sirenEl.play();
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            htmlAudioPlaying = true;
-            stopSynthetic(); // STOP synth immediately so 2 alarms never overlap
-          }).catch(err => {
-            console.warn('HTML5 Siren error or blocked, activating Web Audio fallback:', err);
-            playSyntheticFallback();
-          });
-        } else {
-          htmlAudioPlaying = true;
-          stopSynthetic();
-        }
-      } else {
-        playSyntheticFallback();
-      }
+      playNdrrmcTwoTone();
     } else {
       window.isBroadcastActive = false;
-      stopSynthetic();
-      if (sirenEl) {
-        sirenEl.pause();
-        sirenEl.currentTime = 0;
-      }
+      stopAudio();
     }
-    
+
     return () => {
       window.isBroadcastActive = false;
       if (interval) clearInterval(interval);
-      stopSynthetic();
-      if (sirenEl) {
-        sirenEl.pause();
-        sirenEl.currentTime = 0;
-      }
+      stopAudio();
     };
   }, [activeBroadcast]);
   
@@ -269,12 +282,16 @@ const AppLayout = ({ children }) => {
       // 1. Immediately inspect URL parameters from push notification click (Instant Zero-Delay Alert)
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('broadcast') === '1') {
-        const rawTitle = urlParams.get('title') || '🚨 CRITICAL EMERGENCY BROADCAST';
+        const rawTitle = urlParams.get('title') || '🚨 EMERGENCY ALERT: EXTREME';
         const rawMsg = urlParams.get('msg') || 'Emergency advisory issued by Jamindan MDRRMO.';
+        const rawSeverity = urlParams.get('severity') || 'extreme';
+        const rawArea = urlParams.get('area') || 'Municipality of Jamindan (All Barangays)';
         setActiveBroadcast({
           id: 'push_' + Date.now(),
           title: decodeURIComponent(rawTitle),
           message: decodeURIComponent(rawMsg),
+          severity: rawSeverity,
+          target_area: decodeURIComponent(rawArea),
           timestamp: new Date().toISOString()
         });
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -291,6 +308,8 @@ const AppLayout = ({ children }) => {
             id: res.data.broadcast.id,
             title: res.data.broadcast.title,
             message: res.data.broadcast.message,
+            severity: res.data.broadcast.severity || 'extreme',
+            target_area: res.data.broadcast.target_area || 'Municipality of Jamindan (All Barangays)',
             timestamp: res.data.broadcast.created_at
           });
         }
@@ -311,8 +330,15 @@ const AppLayout = ({ children }) => {
       // Don't trigger the resident alarm for Admin accounts (Admin is the sender)
       if (user?.role === 'Admin') return;
 
-      // Trigger nonstop emergency siren alert
-      setActiveBroadcast(data);
+      // Trigger nonstop emergency alert
+      setActiveBroadcast({
+        id: 'live_' + Date.now(),
+        title: data.title,
+        message: data.message,
+        severity: data.severity || (data.type === 'advisory' ? 'advisory' : 'extreme'),
+        target_area: data.target_area || 'Municipality of Jamindan (All Barangays)',
+        timestamp: data.created_at || new Date().toISOString()
+      });
     });
     
     return () => {
@@ -594,99 +620,190 @@ const AppLayout = ({ children }) => {
           className="menu-toggle"
         />
       )}
-      </div><MobileBottomNav />{activeBroadcast && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.92)',
-          zIndex: 999999,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px',
-          textAlign: 'center',
-          backdropFilter: 'blur(8px)'
-        }}>
+      </div><MobileBottomNav />{activeBroadcast && (() => {
+        const severity = activeBroadcast.severity || 'extreme';
+        const isExtreme = severity === 'extreme';
+        const isSevere = severity === 'severe';
+
+        const accentColor = isExtreme ? '#dc2626' : (isSevere ? '#ea580c' : '#2563eb');
+        const accentGlow = isExtreme ? 'rgba(220, 38, 38, 0.45)' : (isSevere ? 'rgba(234, 88, 12, 0.45)' : 'rgba(37, 99, 235, 0.45)');
+        const alertBadgeText = isExtreme 
+          ? '🚨 EMERGENCY ALERT: EXTREME' 
+          : (isSevere ? '⚠️ EMERGENCY ALERT: SEVERE' : '📢 MUNICIPAL PUBLIC ADVISORY');
+
+        let displayMessage = activeBroadcast.message || '';
+        let displayArea = activeBroadcast.target_area || 'Municipality of Jamindan (All Barangays)';
+
+        if (displayMessage.startsWith('[') && displayMessage.includes(']')) {
+          const match = displayMessage.match(/^\[(.*?)\]\s*(.*)$/s);
+          if (match) {
+            displayArea = match[1];
+            displayMessage = match[2];
+          }
+        }
+
+        const formatPst = (iso) => {
+          try {
+            const d = iso ? new Date(iso) : new Date();
+            return d.toLocaleString('en-US', {
+              timeZone: 'Asia/Manila',
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            }) + ' PST';
+          } catch(e) {
+            return new Date().toLocaleTimeString() + ' PST';
+          }
+        };
+
+        return (
           <div style={{
-            maxWidth: '480px',
-            width: '100%',
-            backgroundColor: 'var(--card-bg, #ffffff)',
-            borderRadius: '24px',
-            padding: '32px 24px',
-            boxShadow: '0 25px 60px rgba(220, 38, 38, 0.4), 0 0 0 3px #dc2626',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(10, 15, 29, 0.94)',
+            zIndex: 999999,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '16px',
-            animation: 'pulse 1.5s infinite ease-in-out'
+            justifyContent: 'center',
+            padding: '16px',
+            textAlign: 'center',
+            backdropFilter: 'blur(12px)'
           }}>
             <div style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '50%',
-              backgroundColor: '#fee2e2',
+              maxWidth: '490px',
+              width: '100%',
+              backgroundColor: 'var(--card-bg, #ffffff)',
+              borderRadius: '24px',
+              padding: '28px 24px',
+              boxShadow: `0 25px 60px ${accentGlow}, 0 0 0 3px ${accentColor}`,
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '42px',
-              boxShadow: '0 0 25px rgba(239, 68, 68, 0.5)'
+              gap: '14px',
+              animation: 'pulse 1.8s infinite ease-in-out'
             }}>
-              🚨
-            </div>
-
-            <div style={{
-              backgroundColor: '#dc2626',
-              color: 'white',
-              fontSize: '11px',
-              fontWeight: '900',
-              padding: '6px 14px',
-              borderRadius: '20px',
-              letterSpacing: '1.2px',
-              textTransform: 'uppercase'
-            }}>
-              LGU Emergency Broadcast • Nonstop Siren Active
-            </div>
-
-            <h2 style={{ fontSize: '22px', fontWeight: '800', margin: '4px 0 0', color: 'var(--text-main, #0f172a)', lineHeight: '1.3' }}>
-              {activeBroadcast.title || 'CRITICAL EMERGENCY ADVISORY'}
-            </h2>
-
-            <p style={{ fontSize: '15px', color: 'var(--text-light, #475569)', margin: '0', lineHeight: '1.6', maxHeight: '180px', overflowY: 'auto' }}>
-              {activeBroadcast.message}
-            </p>
-
-            <button 
-              onClick={handleAcknowledgeBroadcast}
-              style={{
-                width: '100%',
-                padding: '16px 20px',
-                fontSize: '16px',
-                fontWeight: '900',
-                backgroundColor: '#dc2626',
-                color: 'white',
-                border: 'none',
-                borderRadius: '14px',
-                cursor: 'pointer',
-                boxShadow: '0 8px 25px rgba(220, 38, 38, 0.5)',
+              {/* Emergency Beacon Icon */}
+              <div style={{
+                width: '74px',
+                height: '74px',
+                borderRadius: '50%',
+                backgroundColor: isExtreme ? '#fee2e2' : (isSevere ? '#ffedd5' : '#dbeafe'),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
-                marginTop: '8px'
-              }}
-            >
-              <span>🔕</span> ACKNOWLEDGE & SILENCE SIREN
-            </button>
-            <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-              Tap button to silence alarm and dismiss broadcast.
-            </span>
+                fontSize: '38px',
+                boxShadow: `0 0 25px ${accentGlow}`
+              }}>
+                {isExtreme ? '🚨' : (isSevere ? '⚠️' : '📢')}
+              </div>
+
+              {/* NDRRMC Cell-Broadcast Authority Badge */}
+              <div style={{
+                backgroundColor: accentColor,
+                color: '#ffffff',
+                fontSize: '11px',
+                fontWeight: '900',
+                padding: '6px 16px',
+                borderRadius: '30px',
+                letterSpacing: '1.2px',
+                textTransform: 'uppercase',
+                boxShadow: `0 4px 14px ${accentGlow}`
+              }}>
+                {alertBadgeText}
+              </div>
+
+              <div style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-light, #64748b)', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+                NDRRMC • MDRRMO JAMINDAN OPERATIONS CENTER
+              </div>
+
+              {/* Target Hazard Area Pill */}
+              <div style={{
+                backgroundColor: 'rgba(0,0,0,0.05)',
+                border: '1px solid var(--border-color, #e2e8f0)',
+                padding: '6px 12px',
+                borderRadius: '10px',
+                fontSize: '12px',
+                fontWeight: '700',
+                color: 'var(--text-main, #0f172a)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                width: '100%',
+                justifyContent: 'center'
+              }}>
+                <span>📍</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  Target Area: <strong>{displayArea}</strong>
+                </span>
+              </div>
+
+              {/* Timestamp */}
+              <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600' }}>
+                Issued: {formatPst(activeBroadcast.timestamp)}
+              </div>
+
+              {/* Alert Title */}
+              <h2 style={{ fontSize: '20px', fontWeight: '900', margin: '2px 0 0', color: 'var(--text-main, #0f172a)', lineHeight: '1.3' }}>
+                {activeBroadcast.title || 'CRITICAL EMERGENCY ADVISORY'}
+              </h2>
+
+              {/* Message Content */}
+              <div style={{
+                fontSize: '14px',
+                color: 'var(--text-light, #334155)',
+                lineHeight: '1.6',
+                maxHeight: '180px',
+                overflowY: 'auto',
+                backgroundColor: 'rgba(0,0,0,0.02)',
+                padding: '12px 14px',
+                borderRadius: '12px',
+                border: '1px solid var(--border-color, #f1f5f9)',
+                textAlign: 'left',
+                width: '100%',
+                whiteSpace: 'pre-line'
+              }}>
+                {displayMessage}
+              </div>
+
+              {/* Big Acknowledge / Silence Siren Button */}
+              <button 
+                onClick={handleAcknowledgeBroadcast}
+                style={{
+                  width: '100%',
+                  padding: '16px 20px',
+                  fontSize: '15px',
+                  fontWeight: '900',
+                  backgroundColor: accentColor,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '14px',
+                  cursor: 'pointer',
+                  boxShadow: `0 8px 25px ${accentGlow}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  marginTop: '4px'
+                }}
+              >
+                <span>🔕</span> ACKNOWLEDGE & SILENCE ALARM
+              </button>
+
+              {/* Regulatory citation */}
+              <div style={{ fontSize: '10px', color: '#94a3b8', lineHeight: '1.4' }}>
+                Republic Act 10639 (Free Mobile Disaster Alerts Act) • MDRRMO Jamindan
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </>
   );
 };

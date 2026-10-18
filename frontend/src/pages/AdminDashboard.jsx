@@ -24,6 +24,37 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import CommandMap from './CommandMap';
 
+const NDRRMC_PRESETS = [
+  {
+    label: '🔴 Red Rainfall / Flood',
+    severity: 'extreme',
+    title: 'RED RAINFALL WARNING & FLASH FLOOD ADVISORY',
+    area: 'Municipality of Jamindan (Low-lying & Riverbank Barangays)',
+    message: 'Torrential rainfall observed due to severe weather disturbance. Severe flooding and river overflow are expected. Residents in low-lying and landslide-prone areas must evacuate immediately to designated evacuation centers or higher ground. Keep hotlines on standby.'
+  },
+  {
+    label: '🌀 Typhoon Signal No. 3',
+    severity: 'extreme',
+    title: 'TROPICAL CYCLONE WARNING: SIGNAL NO. 3',
+    area: 'Municipality of Jamindan (All Barangays)',
+    message: 'Destructive typhoon-force winds and heavy torrential rains expected within 18 hours. Secure dwellings, prepare emergency go-bags, and complete pre-emptive evacuation before nightfall. Stay tuned to MDRRMO Jamindan operations.'
+  },
+  {
+    label: '🚨 Evacuation Order',
+    severity: 'severe',
+    title: 'MANDATORY EVACUATION ORDER',
+    area: 'Barangays Pangabuan, Jaena Norte, Agambulong, Guibuangan',
+    message: 'MDRRMO Jamindan orders mandatory pre-emptive evacuation due to critical water level rise and landslide threat. Barangay DRRM committees and rescue vehicles are deployed. Move immediately to municipal evacuation centers.'
+  },
+  {
+    label: '🌧️ Weather Advisory',
+    severity: 'advisory',
+    title: 'THUNDERSTORM & HEAVY RAIN ADVISORY',
+    area: 'Municipality of Jamindan (All Barangays)',
+    message: 'Moderate to heavy rainshowers with lightning and strong winds expected over Jamindan. Residents are advised to take precautionary measures against localized flash floods and avoid crossing swollen creeks.'
+  }
+];
+
 const AdminDashboard = () => {
   const { t } = useLanguage();
   const { user, setUser } = useAuth();
@@ -32,9 +63,18 @@ const AdminDashboard = () => {
   const [togglingDuty, setTogglingDuty] = useState(false);
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [broadcastSeverity, setBroadcastSeverity] = useState('extreme');
+  const [broadcastArea, setBroadcastArea] = useState('Municipality of Jamindan (All Barangays)');
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [broadcasting, setBroadcasting] = useState(false);
   const navigate = useNavigate();
+
+  const handleSelectPreset = (preset) => {
+    setBroadcastTitle(preset.title);
+    setBroadcastMessage(preset.message);
+    setBroadcastSeverity(preset.severity);
+    setBroadcastArea(preset.area);
+  };
 
   const fetchDashboardStats = async () => {
     try {
@@ -60,12 +100,16 @@ const AdminDashboard = () => {
     try {
       await axios.post('/api/notifications/broadcast', {
         title: broadcastTitle,
-        message: broadcastMessage
+        message: broadcastMessage,
+        severity: broadcastSeverity,
+        target_area: broadcastArea
       });
-      alert('Broadcast sent successfully!');
+      alert('NDRRMC Emergency Alert transmitted successfully to all resident devices!');
       setShowBroadcastModal(false);
       setBroadcastTitle('');
       setBroadcastMessage('');
+      setBroadcastSeverity('extreme');
+      setBroadcastArea('Municipality of Jamindan (All Barangays)');
     } catch (err) {
       console.error(err);
       alert('Failed to send broadcast.');
@@ -442,20 +486,25 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Premium Glassmorphic Broadcast Modal */}
+      {/* Premium NDRRMC Emergency Broadcast Modal */}
       {showBroadcastModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: 'var(--card-bg)', width: '90%', maxWidth: '440px', padding: '32px', borderRadius: '24px', boxShadow: '0 24px 48px rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.88)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: 'var(--card-bg)', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', padding: '28px', borderRadius: '24px', boxShadow: '0 24px 60px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)' }}>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ background: '#fef2f2', padding: '12px', borderRadius: '12px', color: '#dc2626' }}>
+                <div style={{ 
+                  background: broadcastSeverity === 'extreme' ? '#fee2e2' : (broadcastSeverity === 'severe' ? '#ffedd5' : '#dbeafe'), 
+                  padding: '12px', 
+                  borderRadius: '14px', 
+                  color: broadcastSeverity === 'extreme' ? '#dc2626' : (broadcastSeverity === 'severe' ? '#ea580c' : '#2563eb') 
+                }}>
                   <Radio size={24} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '20px', fontWeight: '800' }}>{t('massBroadcast')}</h3>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-light)', fontWeight: '500' }}>
-                    Send an instant push notification to all users.
+                  <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '19px', fontWeight: '800' }}>NDRRMC Emergency Alert System</h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-light)', fontWeight: '500' }}>
+                    Transmits dual-tone siren alarm & cell-broadcast modal to residents.
                   </p>
                 </div>
               </div>
@@ -466,40 +515,216 @@ const AdminDashboard = () => {
                 <X size={16} />
               </button>
             </div>
+
+            {/* Quick 1-Click NDRRMC Presets */}
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', fontWeight: '800', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                ⚡ 1-Click NDRRMC Official Presets
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {NDRRMC_PRESETS.map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSelectPreset(preset)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--border-color)',
+                      background: 'rgba(0,0,0,0.03)',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      color: 'var(--text-main)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             
             <form onSubmit={handleBroadcast}>
+              {/* Severity Selector */}
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>Alert Title</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>
+                  Alert Severity Tier
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setBroadcastSeverity('extreme')}
+                    style={{
+                      padding: '10px 8px',
+                      borderRadius: '12px',
+                      border: broadcastSeverity === 'extreme' ? '2px solid #dc2626' : '1px solid var(--border-color)',
+                      backgroundColor: broadcastSeverity === 'extreme' ? '#fee2e2' : 'transparent',
+                      color: broadcastSeverity === 'extreme' ? '#dc2626' : 'var(--text-main)',
+                      fontWeight: '800',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <span>🔴 EXTREME</span>
+                    <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '600' }}>853Hz+960Hz Siren</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBroadcastSeverity('severe')}
+                    style={{
+                      padding: '10px 8px',
+                      borderRadius: '12px',
+                      border: broadcastSeverity === 'severe' ? '2px solid #ea580c' : '1px solid var(--border-color)',
+                      backgroundColor: broadcastSeverity === 'severe' ? '#ffedd5' : 'transparent',
+                      color: broadcastSeverity === 'severe' ? '#ea580c' : 'var(--text-main)',
+                      fontWeight: '800',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <span>🟠 SEVERE</span>
+                    <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '600' }}>High Alert Tone</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBroadcastSeverity('advisory')}
+                    style={{
+                      padding: '10px 8px',
+                      borderRadius: '12px',
+                      border: broadcastSeverity === 'advisory' ? '2px solid #2563eb' : '1px solid var(--border-color)',
+                      backgroundColor: broadcastSeverity === 'advisory' ? '#dbeafe' : 'transparent',
+                      color: broadcastSeverity === 'advisory' ? '#2563eb' : 'var(--text-main)',
+                      fontWeight: '800',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <span>🔵 ADVISORY</span>
+                    <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '600' }}>Public Chime</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Target Hazard Area */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
+                  Target Hazard Area
+                </label>
+                <input 
+                  type="text" 
+                  required 
+                  list="jamindan-areas"
+                  value={broadcastArea} 
+                  onChange={e => setBroadcastArea(e.target.value)} 
+                  placeholder="e.g. Municipality of Jamindan (All Barangays)" 
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: '#f8fafc', fontSize: '14px', fontWeight: '600' }}
+                />
+                <datalist id="jamindan-areas">
+                  <option value="Municipality of Jamindan (All Barangays)" />
+                  <option value="Barangays Pangabuan, Jaena Norte, Agambulong, Guibuangan" />
+                  <option value="Barangays Poblacion, Linambasan, Esperanza, Fe" />
+                  <option value="Barangays Lucero, Molet, Jagnaya, San Jose" />
+                  <option value="Barangays Milan, Pasig, San Vicente, Bayuyan" />
+                </datalist>
+              </div>
+
+              {/* Alert Title */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
+                  Alert Title
+                </label>
                 <input 
                   type="text" 
                   required 
                   value={broadcastTitle} 
                   onChange={e => setBroadcastTitle(e.target.value)} 
-                  placeholder="e.g. TYPHOON WARNING" 
-                  style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border-color)', background: '#f8fafc', fontSize: '15px', fontWeight: '600' }}
+                  placeholder="e.g. RED RAINFALL WARNING & FLOOD ADVISORY" 
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: '#f8fafc', fontSize: '14px', fontWeight: '700' }}
                 />
               </div>
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>Message Content</label>
+
+              {/* Message Content */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
+                  Message Content & Instructions
+                </label>
                 <textarea 
                   required 
                   rows="4" 
                   value={broadcastMessage} 
                   onChange={e => setBroadcastMessage(e.target.value)} 
-                  placeholder="Type emergency instructions here..."
-                  style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--border-color)', background: '#f8fafc', fontSize: '15px', resize: 'vertical' }}
+                  placeholder="Type emergency instructions, evacuation directions, or hotlines..."
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: '#f8fafc', fontSize: '14px', resize: 'vertical' }}
                 ></textarea>
               </div>
+
+              {/* Resident Display Preview */}
+              {(broadcastTitle || broadcastMessage) && (
+                <div style={{ 
+                  marginBottom: '20px', 
+                  padding: '14px', 
+                  borderRadius: '14px', 
+                  border: `1px solid ${broadcastSeverity === 'extreme' ? '#f87171' : (broadcastSeverity === 'severe' ? '#fb923c' : '#60a5fa')}`,
+                  backgroundColor: broadcastSeverity === 'extreme' ? '#fef2f2' : (broadcastSeverity === 'severe' ? '#fff7ed' : '#eff6ff') 
+                }}>
+                  <div style={{ fontSize: '11px', fontWeight: '900', color: broadcastSeverity === 'extreme' ? '#dc2626' : (broadcastSeverity === 'severe' ? '#ea580c' : '#2563eb'), textTransform: 'uppercase', marginBottom: '4px' }}>
+                    📱 Resident Device Preview:
+                  </div>
+                  <div style={{ fontWeight: '800', fontSize: '13px', color: '#0f172a' }}>
+                    {broadcastTitle || 'Alert Title'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>
+                    📍 <strong>{broadcastArea}</strong>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#334155', marginTop: '4px', lineHeight: '1.4' }}>
+                    {broadcastMessage || 'Message content...'}
+                  </div>
+                </div>
+              )}
               
               <div style={{ display: 'flex', gap: '12px' }}>
-                <button type="button" style={{ flex: 1, padding: '14px', borderRadius: '12px', background: '#f1f5f9', border: 'none', color: 'var(--text-main)', fontWeight: '700', fontSize: '15px', cursor: 'pointer' }} onClick={() => setShowBroadcastModal(false)}>
+                <button type="button" style={{ flex: 1, padding: '14px', borderRadius: '12px', background: '#f1f5f9', border: 'none', color: 'var(--text-main)', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }} onClick={() => setShowBroadcastModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" style={{ flex: 1, padding: '14px', borderRadius: '12px', background: '#dc2626', border: 'none', color: 'white', fontWeight: '700', fontSize: '15px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} disabled={broadcasting}>
+                <button 
+                  type="submit" 
+                  style={{ 
+                    flex: 1.5, 
+                    padding: '14px', 
+                    borderRadius: '12px', 
+                    background: broadcastSeverity === 'extreme' ? '#dc2626' : (broadcastSeverity === 'severe' ? '#ea580c' : '#2563eb'), 
+                    border: 'none', 
+                    color: 'white', 
+                    fontWeight: '800', 
+                    fontSize: '14px', 
+                    cursor: 'pointer', 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    gap: '8px',
+                    boxShadow: broadcastSeverity === 'extreme' ? '0 4px 15px rgba(220, 38, 38, 0.4)' : 'none'
+                  }} 
+                  disabled={broadcasting}
+                >
                   {broadcasting ? (
-                    <><div style={{ width: '16px', height: '16px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div> Sending...</>
+                    <><div style={{ width: '16px', height: '16px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div> Transmitting...</>
                   ) : (
-                    <>SEND ALERT</>
+                    <>🚨 TRANSMIT ALERT</>
                   )}
                 </button>
               </div>

@@ -2,9 +2,11 @@ self.addEventListener('push', function(event) {
   if (event.data) {
     try {
       const data = event.data.json();
-      const bTitle = data.title || '🚨 EMERGENCY BROADCAST ALERT';
-      const bBody = data.body || '🚨 CRITICAL ADVISORY: Tap to open platform and sound emergency alarm.';
-      const fallbackUrl = `/?broadcast=1&title=${encodeURIComponent(bTitle)}&msg=${encodeURIComponent(bBody)}`;
+      const bTitle = data.title || '🚨 EMERGENCY ALERT: EXTREME';
+      const bBody = data.body || '🚨 CRITICAL ADVISORY: Tap to open platform and view alert.';
+      const bSeverity = data.severity || 'extreme';
+      const bArea = data.area || 'Municipality of Jamindan';
+      const fallbackUrl = `/?broadcast=1&title=${encodeURIComponent(bTitle)}&msg=${encodeURIComponent(bBody)}&severity=${encodeURIComponent(bSeverity)}&area=${encodeURIComponent(bArea)}`;
       const targetUrl = data.url || fallbackUrl;
 
       const options = {
@@ -14,12 +16,12 @@ self.addEventListener('push', function(event) {
         tag: 'jamindan-emergency-alert',
         renotify: true,
         requireInteraction: true,
-        vibrate: [800, 250, 800, 250, 800, 250, 800, 250],
+        vibrate: [4000, 1000, 2000, 1000, 2000, 1000],
         data: {
           url: targetUrl
         },
         actions: [
-          { action: 'open_siren', title: '🚨 OPEN & SOUND ALARM' }
+          { action: 'open_siren', title: '🚨 VIEW EMERGENCY ALERT' }
         ]
       };
 
@@ -29,19 +31,19 @@ self.addEventListener('push', function(event) {
     } catch (e) {
       // Fallback for plain text push
       const rawText = event.data.text();
-      const fallbackUrl = `/?broadcast=1&title=${encodeURIComponent('🚨 Jamindan Emergency Alert')}&msg=${encodeURIComponent(rawText)}`;
+      const fallbackUrl = `/?broadcast=1&title=${encodeURIComponent('🚨 EMERGENCY ALERT: EXTREME')}&msg=${encodeURIComponent(rawText)}&severity=extreme&area=Municipality%20of%20Jamindan`;
       event.waitUntil(
-        self.registration.showNotification('🚨 Jamindan Emergency Alert', {
+        self.registration.showNotification('🚨 EMERGENCY ALERT: EXTREME', {
           body: rawText,
           icon: '/logo.png',
           badge: '/logo.png',
           tag: 'jamindan-emergency-alert',
           renotify: true,
           requireInteraction: true,
-          vibrate: [800, 250, 800, 250, 800, 250, 800, 250],
+          vibrate: [4000, 1000, 2000, 1000, 2000, 1000],
           data: { url: fallbackUrl },
           actions: [
-            { action: 'open_siren', title: '🚨 OPEN & SOUND ALARM' }
+            { action: 'open_siren', title: '🚨 VIEW EMERGENCY ALERT' }
           ]
         })
       );
