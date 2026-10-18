@@ -266,10 +266,27 @@ const AppLayout = ({ children }) => {
 
     // Check if there is an unread emergency broadcast sent while user had cleared tabs
     const checkActiveBroadcast = async () => {
-      if (user?.role === 'Admin') return;
+      // 1. Immediately inspect URL parameters from push notification click (Instant Zero-Delay Alert)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('broadcast') === '1') {
+        const rawTitle = urlParams.get('title') || '🚨 CRITICAL EMERGENCY BROADCAST';
+        const rawMsg = urlParams.get('msg') || 'Emergency advisory issued by Jamindan MDRRMO.';
+        setActiveBroadcast({
+          id: 'push_' + Date.now(),
+          title: decodeURIComponent(rawTitle),
+          message: decodeURIComponent(rawMsg),
+          timestamp: new Date().toISOString()
+        });
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+
       try {
         const res = await axios.get('/api/notifications/active-broadcast');
         if (res.data?.active && res.data.broadcast) {
+          const dismissed = sessionStorage.getItem('dismissed_broadcast_' + res.data.broadcast.id);
+          if (dismissed) return;
+
           setActiveBroadcast({
             id: res.data.broadcast.id,
             title: res.data.broadcast.title,
@@ -311,6 +328,7 @@ const AppLayout = ({ children }) => {
 
   const handleAcknowledgeBroadcast = async () => {
     if (activeBroadcast?.id) {
+      sessionStorage.setItem('dismissed_broadcast_' + activeBroadcast.id, 'true');
       try {
         await axios.put(`/api/notifications/${activeBroadcast.id}/read`);
       } catch (err) {

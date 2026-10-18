@@ -21,6 +21,27 @@ try {
   console.error('Failed to initialize webpush:', err.message);
 }
 
+// Get latest active emergency broadcast (within last 4 hours) - Public so emergency siren sounds without auth barrier
+router.get('/active-broadcast', async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT id, title, message, created_at FROM notifications 
+      WHERE reference_type = 'broadcast' 
+      AND created_at >= NOW() - INTERVAL 4 HOUR
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `);
+    
+    if (rows && rows.length > 0) {
+      return res.json({ active: true, broadcast: rows[0] });
+    }
+    return res.json({ active: false, broadcast: null });
+  } catch (error) {
+    console.error('Fetch active broadcast error:', error);
+    return res.status(500).json({ message: 'Server error while checking active broadcast' });
+  }
+});
+
 router.use(authRequired);
 
 // Get notifications for current user
@@ -37,29 +58,6 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Fetch notifications error:', error);
     return res.status(500).json({ message: 'Server error while fetching notifications' });
-  }
-});
-
-// Get latest active unread broadcast for current user (within last 4 hours)
-router.get('/active-broadcast', async (req, res) => {
-  try {
-    const [rows] = await db.query(`
-      SELECT * FROM notifications 
-      WHERE user_id = ? 
-      AND reference_type = 'broadcast' 
-      AND is_read = 0 
-      AND created_at >= NOW() - INTERVAL 4 HOUR
-      ORDER BY created_at DESC 
-      LIMIT 1
-    `, [req.user.id]);
-    
-    if (rows && rows.length > 0) {
-      return res.json({ active: true, broadcast: rows[0] });
-    }
-    return res.json({ active: false, broadcast: null });
-  } catch (error) {
-    console.error('Fetch active broadcast error:', error);
-    return res.status(500).json({ message: 'Server error while checking active broadcast' });
   }
 });
 
@@ -105,7 +103,7 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
       title: title,
       body: message,
       icon: '/jamindan-seal.png',
-      url: '/'
+      url: `/?broadcast=1&title=${encodeURIComponent(title)}&msg=${encodeURIComponent(message)}`
     });
 
     if (users.length > 0) {
@@ -175,7 +173,7 @@ router.post('/broadcast-evacuation', requireRole(['Admin']), async (req, res) =>
       title: title,
       body: message,
       icon: '/jamindan-seal.png',
-      url: '/'
+      url: `/?broadcast=1&title=${encodeURIComponent(title)}&msg=${encodeURIComponent(message)}`
     });
 
     if (users.length > 0) {
