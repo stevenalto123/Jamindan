@@ -4,28 +4,28 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 
-// Synchronously capture broadcast parameters on page load so state is ready on initial render tick
+// Safely parse initial broadcast from URL or storage
 const getInitialBroadcast = () => {
   try {
     if (typeof window !== 'undefined' && window.location.search) {
       const params = new URLSearchParams(window.location.search);
       if (params.get('broadcast') === '1') {
+        const id = params.get('b_id') || ('push_' + Date.now());
+        if (localStorage.getItem('dismissed_broadcast_' + id) === 'true') {
+          return null;
+        }
         const item = {
-          id: 'push_' + Date.now(),
+          id: id,
           title: decodeURIComponent(params.get('title') || '🚨 EMERGENCY ALERT: EXTREME'),
           message: decodeURIComponent(params.get('msg') || 'Emergency advisory issued by Jamindan MDRRMO.'),
           severity: params.get('severity') || 'extreme',
           target_area: decodeURIComponent(params.get('area') || 'Municipality of Jamindan (All Barangays)'),
           timestamp: new Date().toISOString()
         };
-        sessionStorage.setItem('pending_broadcast_alert', JSON.stringify(item));
+        // Clean URL to avoid endless re-triggering
+        window.history.replaceState({}, document.title, window.location.pathname);
         return item;
       }
-    }
-    const stored = sessionStorage.getItem('pending_broadcast_alert');
-    if (stored) {
-      sessionStorage.removeItem('pending_broadcast_alert');
-      return JSON.parse(stored);
     }
   } catch (e) {
     console.warn('Initial broadcast pre-capture error:', e);
@@ -51,44 +51,15 @@ const EmergencyBroadcastHandler = () => {
     let compressor = null;
     let oscInterval = null;
 
-    const unlockAudio = () => {
-      try {
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume().catch(e => console.warn('AudioContext resume:', e));
-        }
-        if (window.globalAudioCtx && window.globalAudioCtx.state === 'suspended') {
-          window.globalAudioCtx.resume().catch(e => console.warn('Global AudioContext resume:', e));
-        }
-        const currentSiren = sirenRef.current || document.getElementById('siren-audio');
-        if (currentSiren) {
-          currentSiren.volume = 1.0;
-          currentSiren.currentTime = 0;
-          currentSiren.loop = true;
-          currentSiren.play().then(() => {
-            setIsAudioActive(true);
-          }).catch(e => console.warn('HTML5 siren play on gesture:', e));
-        }
-        setIsAudioActive(true);
-        if (navigator.vibrate) {
-          navigator.vibrate([3000, 600, 3000, 600]);
-        }
-      } catch (e) {
-        console.warn('Unlock audio failed:', e);
-      }
-    };
-
-    window.unlockBroadcastAudio = unlockAudio;
-    // Only listen for direct user touch/click gestures to satisfy browser Autoplay Policy
-    const unlockEvents = ['click', 'touchstart', 'touchend', 'pointerdown'];
-    unlockEvents.forEach(evt => window.addEventListener(evt, unlockAudio, { passive: true }));
-    unlockEvents.forEach(evt => document.addEventListener(evt, unlockAudio, { passive: true }));
-
     const stopAudio = () => {
-      unlockEvents.forEach(evt => window.removeEventListener(evt, unlockAudio));
-      unlockEvents.forEach(evt => document.removeEventListener(evt, unlockAudio));
       window.unlockBroadcastAudio = null;
+      window.stopBroadcastAudio = null;
       setIsAudioActive(false);
 
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
       if (oscInterval) {
         clearInterval(oscInterval);
         oscInterval = null;
@@ -118,13 +89,45 @@ const EmergencyBroadcastHandler = () => {
         currentSiren.pause();
         currentSiren.currentTime = 0;
       }
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(0);
+      }
     };
+
+    const unlockAudio = () => {
+      try {
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(e => console.warn('AudioContext resume:', e));
+        }
+        if (window.globalAudioCtx && window.globalAudioCtx.state === 'suspended') {
+          window.globalAudioCtx.resume().catch(e => console.warn('Global AudioContext resume:', e));
+        }
+        const currentSiren = sirenRef.current || document.getElementById('siren-audio');
+        if (currentSiren) {
+          currentSiren.volume = 1.0;
+          currentSiren.currentTime = 0;
+          currentSiren.loop = true;
+          currentSiren.play().then(() => {
+            setIsAudioActive(true);
+          }).catch(e => console.warn('HTML5 siren play on gesture:', e));
+        }
+        setIsAudioActive(true);
+        if (navigator.vibrate) {
+          navigator.vibrate([3000, 600, 3000, 600]);
+        }
+      } catch (e) {
+        console.warn('Unlock audio failed:', e);
+      }
+    };
+
+    window.unlockBroadcastAudio = unlockAudio;
+    window.stopBroadcastAudio = stopAudio;
 
     if (activeBroadcast) {
       window.isBroadcastActive = true;
       const severity = activeBroadcast.severity || 'extreme';
 
-      // 1. Continuous Nonstop In-App Vibration Pattern (3.5s buzz, 500ms pause, continuous)
+      // 1. Continuous Nonstop In-App Vibration Pattern
       const vibPattern = severity === 'advisory' 
         ? [500, 300, 500] 
         : [3500, 500, 3500, 500, 3500, 500];
@@ -139,7 +142,6 @@ const EmergencyBroadcastHandler = () => {
       }, 4000);
 
       // 2. Synthesize Official NDRRMC Dual-Frequency Attention Signal (853 Hz + 960 Hz pure sines)
-      // Boosted with Dynamics Compression & Maximum Gain for Maximum Loudness
       const playNdrrmcTwoTone = () => {
         try {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -152,12 +154,10 @@ const EmergencyBroadcastHandler = () => {
             audioCtx.resume().catch(e => console.warn('AudioContext initial resume:', e));
           }
 
-          // Full Loudness: Gain set to 1.0 (Maximum)
           gainNode = audioCtx.createGain();
           const maxGain = severity === 'advisory' ? 0.6 : 1.0;
           gainNode.gain.setValueAtTime(maxGain, audioCtx.currentTime);
 
-          // Dynamics Compressor boosts perceived loudness & RMS through mobile phone speakers
           compressor = audioCtx.createDynamicsCompressor();
           compressor.threshold.setValueAtTime(-14, audioCtx.currentTime);
           compressor.knee.setValueAtTime(6, audioCtx.currentTime);
@@ -175,7 +175,6 @@ const EmergencyBroadcastHandler = () => {
             osc1.connect(gainNode);
             osc1.start();
           } else {
-            // Authentic WEA / NDRRMC Dual Tone: Simultaneous 853 Hz & 960 Hz pure sines
             osc1 = audioCtx.createOscillator();
             osc2 = audioCtx.createOscillator();
 
@@ -192,7 +191,7 @@ const EmergencyBroadcastHandler = () => {
             osc2.start();
           }
 
-          // HTML5 Audio siren in parallel at full 100% volume
+          // HTML5 Audio siren in parallel
           const currentSiren = sirenRef.current || document.getElementById('siren-audio');
           if (currentSiren) {
             currentSiren.volume = 1.0;
@@ -200,7 +199,7 @@ const EmergencyBroadcastHandler = () => {
             currentSiren.loop = true;
             currentSiren.play().then(() => {
               setIsAudioActive(true);
-            }).catch(e => console.warn('HTML5 siren immediate play deferred until user gesture:', e));
+            }).catch(e => console.warn('HTML5 siren deferred until user gesture:', e));
           }
 
           // Pulsed attention cadence (800ms ON / 150ms OFF)
@@ -236,50 +235,23 @@ const EmergencyBroadcastHandler = () => {
 
     return () => {
       window.isBroadcastActive = false;
-      if (interval) clearInterval(interval);
       stopAudio();
     };
   }, [activeBroadcast]);
 
-  // Check storage, URL params, or active broadcast API
+  // Check backend active broadcast or listen to real-time socket events
   useEffect(() => {
     const checkActiveBroadcast = async () => {
-      // 0. Check pre-captured broadcast from storage
-      const storedPending = sessionStorage.getItem('pending_broadcast_alert');
-      if (storedPending) {
-        try {
-          const parsed = JSON.parse(storedPending);
-          sessionStorage.removeItem('pending_broadcast_alert');
-          setActiveBroadcast(parsed);
-          return;
-        } catch (e) {}
-      }
-
-      // 1. Immediately inspect URL search parameters
-      const urlParams = new URLSearchParams(window.location.search || location.search);
-      if (urlParams.get('broadcast') === '1') {
-        const rawTitle = urlParams.get('title') || '🚨 EMERGENCY ALERT: EXTREME';
-        const rawMsg = urlParams.get('msg') || 'Emergency advisory issued by Jamindan MDRRMO.';
-        const rawSeverity = urlParams.get('severity') || 'extreme';
-        const rawArea = urlParams.get('area') || 'Municipality of Jamindan (All Barangays)';
-        setActiveBroadcast({
-          id: 'push_' + Date.now(),
-          title: decodeURIComponent(rawTitle),
-          message: decodeURIComponent(rawMsg),
-          severity: rawSeverity,
-          target_area: decodeURIComponent(rawArea),
-          timestamp: new Date().toISOString()
-        });
-        window.history.replaceState({}, document.title, window.location.pathname);
+      // Don't hijack admin view if admin is managing the system
+      if (user?.role === 'Admin' && location.pathname.startsWith('/admin')) {
         return;
       }
 
-      // 2. Fetch active broadcast from backend
       try {
         const res = await axios.get('/api/notifications/active-broadcast');
         if (res.data?.active && res.data.broadcast) {
-          const dismissed = sessionStorage.getItem('dismissed_broadcast_' + res.data.broadcast.id);
-          if (dismissed) return;
+          const dismissed = localStorage.getItem('dismissed_broadcast_' + res.data.broadcast.id);
+          if (dismissed === 'true') return;
 
           setActiveBroadcast({
             id: res.data.broadcast.id,
@@ -303,8 +275,17 @@ const EmergencyBroadcastHandler = () => {
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
 
     socket.on('new-broadcast', (data) => {
+      // Admin dashboard sends the alert; do not block admin screen
+      if (user?.role === 'Admin' && location.pathname.startsWith('/admin')) {
+        return;
+      }
+      const broadcastId = data.id || ('live_' + Date.now());
+      if (localStorage.getItem('dismissed_broadcast_' + broadcastId) === 'true') {
+        return;
+      }
+
       setActiveBroadcast({
-        id: 'live_' + Date.now(),
+        id: broadcastId,
         title: data.title,
         message: data.message,
         severity: data.severity || (data.type === 'advisory' ? 'advisory' : 'extreme'),
@@ -317,17 +298,41 @@ const EmergencyBroadcastHandler = () => {
       window.removeEventListener('focus', checkActiveBroadcast);
       socket.disconnect();
     };
-  }, [location]);
+  }, [location, user]);
 
-  const handleAcknowledgeBroadcast = async () => {
+  const handleAcknowledgeBroadcast = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    // 1. Immediately kill all audio & vibration
+    if (window.stopBroadcastAudio) {
+      window.stopBroadcastAudio();
+    }
+    const currentSiren = sirenRef.current || document.getElementById('siren-audio');
+    if (currentSiren) {
+      currentSiren.pause();
+      currentSiren.currentTime = 0;
+    }
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(0);
+    }
+    setIsAudioActive(false);
+
+    // 2. Persist dismissal in localStorage
     if (activeBroadcast?.id) {
-      sessionStorage.setItem('dismissed_broadcast_' + activeBroadcast.id, 'true');
-      try {
-        await axios.put(`/api/notifications/${activeBroadcast.id}/read`);
-      } catch (err) {
-        console.warn('Failed to mark broadcast as read:', err);
+      localStorage.setItem('dismissed_broadcast_' + activeBroadcast.id, 'true');
+      if (typeof activeBroadcast.id === 'number' || /^\d+$/.test(activeBroadcast.id)) {
+        try {
+          await axios.put(`/api/notifications/${activeBroadcast.id}/read`);
+        } catch (err) {
+          console.warn('Failed to mark broadcast as read:', err);
+        }
       }
     }
+
+    // 3. Close the modal
     setActiveBroadcast(null);
   };
 
@@ -342,21 +347,10 @@ const EmergencyBroadcastHandler = () => {
         const isSevere = severity === 'severe';
 
         const accentColor = isExtreme ? '#dc2626' : (isSevere ? '#ea580c' : '#2563eb');
-        const accentGlow = isExtreme ? 'rgba(220, 38, 38, 0.45)' : (isSevere ? 'rgba(234, 88, 12, 0.45)' : 'rgba(37, 99, 235, 0.45)');
-        const alertBadgeText = isExtreme 
-          ? '🚨 EMERGENCY ALERT: EXTREME' 
-          : (isSevere ? '⚠️ EMERGENCY ALERT: SEVERE' : '📢 MUNICIPAL PUBLIC ADVISORY');
-
-        let displayMessage = activeBroadcast.message || '';
-        let displayArea = activeBroadcast.target_area || 'Municipality of Jamindan (All Barangays)';
-
-        if (displayMessage.startsWith('[') && displayMessage.includes(']')) {
-          const match = displayMessage.match(/^\[(.*?)\]\s*(.*)$/s);
-          if (match) {
-            displayArea = match[1];
-            displayMessage = match[2];
-          }
-        }
+        const accentGlow = isExtreme ? 'rgba(220, 38, 38, 0.4)' : (isSevere ? 'rgba(234, 88, 12, 0.4)' : 'rgba(37, 99, 235, 0.4)');
+        const alertBadgeText = isExtreme ? '🚨 EXTREME EMERGENCY ALERT' : (isSevere ? '⚠️ SEVERE EMERGENCY ALERT' : '📢 MUNICIPAL ADVISORY');
+        const displayArea = activeBroadcast.target_area || 'Municipality of Jamindan (All Barangays)';
+        const displayMessage = activeBroadcast.message || 'Critical emergency alert issued by Jamindan MDRRMO.';
 
         const formatPst = (iso) => {
           try {
@@ -377,8 +371,16 @@ const EmergencyBroadcastHandler = () => {
 
         return (
           <div 
-            onClick={() => window.unlockBroadcastAudio && window.unlockBroadcastAudio()}
-            onTouchStart={() => window.unlockBroadcastAudio && window.unlockBroadcastAudio()}
+            onClick={() => {
+              if (!isAudioActive && window.unlockBroadcastAudio) {
+                window.unlockBroadcastAudio();
+              }
+            }}
+            onTouchStart={() => {
+              if (!isAudioActive && window.unlockBroadcastAudio) {
+                window.unlockBroadcastAudio();
+              }
+            }}
             style={{
               position: 'fixed',
               top: 0,
@@ -397,11 +399,10 @@ const EmergencyBroadcastHandler = () => {
             }}
           >
             <div 
-              onClick={() => {
-                if (window.unlockBroadcastAudio) window.unlockBroadcastAudio();
-              }}
-              onTouchStart={() => {
-                if (window.unlockBroadcastAudio) window.unlockBroadcastAudio();
+              onClick={(e) => {
+                if (!isAudioActive && window.unlockBroadcastAudio) {
+                  window.unlockBroadcastAudio();
+                }
               }}
               style={{
                 maxWidth: '490px',
@@ -492,6 +493,7 @@ const EmergencyBroadcastHandler = () => {
                 backgroundColor: 'rgba(0,0,0,0.02)',
                 padding: '12px 14px',
                 borderRadius: '12px',
+                border: '1px solid var(--border-color, #f1f5f9)',
                 textAlign: 'left',
                 width: '100%',
                 whiteSpace: 'pre-line'
@@ -503,6 +505,10 @@ const EmergencyBroadcastHandler = () => {
               {!isAudioActive ? (
                 <div 
                   onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.unlockBroadcastAudio) window.unlockBroadcastAudio();
+                  }}
+                  onTouchStart={(e) => {
                     e.stopPropagation();
                     if (window.unlockBroadcastAudio) window.unlockBroadcastAudio();
                   }}
@@ -548,7 +554,11 @@ const EmergencyBroadcastHandler = () => {
 
               {/* Big Acknowledge / Silence Siren Button */}
               <button 
-                onClick={handleAcknowledgeBroadcast}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAcknowledgeBroadcast(e);
+                }}
+                onTouchStart={(e) => e.stopPropagation()}
                 style={{
                   width: '100%',
                   padding: '16px 20px',
