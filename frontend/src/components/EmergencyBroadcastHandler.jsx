@@ -35,6 +35,7 @@ const getInitialBroadcast = () => {
 
 const EmergencyBroadcastHandler = () => {
   const [activeBroadcast, setActiveBroadcast] = useState(getInitialBroadcast);
+  const [isAudioActive, setIsAudioActive] = useState(false);
   const location = useLocation();
   const { user } = useAuth();
   const sirenRef = useRef(null);
@@ -49,8 +50,6 @@ const EmergencyBroadcastHandler = () => {
     let gainNode = null;
     let compressor = null;
     let oscInterval = null;
-    let autoRetryTimer = null;
-    const sirenEl = sirenRef.current || document.getElementById('siren-audio');
 
     const unlockAudio = () => {
       try {
@@ -60,11 +59,18 @@ const EmergencyBroadcastHandler = () => {
         if (window.globalAudioCtx && window.globalAudioCtx.state === 'suspended') {
           window.globalAudioCtx.resume().catch(e => console.warn('Global AudioContext resume:', e));
         }
-        if (sirenEl && sirenEl.paused) {
-          sirenEl.volume = 1.0;
-          sirenEl.currentTime = 0;
-          sirenEl.loop = true;
-          sirenEl.play().catch(e => console.warn('HTML5 siren play:', e));
+        const currentSiren = sirenRef.current || document.getElementById('siren-audio');
+        if (currentSiren) {
+          currentSiren.volume = 1.0;
+          currentSiren.currentTime = 0;
+          currentSiren.loop = true;
+          currentSiren.play().then(() => {
+            setIsAudioActive(true);
+          }).catch(e => console.warn('HTML5 siren play on gesture:', e));
+        }
+        setIsAudioActive(true);
+        if (navigator.vibrate) {
+          navigator.vibrate([3000, 600, 3000, 600]);
         }
       } catch (e) {
         console.warn('Unlock audio failed:', e);
@@ -72,10 +78,8 @@ const EmergencyBroadcastHandler = () => {
     };
 
     window.unlockBroadcastAudio = unlockAudio;
-    const unlockEvents = [
-      'click', 'touchstart', 'touchend', 'touchmove', 'pointerdown', 'pointerup', 
-      'mousedown', 'focus', 'pageshow', 'visibilitychange', 'keydown', 'scroll'
-    ];
+    // Only listen for direct user touch/click gestures to satisfy browser Autoplay Policy
+    const unlockEvents = ['click', 'touchstart', 'touchend', 'pointerdown'];
     unlockEvents.forEach(evt => window.addEventListener(evt, unlockAudio, { passive: true }));
     unlockEvents.forEach(evt => document.addEventListener(evt, unlockAudio, { passive: true }));
 
@@ -83,11 +87,8 @@ const EmergencyBroadcastHandler = () => {
       unlockEvents.forEach(evt => window.removeEventListener(evt, unlockAudio));
       unlockEvents.forEach(evt => document.removeEventListener(evt, unlockAudio));
       window.unlockBroadcastAudio = null;
+      setIsAudioActive(false);
 
-      if (autoRetryTimer) {
-        clearInterval(autoRetryTimer);
-        autoRetryTimer = null;
-      }
       if (oscInterval) {
         clearInterval(oscInterval);
         oscInterval = null;
@@ -112,9 +113,10 @@ const EmergencyBroadcastHandler = () => {
         audioCtx.close().catch(e => console.warn(e));
         audioCtx = null;
       }
-      if (sirenEl) {
-        sirenEl.pause();
-        sirenEl.currentTime = 0;
+      const currentSiren = sirenRef.current || document.getElementById('siren-audio');
+      if (currentSiren) {
+        currentSiren.pause();
+        currentSiren.currentTime = 0;
       }
     };
 
@@ -191,11 +193,14 @@ const EmergencyBroadcastHandler = () => {
           }
 
           // HTML5 Audio siren in parallel at full 100% volume
-          if (sirenEl) {
-            sirenEl.volume = 1.0;
-            sirenEl.currentTime = 0;
-            sirenEl.loop = true;
-            sirenEl.play().catch(e => console.warn('HTML5 siren immediate play:', e));
+          const currentSiren = sirenRef.current || document.getElementById('siren-audio');
+          if (currentSiren) {
+            currentSiren.volume = 1.0;
+            currentSiren.currentTime = 0;
+            currentSiren.loop = true;
+            currentSiren.play().then(() => {
+              setIsAudioActive(true);
+            }).catch(e => console.warn('HTML5 siren immediate play deferred until user gesture:', e));
           }
 
           // Pulsed attention cadence (800ms ON / 150ms OFF)
@@ -211,23 +216,14 @@ const EmergencyBroadcastHandler = () => {
             }
           }, 800);
 
-          // Aggressive Autoplay Unlock Retry (retries every 100ms for first 3.5 seconds)
-          let attempts = 0;
-          autoRetryTimer = setInterval(() => {
-            attempts++;
-            unlockAudio();
-            if ((audioCtx && audioCtx.state === 'running') || attempts > 35) {
-              clearInterval(autoRetryTimer);
-            }
-          }, 100);
-
         } catch (err) {
           console.warn('NDRRMC audio synthesis error:', err);
-          if (sirenEl) {
-            sirenEl.volume = 1.0;
-            sirenEl.currentTime = 0;
-            sirenEl.loop = true;
-            sirenEl.play().catch(e => console.warn(e));
+          const currentSiren = sirenRef.current || document.getElementById('siren-audio');
+          if (currentSiren) {
+            currentSiren.volume = 1.0;
+            currentSiren.currentTime = 0;
+            currentSiren.loop = true;
+            currentSiren.play().catch(e => console.warn(e));
           }
         }
       };
@@ -496,13 +492,59 @@ const EmergencyBroadcastHandler = () => {
                 backgroundColor: 'rgba(0,0,0,0.02)',
                 padding: '12px 14px',
                 borderRadius: '12px',
-                border: '1px solid var(--border-color, #f1f5f9)',
                 textAlign: 'left',
                 width: '100%',
                 whiteSpace: 'pre-line'
               }}>
                 {displayMessage}
               </div>
+
+              {/* Emergency Audio State & Tap-to-Sound Trigger */}
+              {!isAudioActive ? (
+                <div 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.unlockBroadcastAudio) window.unlockBroadcastAudio();
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    backgroundColor: '#fee2e2',
+                    border: `2px dashed ${accentColor}`,
+                    borderRadius: '12px',
+                    color: accentColor,
+                    fontWeight: '900',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    animation: 'pulse 1.2s infinite'
+                  }}
+                >
+                  <span style={{ fontSize: '18px' }}>🔊</span> TAP TO SOUND EMERGENCY SIREN
+                </div>
+              ) : (
+                <div 
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    border: `1px solid ${accentColor}`,
+                    borderRadius: '10px',
+                    color: accentColor,
+                    fontWeight: '800',
+                    fontSize: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span>🚨</span> EMERGENCY SIREN ACTIVE (FULL VOLUME)
+                </div>
+              )}
 
               {/* Big Acknowledge / Silence Siren Button */}
               <button 
