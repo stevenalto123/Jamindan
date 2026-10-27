@@ -1,23 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { PhoneCall, ShieldAlert, Heart, Building2, MapPin, Plus, Edit, Trash2, X, Search, Clock, Zap, Siren, Hospital } from 'lucide-react';
+import {
+  PhoneCall, ShieldAlert, Heart, MapPin, Plus, Edit, Trash2,
+  X, Search, Clock, Zap, Siren, Copy, Check, Building2
+} from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 
-// ─── Agency Type Detection ─────────────────────────────────────────────────
-const getAgencyMeta = (name) => {
+// ─── Agency Type & Category Detection ──────────────────────────────────────
+const getAgencyMeta = (name = '', barangay = '') => {
   const lower = name.toLowerCase();
-  if (lower.includes('police') || lower.includes('pnp'))
-    return { icon: ShieldAlert, color: '#1a5276', bg: '#d6eaf8', label: 'Police' };
-  if (lower.includes('fire') || lower.includes('bfp'))
-    return { icon: Siren, color: '#c0392b', bg: '#fdf2f2', label: 'Fire' };
-  if (lower.includes('health') || lower.includes('rhu') || lower.includes('hospital') || lower.includes('medical') || lower.includes('centrum'))
-    return { icon: Heart, color: '#1a7a4a', bg: '#eafaf1', label: 'Medical' };
-  if (lower.includes('mdrrmo') || lower.includes('response') || lower.includes('disaster'))
-    return { icon: ShieldAlert, color: '#784212', bg: '#fdebd0', label: 'MDRRMO' };
-  if (lower.includes('capelco') || lower.includes('electric') || lower.includes('power'))
-    return { icon: Zap, color: '#7d6608', bg: '#fef9e7', label: 'Electric' };
-  return { icon: PhoneCall, color: '#1f618d', bg: '#d6eaf8', label: 'Other' };
+  if (barangay) {
+    return { icon: MapPin, color: '#0284c7', bg: 'rgba(2, 132, 199, 0.1)', label: `Brgy. ${barangay}`, category: 'barangay' };
+  }
+  if (lower.includes('mdrrmo') || lower.includes('response') || lower.includes('disaster')) {
+    return { icon: ShieldAlert, color: '#ea580c', bg: 'rgba(234, 88, 12, 0.1)', label: 'MDRRMO Rescue', category: 'emergency' };
+  }
+  if (lower.includes('police') || lower.includes('pnp')) {
+    return { icon: ShieldAlert, color: '#2563eb', bg: 'rgba(37, 99, 235, 0.1)', label: 'Police (PNP)', category: 'emergency' };
+  }
+  if (lower.includes('fire') || lower.includes('bfp')) {
+    return { icon: Siren, color: '#dc2626', bg: 'rgba(220, 38, 38, 0.1)', label: 'Fire Protection (BFP)', category: 'emergency' };
+  }
+  if (lower.includes('capelco') || lower.includes('electric') || lower.includes('power')) {
+    return { icon: Zap, color: '#d97706', bg: 'rgba(217, 119, 6, 0.1)', label: 'Power Utility', category: 'emergency' };
+  }
+  if (lower.includes('municipal health') || lower.includes('rhu')) {
+    return { icon: Heart, color: '#059669', bg: 'rgba(5, 150, 105, 0.1)', label: 'Municipal Health (RHU)', category: 'emergency' };
+  }
+  if (lower.includes('hospital') || lower.includes('medical') || lower.includes('centrum') || lower.includes('health')) {
+    return { icon: Heart, color: '#059669', bg: 'rgba(5, 150, 105, 0.1)', label: 'Hospital / Medical', category: 'medical' };
+  }
+  return { icon: Building2, color: '#4f46e5', bg: 'rgba(79, 70, 229, 0.1)', label: 'Emergency Line', category: 'emergency' };
 };
 
 // ─── Actual Jamindan Hotlines (fallback data) ─────────────────────────────
@@ -48,6 +62,8 @@ const Hotlines = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [copiedNum, setCopiedNum] = useState('');
   const [recentHotlines, setRecentHotlines] = useState(() => {
     const saved = localStorage.getItem('recentHotlines');
     return saved ? JSON.parse(saved) : [];
@@ -65,10 +81,10 @@ const Hotlines = () => {
         setHotlines(res.data);
         localStorage.setItem('cached_hotlines', JSON.stringify(res.data));
       } else {
-        throw new Error("No data");
+        throw new Error('No data');
       }
     } catch (err) {
-      console.warn("Offline or API failed, using fallback hotlines.", err);
+      console.warn('Offline or API failed, using fallback hotlines.', err);
       const cached = localStorage.getItem('cached_hotlines');
       setHotlines(cached ? JSON.parse(cached) : JAMINDAN_FALLBACK);
     } finally {
@@ -117,6 +133,12 @@ const Hotlines = () => {
     }
   };
 
+  const handleCopy = (num) => {
+    navigator.clipboard.writeText(num);
+    setCopiedNum(num);
+    setTimeout(() => setCopiedNum(''), 1800);
+  };
+
   const handleCall = async (e, hotline, number) => {
     e.preventDefault();
     const newRecent = { ...hotline, contact_number: number };
@@ -129,9 +151,14 @@ const Hotlines = () => {
     try {
       await axios.post('/api/emergency/hotlines/log', { hotline_name: hotline.agency_name, hotline_number: number });
     } catch (err) {
-      console.warn("Failed to log call intent", err);
+      console.warn('Failed to log call intent', err);
     }
     window.location.href = `tel:${number.replace(/\s+/g, '').replace(/[()]/g, '')}`;
+  };
+
+  const clearRecent = () => {
+    setRecentHotlines([]);
+    localStorage.removeItem('recentHotlines');
   };
 
   if (loading) {
@@ -144,204 +171,416 @@ const Hotlines = () => {
     h.contact_number.includes(searchQuery)
   );
 
-  const municipalHotlines = filteredHotlines.filter(h => !h.barangay);
+  const emergencyUnits = filteredHotlines.filter(h => !h.barangay && getAgencyMeta(h.agency_name).category === 'emergency');
+  const medicalUnits = filteredHotlines.filter(h => !h.barangay && getAgencyMeta(h.agency_name).category === 'medical');
   const barangayHotlines = filteredHotlines.filter(h => h.barangay);
 
-  return (
-    <div className="content-body" style={{ maxWidth: '1100px', paddingBottom: '60px' }}>
+  const renderHotlineCard = (hotline) => {
+    const meta = getAgencyMeta(hotline.agency_name, hotline.barangay);
+    const Icon = meta.icon;
+    const numbers = hotline.contact_number.split('/').map(n => n.trim()).filter(Boolean);
 
-      {error && <div className="alert alert-danger" style={{ fontSize: '13px', padding: '12px 16px', marginBottom: '20px', borderRadius: '8px' }}>{error}</div>}
-
-      {/* Header row: Admin button */}
-      {isAdmin && (
-        <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={() => handleOpenModal()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Plus size={18} /> Add New Hotline
-          </button>
-        </div>
-      )}
-
-      {/* Search Bar */}
-      <div style={{ marginBottom: '28px', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: '50%', left: '16px', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}>
-          <Search size={20} />
-        </div>
-        <input
-          type="text"
-          placeholder={t('searchHotlines') || 'Search by name, barangay, or number...'}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ width: '100%', padding: '14px 14px 14px 48px', borderRadius: '12px', border: '1px solid var(--border-color)', fontSize: '15px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)', boxSizing: 'border-box', boxShadow: 'var(--shadow-sm)' }}
-        />
-      </div>
-
-      {/* ─── Recently Called Section ───────────────────────────────── */}
-      {recentHotlines.length > 0 && !searchQuery && (
-        <div style={{ marginBottom: '36px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              <Clock size={18} color="var(--primary-color)" /> {t('recentHotlines') || 'Recent Hotlines'}
-            </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-            {recentHotlines.map((hotline, idx) => {
-              const meta = getAgencyMeta(hotline.agency_name);
-              const Icon = meta.icon;
-              return (
-                <div key={`recent-${idx}`} className="glass-card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px', borderLeft: `4px solid ${meta.color}` }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: meta.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon size={18} color={meta.color} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{hotline.agency_name}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-light)' }}>{hotline.contact_number.split('/')[0].trim()}</div>
-                  </div>
-                  <a
-                    href={`tel:${hotline.contact_number.split('/')[0].trim().replace(/\s+/g, '').replace(/[()]/g, '')}`}
-                    onClick={(e) => handleCall(e, hotline, hotline.contact_number.split('/')[0].trim())}
-                    style={{ padding: '8px 14px', fontSize: '12px', fontWeight: '700', color: '#fff', backgroundColor: meta.color, borderRadius: '8px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}
-                  >
-                    <PhoneCall size={13} /> {t('call') || 'Call'}
-                  </a>
-                </div>
-              );
-            })}
+    return (
+      <div
+        key={hotline.id}
+        className="glass-card"
+        style={{
+          padding: '16px',
+          borderRadius: '12px',
+          border: '1px solid var(--border-color)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          gap: '14px',
+          backgroundColor: 'var(--card-bg)',
+          boxShadow: 'none'
+        }}
+      >
+        {/* Top Row: Icon + Agency Info + Admin Actions */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', minWidth: 0 }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              backgroundColor: meta.bg,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <Icon size={20} color={meta.color} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <span style={{
+                display: 'inline-block',
+                fontSize: '10px',
+                fontWeight: '700',
+                color: meta.color,
+                textTransform: 'uppercase',
+                letterSpacing: '0.4px',
+                marginBottom: '2px'
+              }}>
+                {meta.label}
+              </span>
+              <h4 style={{
+                margin: 0,
+                fontSize: '14px',
+                fontWeight: '700',
+                color: 'var(--text-main)',
+                lineHeight: '1.35'
+              }}>
+                {hotline.agency_name}
+              </h4>
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* ─── Municipal Responders Section ─────────────────────────── */}
-      <div style={{ marginBottom: '36px' }}>
-        <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          <ShieldAlert size={18} color="#c0392b" /> {t('municipalResponders') || 'Municipal Responders'}
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
-          {municipalHotlines.map((hotline) => {
-            const meta = getAgencyMeta(hotline.agency_name);
-            const Icon = meta.icon;
-            const numbers = hotline.contact_number.split('/').map(n => n.trim());
+          {isAdmin && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
+              <button
+                onClick={() => handleOpenModal(hotline)}
+                title="Edit Hotline"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '5px', borderRadius: '6px' }}
+              >
+                <Edit size={14} />
+              </button>
+              <button
+                onClick={() => handleDelete(hotline.id)}
+                title="Delete Hotline"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger-color)', padding: '5px', borderRadius: '6px' }}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Contact Number Rows */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {numbers.map((num, i) => {
+            const isCopied = copiedNum === num;
             return (
               <div
-                key={hotline.id}
-                className="glass-card"
-                style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '16px', padding: '20px', borderLeft: `4px solid ${meta.color}`, position: 'relative' }}
+                key={i}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  padding: '7px 10px',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--card-alt)',
+                  border: '1px solid var(--border-color)'
+                }}
               >
-                {/* Agency Type Icon */}
-                <div style={{ width: '52px', height: '52px', borderRadius: '14px', backgroundColor: meta.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon size={24} color={meta.color} />
+                <span style={{
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: 'var(--text-main)',
+                  fontVariantNumeric: 'tabular-nums',
+                  letterSpacing: '0.2px'
+                }}>
+                  {num}
+                </span>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(num)}
+                    title="Copy number"
+                    style={{
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '6px',
+                      padding: '5px 7px',
+                      cursor: 'pointer',
+                      color: isCopied ? '#10b981' : 'var(--text-muted)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {isCopied ? <Check size={13} /> : <Copy size={13} />}
+                  </button>
+                  <a
+                    href={`tel:${num.replace(/\s+/g, '').replace(/[()]/g, '')}`}
+                    onClick={(e) => handleCall(e, hotline, num)}
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      color: '#fff',
+                      textDecoration: 'none',
+                      backgroundColor: 'var(--primary-color)',
+                      padding: '5px 11px',
+                      borderRadius: '6px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <PhoneCall size={12} /> {t('call') || 'Call'}
+                  </a>
                 </div>
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {/* Agency Type Badge */}
-                  <div style={{ marginBottom: '6px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '800', color: meta.color, backgroundColor: meta.bg, padding: '2px 8px', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      {meta.label}
-                    </span>
-                  </div>
-
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '15px', fontWeight: '800', color: 'var(--text-main)', lineHeight: '1.3' }}>{hotline.agency_name}</h4>
-
-                  {/* Call Buttons - one per number */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {numbers.map((num, i) => (
-                      <a
-                        key={i}
-                        href={`tel:${num.replace(/\s+/g, '').replace(/[()]/g, '')}`}
-                        onClick={(e) => handleCall(e, hotline, num)}
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: '700',
-                          color: '#fff',
-                          textDecoration: 'none',
-                          backgroundColor: meta.color,
-                          padding: '8px 14px',
-                          borderRadius: '8px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          boxShadow: `0 3px 8px ${meta.color}40`
-                        }}
-                      >
-                        <PhoneCall size={14} /> {num}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-
-                {isAdmin && (
-                  <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '4px' }}>
-                    <button onClick={() => handleOpenModal(hotline)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><Edit size={15} /></button>
-                    <button onClick={() => handleDelete(hotline.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger-color)', padding: '4px' }}><Trash2 size={15} /></button>
-                  </div>
-                )}
               </div>
             );
           })}
         </div>
       </div>
+    );
+  };
 
-      {/* ─── Barangay Emergency Desks Section ─────────────────────── */}
-      <div>
-        <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          <MapPin size={18} color="#2980b9" /> {t('barangayDesks') || 'Barangay Emergency Desks'}
-        </h3>
+  return (
+    <div className="content-body" style={{ maxWidth: '1140px', paddingBottom: '48px' }}>
 
-        {barangayHotlines.length === 0 ? (
-          <div className="glass-card" style={{ padding: '32px', textAlign: 'center', border: '1px dashed var(--border-color)' }}>
-            <MapPin size={32} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
-            <p style={{ color: 'var(--text-light)', fontSize: '14px', margin: 0 }}>{t('noBarangayDesks') || 'No barangay emergency desks registered yet.'}</p>
+      {error && (
+        <div className="alert alert-danger" style={{ fontSize: '13px', padding: '12px 16px', marginBottom: '16px', borderRadius: '8px' }}>
+          {error}
+        </div>
+      )}
+
+      {/* ─── Unified Top Toolbar: Search + Category Filter + Admin Add ─── */}
+      <div
+        className="glass-card"
+        style={{
+          padding: '14px 16px',
+          marginBottom: '20px',
+          borderRadius: '12px',
+          border: '1px solid var(--border-color)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          boxShadow: 'none'
+        }}
+      >
+        {/* Search Input */}
+        <div style={{ position: 'relative', flex: '1 1 260px', minWidth: '220px' }}>
+          <Search size={16} style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+          <input
+            type="text"
+            placeholder={t('searchHotlines') || 'Search agency, hospital, or number...'}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '9px 32px 9px 36px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-color)',
+              fontSize: '13px',
+              backgroundColor: 'var(--card-alt)',
+              color: 'var(--text-main)',
+              boxSizing: 'border-box'
+            }}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              style={{ position: 'absolute', top: '50%', right: '8px', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', display: 'flex' }}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* Category Filter Tabs */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
+          {[
+            { id: 'all', label: 'All Directory', count: filteredHotlines.length },
+            { id: 'emergency', label: 'Emergency Units', count: emergencyUnits.length },
+            { id: 'medical', label: 'Hospitals & Medical', count: medicalUnits.length },
+            { id: 'barangay', label: 'Barangay Desks', count: barangayHotlines.length }
+          ].map(tab => {
+            const active = activeCategory === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveCategory(tab.id)}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: active ? '700' : '600',
+                  border: active ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
+                  backgroundColor: active ? 'var(--primary-color)' : 'var(--card-alt)',
+                  color: active ? '#fff' : 'var(--text-light)',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {tab.label}
+                <span style={{
+                  fontSize: '10px',
+                  fontWeight: '700',
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                  backgroundColor: active ? 'rgba(255,255,255,0.22)' : 'var(--card-bg)',
+                  color: active ? '#fff' : 'var(--text-muted)'
+                }}>
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+
+          {isAdmin && (
+            <button
+              onClick={() => handleOpenModal()}
+              className="btn btn-primary"
+              style={{ padding: '8px 14px', fontSize: '12px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}
+            >
+              <Plus size={15} /> Add Hotline
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ─── Recently Called Compact Strip ─────────────────────────── */}
+      {recentHotlines.length > 0 && !searchQuery && activeCategory === 'all' && (
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <Clock size={14} color="var(--primary-color)" /> {t('recentHotlines') || 'Recently Dialed'}
+            </span>
+            <button
+              type="button"
+              onClick={clearRecent}
+              style={{ background: 'none', border: 'none', fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 6px' }}
+            >
+              Clear
+            </button>
           </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-            {barangayHotlines.map((hotline) => {
-              const meta = getAgencyMeta(hotline.agency_name);
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
+            {recentHotlines.map((hotline, idx) => {
+              const meta = getAgencyMeta(hotline.agency_name, hotline.barangay);
               const Icon = meta.icon;
+              const primaryNum = hotline.contact_number.split('/')[0].trim();
               return (
                 <div
-                  key={hotline.id}
+                  key={`recent-${idx}`}
                   className="glass-card"
-                  style={{ padding: '18px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px', position: 'relative', borderLeft: `4px solid ${meta.color}` }}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    boxShadow: 'none'
+                  }}
                 >
-                  {isAdmin && (
-                    <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '4px' }}>
-                      <button onClick={() => handleOpenModal(hotline)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><Edit size={15} /></button>
-                      <button onClick={() => handleDelete(hotline.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger-color)', padding: '4px' }}><Trash2 size={15} /></button>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: meta.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={16} color={meta.color} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {hotline.agency_name}
                     </div>
-                  )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: meta.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Icon size={18} color={meta.color} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '10px', fontWeight: '800', color: '#2980b9', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Brgy. {hotline.barangay}</div>
-                      <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '700', color: 'var(--text-main)', lineHeight: '1.3' }}>{hotline.agency_name}</h4>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                      {primaryNum}
                     </div>
                   </div>
-
                   <a
-                    href={`tel:${hotline.contact_number.replace(/\s+/g, '').replace(/[()]/g, '')}`}
-                    onClick={(e) => handleCall(e, hotline, hotline.contact_number)}
-                    style={{ fontSize: '14px', fontWeight: '700', color: '#fff', textDecoration: 'none', backgroundColor: meta.color, padding: '10px 14px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: `0 3px 8px ${meta.color}40` }}
+                    href={`tel:${primaryNum.replace(/\s+/g, '').replace(/[()]/g, '')}`}
+                    onClick={(e) => handleCall(e, hotline, primaryNum)}
+                    style={{
+                      padding: '5px 10px',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      color: '#fff',
+                      backgroundColor: 'var(--primary-color)',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      whiteSpace: 'nowrap'
+                    }}
                   >
-                    <PhoneCall size={16} /> {hotline.contact_number}
+                    <PhoneCall size={11} /> {t('call') || 'Call'}
                   </a>
                 </div>
               );
             })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* ─── Section 1: Municipal Emergency Units ──────────────────── */}
+      {(activeCategory === 'all' || activeCategory === 'emergency') && emergencyUnits.length > 0 && (
+        <div style={{ marginBottom: '28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <ShieldAlert size={16} color="#ea580c" />
+            <h3 style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              {t('municipalResponders') || 'Municipal Emergency Units'}
+            </h3>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>({emergencyUnits.length})</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+            {emergencyUnits.map(renderHotlineCard)}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Section 2: Hospitals & Medical Centers ────────────────── */}
+      {(activeCategory === 'all' || activeCategory === 'medical') && medicalUnits.length > 0 && (
+        <div style={{ marginBottom: '28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <Heart size={16} color="#059669" />
+            <h3 style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Hospitals & Medical Centers
+            </h3>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>({medicalUnits.length})</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+            {medicalUnits.map(renderHotlineCard)}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Section 3: Barangay Emergency Desks ───────────────────── */}
+      {(activeCategory === 'all' || activeCategory === 'barangay') && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <MapPin size={16} color="#0284c7" />
+            <h3 style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              {t('barangayDesks') || 'Barangay Emergency Desks'}
+            </h3>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>({barangayHotlines.length})</span>
+          </div>
+
+          {barangayHotlines.length === 0 ? (
+            <div className="glass-card" style={{ padding: '24px', textAlign: 'center', borderRadius: '12px', border: '1px dashed var(--border-color)', boxShadow: 'none' }}>
+              <MapPin size={24} style={{ color: 'var(--text-muted)', marginBottom: '8px' }} />
+              <p style={{ color: 'var(--text-light)', fontSize: '13px', margin: 0 }}>
+                {t('noBarangayDesks') || 'No barangay emergency desks registered yet.'}
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+              {barangayHotlines.map(renderHotlineCard)}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ─── Admin Modal ──────────────────────────────────────────── */}
       {showModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '420px', padding: '28px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <PhoneCall size={20} color="var(--primary-color)" />
+          <div className="glass-card" style={{ width: '100%', maxWidth: '420px', padding: '24px', borderRadius: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
+              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <PhoneCall size={18} color="var(--primary-color)" />
                 {editingId ? 'Edit Hotline' : 'Add New Hotline'}
               </h3>
-              <button onClick={handleCloseModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={22} /></button>
+              <button onClick={handleCloseModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={20} /></button>
             </div>
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Agency / Unit Name *</label>
                 <input className="form-input" value={formData.agency_name} onChange={e => setFormData({ ...formData, agency_name: e.target.value })} required placeholder="e.g., Jamindan Police Station" />
@@ -356,8 +595,8 @@ const Hotlines = () => {
                 <input className="form-input" value={formData.barangay} onChange={e => setFormData({ ...formData, barangay: e.target.value })} placeholder="Leave blank for Municipal Hotlines" />
                 <small style={{ color: 'var(--text-muted)', fontSize: '11px' }}>If filled, appears under Barangay Desks section.</small>
               </div>
-              <button type="submit" className="btn btn-primary" style={{ height: '48px', marginTop: '8px', fontSize: '15px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <PhoneCall size={18} /> {editingId ? 'Save Changes' : 'Add Hotline'}
+              <button type="submit" className="btn btn-primary" style={{ height: '44px', marginTop: '6px', fontSize: '14px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <PhoneCall size={16} /> {editingId ? 'Save Changes' : 'Add Hotline'}
               </button>
             </form>
           </div>
