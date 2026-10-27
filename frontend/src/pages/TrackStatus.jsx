@@ -457,10 +457,10 @@ const TrackStatus = () => {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }} className="responsive-grid-col">
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'start' }} className="responsive-grid-col">
         {/* Left Side: Basic details & History */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div className="card">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="card" style={{ marginBottom: 0 }}>
             {/* Header: Report ID */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '16px' }}>
               <div>
@@ -659,14 +659,105 @@ const TrackStatus = () => {
               </div>
             </div>
           </div>
+
+          {/* Reporter Details & Paramedic Medical Handoff (Placed in Left Column to balance laptop layout) */}
+          {isStaff && (
+            <>
+              <div className="card" style={{ marginBottom: 0 }}>
+                <h3 className="card-title">Reporter Details</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', fontSize: '13px', marginTop: '10px' }}>
+                  <p style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <User size={16} style={{ color: 'var(--text-light)' }} />
+                    <strong>Name:</strong> {incident.reporter_name}
+                  </p>
+                  <p style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <Phone size={16} style={{ color: 'var(--text-light)' }} />
+                    <strong>Contact:</strong> {incident.reporter_phone}
+                  </p>
+                </div>
+              </div>
+
+              {/* PARAMEDIC MEDICAL HANDOFF */}
+              <div className="card" style={{ borderLeft: '4px solid #e74c3c', backgroundColor: '#fff5f5', marginBottom: 0 }}>
+                <h3 className="card-title" style={{ color: '#c0392b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Activity size={18} /> Paramedic Medical Handoff
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px', marginTop: '10px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ffcccc' }}>
+                      <div style={{ fontSize: '11px', color: '#7f8c8d', textTransform: 'uppercase' }}>Blood Type</div>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#c0392b' }}>{incident.reporter_blood_type || 'Unknown'}</div>
+                    </div>
+                    <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ffcccc' }}>
+                      <div style={{ fontSize: '11px', color: '#7f8c8d', textTransform: 'uppercase' }}>Allergies</div>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: incident.reporter_allergies ? '#d35400' : '#7f8c8d' }}>
+                        {incident.reporter_allergies || 'None listed'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ffcccc' }}>
+                    <div style={{ fontSize: '11px', color: '#7f8c8d', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertTriangle size={12} color="#e67e22" /> Medical Conditions
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: incident.reporter_medical_conditions ? '#d35400' : '#7f8c8d', marginTop: '4px' }}>
+                      {incident.reporter_medical_conditions || 'None listed'}
+                    </div>
+                  </div>
+
+                  {(incident.reporter_emergency_contact_name || incident.reporter_emergency_contact_phone) && (
+                    <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ffcccc' }}>
+                      <div style={{ fontSize: '11px', color: '#7f8c8d', textTransform: 'uppercase' }}>Emergency Contact</div>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2c3e50', marginTop: '4px' }}>
+                        {incident.reporter_emergency_contact_name} {incident.reporter_emergency_contact_phone ? `(${incident.reporter_emergency_contact_phone})` : ''}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* HOUSEHOLD MEMBERS (For Paramedics context) */}
+              {household && household.length > 0 && (
+                <div className="card" style={{ borderLeft: '4px solid #3498db', backgroundColor: '#f0f8ff', marginBottom: 0 }}>
+                  <h3 className="card-title" style={{ color: '#2980b9', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Users size={18} /> Household Members
+                  </h3>
+                  <div style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '10px' }}>
+                    Context for potential victims at the location
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {household.map(member => (
+                      <div key={member.id} style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #bde0fe', fontSize: '13px' }}>
+                        <div style={{ fontWeight: 'bold', color: '#2c3e50', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>{member.full_name}</span>
+                          <span style={{ color: '#7f8c8d' }}>{member.age} yrs • {member.gender}</span>
+                        </div>
+                        {member.medical_notes && (
+                          <div style={{ marginTop: '4px', color: '#e67e22', fontSize: '12px', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
+                            <AlertTriangle size={12} style={{ marginTop: '2px' }} />
+                            <span>{member.medical_notes}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Live Incident Chat Section (Inside Left Column to fill space cleanly) */}
+          <div className="no-print">
+            <IncidentChat incidentId={id} incidentStatus={incident.status} />
+          </div>
         </div>
 
         {/* Right Side: Map & Actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* Live Video Streaming Section */}
           {user?.role === 'Resident' && canResidentSeeStream && (
-            <div className="card no-print" style={{ borderColor: 'var(--primary-color)' }}>
+            <div className="card no-print" style={{ borderColor: 'var(--primary-color)', marginBottom: 0 }}>
               <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary-color)' }}>
                 <Video size={18} /> Live Incident Broadcast Active
               </h3>
@@ -678,7 +769,7 @@ const TrackStatus = () => {
           )}
 
           {isStaff && canResidentSeeStream && (
-            <div className="card no-print" style={{ backgroundColor: showLiveStream ? '#000' : 'var(--card-bg)' }}>
+            <div className="card no-print" style={{ backgroundColor: showLiveStream ? '#000' : 'var(--card-bg)', marginBottom: 0 }}>
               {!showLiveStream ? (
                 <button 
                   onClick={() => setShowLiveStream(true)}
@@ -702,7 +793,7 @@ const TrackStatus = () => {
 
           {/* Resource Recommendations (For Staff) */}
           {isStaff && (
-            <div className="card" style={{ backgroundColor: 'var(--card-alt)', borderColor: 'rgba(231, 76, 60, 0.2)' }}>
+            <div className="card" style={{ backgroundColor: 'var(--card-alt)', borderColor: 'rgba(231, 76, 60, 0.2)', marginBottom: 0 }}>
               <h3 className="card-title" style={{ color: 'var(--danger-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 🎒 Recommended Resources
               </h3>
@@ -719,7 +810,7 @@ const TrackStatus = () => {
 
           {/* Dispatcher Actions */}
           {user?.role === 'Admin' && (
-            <div className="card no-print" style={{ borderColor: 'rgba(59, 130, 246, 0.3)', marginBottom: '24px' }}>
+            <div className="card no-print" style={{ borderColor: 'rgba(59, 130, 246, 0.3)', marginBottom: 0 }}>
               <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6' }}>
                 <Navigation size={18} /> Dispatch Responder
               </h3>
@@ -814,7 +905,7 @@ const TrackStatus = () => {
           )}
 
           {isStaff && (
-            <div className="card no-print" style={{ borderColor: 'rgba(75, 142, 98, 0.3)' }}>
+            <div className="card no-print" style={{ borderColor: 'rgba(75, 142, 98, 0.3)', marginBottom: 0 }}>
               <h3 className="card-title">Update Status & Action Report</h3>
               <form onSubmit={handleStatusUpdateSubmit}>
                 <div className="form-group">
@@ -908,7 +999,7 @@ const TrackStatus = () => {
           )}
 
           {/* Location Map */}
-          <div className="card">
+          <div className="card" style={{ marginBottom: 0 }}>
             <h3 className="card-title">Location</h3>
             <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '12px' }}>
               📍 {incident.location_address ? incident.location_address : (incident.location_lat ? 'Current GPS Location' : `Barangay ${incident.reporter_barangay}`)}
@@ -936,98 +1027,7 @@ const TrackStatus = () => {
               } : null}
             />
           </div>
-
-          {/* Reporter details for dispatcher */}
-          {isStaff && (
-            <>
-              <div className="card">
-                <h3 className="card-title">Reporter Details</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px', marginTop: '10px' }}>
-                  <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <User size={16} style={{ color: 'var(--text-light)' }} />
-                    <strong>Name:</strong> {incident.reporter_name}
-                  </p>
-                  <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Phone size={16} style={{ color: 'var(--text-light)' }} />
-                    <strong>Contact:</strong> {incident.reporter_phone}
-                  </p>
-                </div>
-              </div>
-
-              {/* PARAMEDIC MEDICAL HANDOFF */}
-              <div className="card" style={{ borderLeft: '4px solid #e74c3c', backgroundColor: '#fff5f5' }}>
-                <h3 className="card-title" style={{ color: '#c0392b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Activity size={18} /> Paramedic Medical Handoff
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px', marginTop: '10px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ffcccc' }}>
-                      <div style={{ fontSize: '11px', color: '#7f8c8d', textTransform: 'uppercase' }}>Blood Type</div>
-                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#c0392b' }}>{incident.reporter_blood_type || 'Unknown'}</div>
-                    </div>
-                    <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ffcccc' }}>
-                      <div style={{ fontSize: '11px', color: '#7f8c8d', textTransform: 'uppercase' }}>Allergies</div>
-                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: incident.reporter_allergies ? '#d35400' : '#7f8c8d' }}>
-                        {incident.reporter_allergies || 'None listed'}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ffcccc' }}>
-                    <div style={{ fontSize: '11px', color: '#7f8c8d', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <AlertTriangle size={12} color="#e67e22" /> Medical Conditions
-                    </div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: incident.reporter_medical_conditions ? '#d35400' : '#7f8c8d', marginTop: '4px' }}>
-                      {incident.reporter_medical_conditions || 'None listed'}
-                    </div>
-                  </div>
-
-                  {(incident.reporter_emergency_contact_name || incident.reporter_emergency_contact_phone) && (
-                    <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #ffcccc' }}>
-                      <div style={{ fontSize: '11px', color: '#7f8c8d', textTransform: 'uppercase' }}>Emergency Contact</div>
-                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2c3e50', marginTop: '4px' }}>
-                        {incident.reporter_emergency_contact_name} {incident.reporter_emergency_contact_phone ? `(${incident.reporter_emergency_contact_phone})` : ''}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* HOUSEHOLD MEMBERS (For Paramedics context) */}
-              {household && household.length > 0 && (
-                <div className="card" style={{ borderLeft: '4px solid #3498db', backgroundColor: '#f0f8ff' }}>
-                  <h3 className="card-title" style={{ color: '#2980b9', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Users size={18} /> Household Members
-                  </h3>
-                  <div style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '10px' }}>
-                    Context for potential victims at the location
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {household.map(member => (
-                      <div key={member.id} style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #bde0fe', fontSize: '13px' }}>
-                        <div style={{ fontWeight: 'bold', color: '#2c3e50', display: 'flex', justifyContent: 'space-between' }}>
-                          <span>{member.full_name}</span>
-                          <span style={{ color: '#7f8c8d' }}>{member.age} yrs • {member.gender}</span>
-                        </div>
-                        {member.medical_notes && (
-                          <div style={{ marginTop: '4px', color: '#e67e22', fontSize: '12px', display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
-                            <AlertTriangle size={12} style={{ marginTop: '2px' }} />
-                            <span>{member.medical_notes}</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
         </div>
-      </div>
-
-      {/* Live Incident Chat Section */}
-      <div style={{ marginTop: '24px' }} className="no-print">
-        <IncidentChat incidentId={id} incidentStatus={incident.status} />
       </div>
 
       {/* Official Signatory Certification Block (Visible on PRINT / PDF) */}
