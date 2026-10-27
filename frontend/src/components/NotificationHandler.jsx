@@ -97,11 +97,11 @@ const NotificationHandler = () => {
           (target === 'RHU' && userAgency === 'MEDICAL') ||
           (target === 'BFP' && userAgency === 'FIRE') ||
           (target === 'MDRRMO' && userAgency === 'RESCUE');
-        if (isMatch) {
-          playSiren();
+        if (isMatch && String(data.updatedById) !== String(user.id)) {
+          playChime();
           showNotification(
-            `🚨 Inter-Agency Handoff (${data.leadAgency})`,
-            `Incident ${data.code} has been handed off to ${data.leadAgency}.${data.notes ? ' Notes: ' + data.notes : ''}`
+            `📋 Inter-Agency Coordination (${data.leadAgency})`,
+            `Incident ${data.code}: ${data.notes ? data.notes : 'Lead agency updated to ' + data.leadAgency}`
           );
         }
       }

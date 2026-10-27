@@ -532,7 +532,8 @@ router.put('/:id/agency', authRequired, requireRole(['Admin', 'Responder']), asy
         code: incident.code,
         type: incident.type,
         leadAgency: targetLead,
-        notes: agency_notes || ''
+        notes: agency_notes || '',
+        updatedById: req.user.id
       });
     }
 
