@@ -19,7 +19,9 @@ const buildFilterConditions = (query, tableAlias = 'i') => {
     conditions.push(`DATE(${tableAlias}.created_at) >= DATE(?)`);
     params.push(startDate);
   } else if (period === 'today') {
-    conditions.push(`DATE(${tableAlias}.created_at) = CURDATE()`);
+    const todayPst = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    conditions.push(`DATE(${tableAlias}.created_at) = ?`);
+    params.push(todayPst);
   } else if (period === 'week') {
     conditions.push(`${tableAlias}.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)`);
   } else if (period === 'month') {

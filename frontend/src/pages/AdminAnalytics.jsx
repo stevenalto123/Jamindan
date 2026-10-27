@@ -46,13 +46,15 @@ const AdminAnalytics = () => {
   const [agencyReports, setAgencyReports] = useState([]);
   const [casualtyReport, setCasualtyReport] = useState({ summary: {}, impactList: [] });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
 
   // Map refs
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const heatLayerRef = useRef(null);
 
-  // Build filter query params
+  // Build filter query params (with cache-busting timestamp so Refresh always fetches fresh data)
   const buildQueryParams = () => {
     const params = new URLSearchParams();
     if (period === 'custom') {
@@ -63,14 +65,19 @@ const AdminAnalytics = () => {
     }
     if (selectedBarangay !== 'All') params.append('barangay', selectedBarangay);
     if (selectedAgency !== 'All') params.append('agency', selectedAgency);
+    params.append('_t', Date.now().toString());
     return params.toString();
   };
 
-  const fetchAllData = async () => {
-    setLoading(true);
+  const fetchAllData = async (isManualRefresh = false) => {
+    if (isManualRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     const qs = buildQueryParams();
     try {
-      const [sumRes, typeRes, heatRes, logRes, brgyRes, agencyRes, casRes] = await Promise.all([
+      const results = await Promise.allSettled([
         axios.get(`/api/analytics/summary?${qs}`),
         axios.get(`/api/analytics/by-type?${qs}`),
         axios.get(`/api/analytics/heatmap?${qs}`),
@@ -80,27 +87,39 @@ const AdminAnalytics = () => {
         axios.get(`/api/analytics/reports/casualty-damage?${qs}`)
       ]);
 
-      setSummary(sumRes.data);
-      setTypeData(typeRes.data);
-      setHeatData(heatRes.data);
-      setMasterLogs(logRes.data.reports || []);
-      setBarangayReports(brgyRes.data.barangays || []);
-      setAgencyReports(agencyRes.data.agencyPerformance || []);
-      setCasualtyReport(casRes.data || { summary: {}, impactList: [] });
+      const [sumRes, typeRes, heatRes, logRes, brgyRes, agencyRes, casRes] = results;
+
+      if (sumRes.status === 'fulfilled') setSummary(sumRes.value.data);
+      if (typeRes.status === 'fulfilled') setTypeData(typeRes.value.data);
+      if (heatRes.status === 'fulfilled') setHeatData(heatRes.value.data);
+      if (logRes.status === 'fulfilled') setMasterLogs(logRes.value.data.reports || []);
+      if (brgyRes.status === 'fulfilled') setBarangayReports(brgyRes.value.data.barangays || []);
+      if (agencyRes.status === 'fulfilled') setAgencyReports(agencyRes.value.data.agencyPerformance || []);
+      if (casRes.status === 'fulfilled') setCasualtyReport(casRes.value.data || { summary: {}, impactList: [] });
+
+      setLastUpdated(new Date());
     } catch (err) {
       console.error('Failed to fetch analytics and reports:', err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    fetchAllData();
+    fetchAllData(false);
   }, [period, startDate, endDate, selectedBarangay, selectedAgency]);
 
   // Initialize and update Map / Heatmap when on 'overview' tab
   useEffect(() => {
-    if (loading || activeTab !== 'overview' || !mapContainerRef.current) return;
+    if (activeTab !== 'overview' || !mapContainerRef.current) {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        heatLayerRef.current = null;
+      }
+      return;
+    }
 
     if (!mapRef.current) {
       mapRef.current = L.map(mapContainerRef.current).setView([11.4287, 122.4842], 13);
@@ -109,10 +128,12 @@ const AdminAnalytics = () => {
       }).addTo(mapRef.current);
     }
 
-    if (heatData.length > 0) {
-      if (heatLayerRef.current) {
-        mapRef.current.removeLayer(heatLayerRef.current);
-      }
+    if (heatLayerRef.current && mapRef.current) {
+      mapRef.current.removeLayer(heatLayerRef.current);
+      heatLayerRef.current = null;
+    }
+
+    if (heatData.length > 0 && mapRef.current) {
       window.L = L;
       import('leaflet.heat').then(() => {
         if (L.heatLayer && mapRef.current) {
@@ -125,14 +146,17 @@ const AdminAnalytics = () => {
         }
       }).catch(err => console.error('Failed to load heatmap layer:', err));
     }
+  }, [activeTab, heatData]);
 
+  useEffect(() => {
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
+        heatLayerRef.current = null;
       }
     };
-  }, [loading, activeTab, heatData]);
+  }, []);
 
   // Print handler
   const handlePrint = () => {
@@ -239,6 +263,12 @@ const AdminAnalytics = () => {
 
   return (
     <div className="content-body" style={{ maxWidth: '1350px', margin: '0 auto', padding: '20px' }}>
+      <style>{`
+        @keyframes analyticsSpin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
       
       {/* Top Action Bar (Screen Only) */}
       <div className="no-print" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
@@ -271,7 +301,7 @@ const AdminAnalytics = () => {
           Municipal Disaster Risk Reduction & Management Office (MDRRMO)
         </div>
         <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px' }}>
-          Official Emergency Monitoring & Disaster Documentation Report • Generated on {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} at {new Date().toLocaleTimeString()}
+          Official Emergency Monitoring & Disaster Documentation Report • Generated on {lastUpdated.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} at {lastUpdated.toLocaleTimeString()}
         </div>
       </div>
 
@@ -359,11 +389,33 @@ const AdminAnalytics = () => {
           </div>
 
           <button 
-            onClick={fetchAllData}
+            type="button"
+            onClick={() => fetchAllData(true)}
+            disabled={loading || refreshing}
             title="Refresh Data"
-            style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'transparent', cursor: 'pointer', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}
+            style={{
+              padding: '8px 14px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-color)',
+              backgroundColor: refreshing ? 'var(--bg-color)' : 'transparent',
+              cursor: (loading || refreshing) ? 'wait' : 'pointer',
+              color: 'var(--text-main)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '13px',
+              fontWeight: '700',
+              opacity: (loading || refreshing) ? 0.75 : 1,
+              transition: 'all 0.2s'
+            }}
           >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
+            <RefreshCw
+              size={14}
+              style={{
+                animation: (loading || refreshing) ? 'analyticsSpin 0.8s linear infinite' : 'none'
+              }}
+            />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
       </div>
