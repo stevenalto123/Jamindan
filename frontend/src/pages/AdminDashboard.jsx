@@ -60,6 +60,9 @@ const AdminDashboard = () => {
   const { user, setUser } = useAuth();
   const [data, setData] = useState(null);
   const [safetyData, setSafetyData] = useState({ summary: { safeCount: 0, evacuatedCount: 0, needsHelpCount: 0 }, recentCheckins: [] });
+  const [safetyFilter, setSafetyFilter] = useState('All');
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
+  const [safetySearch, setSafetySearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [togglingDuty, setTogglingDuty] = useState(false);
   const [broadcastTitle, setBroadcastTitle] = useState('');
@@ -69,6 +72,16 @@ const AdminDashboard = () => {
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [broadcasting, setBroadcasting] = useState(false);
   const navigate = useNavigate();
+
+  const handleMarkResidentSafe = async (checkinId) => {
+    try {
+      await axios.put(`/api/notifications/safety-checkins/${checkinId}/status`, { status: 'Safe' });
+      fetchDashboardStats();
+    } catch (err) {
+      console.error('Failed to update resident status', err);
+      alert('Failed to update resident safety status.');
+    }
+  };
 
   const handleSelectPreset = (preset) => {
     setBroadcastTitle(preset.title);
@@ -434,67 +447,179 @@ const AdminDashboard = () => {
           </div>
 
           {/* Resident Safety Check-In Monitor */}
-          <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-            <div style={{ fontWeight: '800', fontSize: '18px', color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <CheckCircle size={20} color="#059669" /> Resident Safety Check-In Monitor
+          <div style={{ background: 'var(--card-bg)', padding: '22px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+              <div style={{ fontWeight: '800', fontSize: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle size={19} color="#059669" /> Resident Safety Check-In
+              </div>
+              {safetyData?.recentCheckins?.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowSafetyModal(true)}
+                  style={{
+                    background: 'var(--card-alt)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    color: 'var(--primary-color)',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  View All ({safetyData.recentCheckins.length})
+                </button>
+              )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '14px' }}>
-              <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
-                <div style={{ fontSize: '22px', fontWeight: '800', color: '#059669' }}>{safetyData?.summary?.safeCount || 0}</div>
+            {/* Interactive Filter Stat Boxes (Click to filter by status) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '14px' }}>
+              <button
+                type="button"
+                onClick={() => setSafetyFilter(prev => prev === 'Safe' ? 'All' : 'Safe')}
+                style={{
+                  background: '#ecfdf5',
+                  border: safetyFilter === 'Safe' ? '2px solid #059669' : '1px solid #a7f3d0',
+                  borderRadius: '12px',
+                  padding: '10px 6px',
+                  textAlign: 'center',
+                  cursor: 'pointer'
+                }}
+                title="Click to filter Safe residents"
+              >
+                <div style={{ fontSize: '20px', fontWeight: '800', color: '#059669' }}>{safetyData?.summary?.safeCount || 0}</div>
                 <div style={{ fontSize: '11px', fontWeight: '700', color: '#065f46' }}>✅ Safe</div>
-              </div>
-              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
-                <div style={{ fontSize: '22px', fontWeight: '800', color: '#2563eb' }}>{safetyData?.summary?.evacuatedCount || 0}</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSafetyFilter(prev => prev === 'At Evacuation Center' ? 'All' : 'At Evacuation Center')}
+                style={{
+                  background: '#eff6ff',
+                  border: safetyFilter === 'At Evacuation Center' ? '2px solid #2563eb' : '1px solid #bfdbfe',
+                  borderRadius: '12px',
+                  padding: '10px 6px',
+                  textAlign: 'center',
+                  cursor: 'pointer'
+                }}
+                title="Click to filter Evacuated residents"
+              >
+                <div style={{ fontSize: '20px', fontWeight: '800', color: '#2563eb' }}>{safetyData?.summary?.evacuatedCount || 0}</div>
                 <div style={{ fontSize: '11px', fontWeight: '700', color: '#1e40af' }}>🏛️ Evacuated</div>
-              </div>
-              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
-                <div style={{ fontSize: '22px', fontWeight: '800', color: '#dc2626' }}>{safetyData?.summary?.needsHelpCount || 0}</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSafetyFilter(prev => prev === 'Needs Assistance' ? 'All' : 'Needs Assistance')}
+                style={{
+                  background: '#fef2f2',
+                  border: safetyFilter === 'Needs Assistance' ? '2px solid #dc2626' : '1px solid #fecaca',
+                  borderRadius: '12px',
+                  padding: '10px 6px',
+                  textAlign: 'center',
+                  cursor: 'pointer'
+                }}
+                title="Click to filter residents who Need Help"
+              >
+                <div style={{ fontSize: '20px', fontWeight: '800', color: '#dc2626' }}>{safetyData?.summary?.needsHelpCount || 0}</div>
                 <div style={{ fontSize: '11px', fontWeight: '700', color: '#991b1b' }}>🆘 Needs Help</div>
-              </div>
+              </button>
             </div>
 
-            {safetyData?.recentCheckins?.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '190px', overflowY: 'auto' }}>
-                {safetyData.recentCheckins.slice(0, 5).map(item => (
-                  <div
-                    key={item.id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '8px 12px',
-                      borderRadius: '10px',
-                      backgroundColor: item.status === 'Needs Assistance' ? '#fef2f2' : '#f8fafc',
-                      border: `1px solid ${item.status === 'Needs Assistance' ? '#fca5a5' : '#e2e8f0'}`
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>
-                        {item.full_name} <span style={{ fontWeight: '600', color: 'var(--text-light)' }}>({item.barangay})</span>
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-light)' }}>
-                        📞 {item.phone} • {new Date(item.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    </div>
-                    <span style={{
-                      fontSize: '11px',
-                      fontWeight: '800',
-                      padding: '3px 8px',
-                      borderRadius: '999px',
-                      backgroundColor: item.status === 'Safe' ? '#d1fae5' : item.status === 'At Evacuation Center' ? '#dbeafe' : '#dc2626',
-                      color: item.status === 'Safe' ? '#065f46' : item.status === 'At Evacuation Center' ? '#1e40af' : '#fff'
-                    }}>
-                      {item.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ fontSize: '12px', color: 'var(--text-light)', textAlign: 'center', padding: '12px 0' }}>
-                No resident check-ins recorded yet.
+            {safetyFilter !== 'All' && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                <span>Filtering: <strong>{safetyFilter}</strong></span>
+                <button type="button" onClick={() => setSafetyFilter('All')} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '11px', fontWeight: '700', cursor: 'pointer', padding: 0 }}>
+                  Show All
+                </button>
               </div>
             )}
+
+            {(() => {
+              const filteredList = (safetyData?.recentCheckins || []).filter(item =>
+                safetyFilter === 'All' ? true : item.status === safetyFilter
+              );
+
+              if (filteredList.length === 0) {
+                return (
+                  <div style={{ fontSize: '12px', color: 'var(--text-light)', textAlign: 'center', padding: '16px 0' }}>
+                    {safetyFilter === 'All' ? 'No resident check-ins recorded yet.' : `No residents currently marked as "${safetyFilter}".`}
+                  </div>
+                );
+              }
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '240px', overflowY: 'auto', paddingRight: '2px' }}>
+                  {filteredList.map(item => {
+                    const isNeedsHelp = item.status === 'Needs Assistance';
+                    const isEvac = item.status === 'At Evacuation Center';
+                    return (
+                      <div
+                        key={item.id}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '10px 12px',
+                          borderRadius: '10px',
+                          backgroundColor: isNeedsHelp ? 'rgba(239, 68, 68, 0.06)' : 'var(--card-alt)',
+                          border: `1px solid ${isNeedsHelp ? 'rgba(239, 68, 68, 0.35)' : 'var(--border-color)'}`
+                        }}
+                      >
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {item.full_name} <span style={{ fontWeight: '600', color: 'var(--text-light)' }}>({item.barangay})</span>
+                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                            <a href={`tel:${item.phone}`} style={{ color: 'var(--primary-color)', textDecoration: 'none', fontWeight: '700' }}>
+                              📞 {item.phone}
+                            </a>
+                            <span>• {new Date(item.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          <span style={{
+                            fontSize: '10px',
+                            fontWeight: '800',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            whiteSpace: 'nowrap',
+                            backgroundColor: item.status === 'Safe' ? '#d1fae5' : isEvac ? '#dbeafe' : '#dc2626',
+                            color: item.status === 'Safe' ? '#065f46' : isEvac ? '#1e40af' : '#fff'
+                          }}>
+                            {isNeedsHelp ? '🆘 Needs Help' : isEvac ? '🏛️ Evacuated' : '✅ Safe'}
+                          </span>
+
+                          {isNeedsHelp && (
+                            <button
+                              type="button"
+                              onClick={() => handleMarkResidentSafe(item.id)}
+                              title="Mark as Assisted / Safe"
+                              style={{
+                                backgroundColor: '#059669',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '4px 8px',
+                                fontSize: '10px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              ✓ Assisted
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
 
           {data?.recentCallLogs && data.recentCallLogs.length > 0 && (
@@ -804,6 +929,192 @@ const AdminDashboard = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Full Resident Safety Check-In Directory Modal */}
+      {showSafetyModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            zIndex: 3000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setShowSafetyModal(false)}
+        >
+          <div
+            className="glass-card"
+            style={{
+              width: '100%',
+              maxWidth: '680px',
+              maxHeight: '85vh',
+              borderRadius: '16px',
+              padding: '20px 22px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              backgroundColor: 'var(--card-bg)',
+              border: '1px solid var(--border-color)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800', fontSize: '16px', color: 'var(--text-main)' }}>
+                <CheckCircle size={20} color="#059669" />
+                Resident Safety Check-In Directory ({safetyData?.recentCheckins?.length || 0})
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSafetyModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Search + Filter Bar */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', justifyContent: 'space-between' }}>
+              <input
+                type="text"
+                placeholder="Search resident name, barangay, or phone..."
+                value={safetySearch}
+                onChange={e => setSafetySearch(e.target.value)}
+                style={{
+                  flex: '1 1 220px',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--card-alt)',
+                  color: 'var(--text-main)',
+                  fontSize: '13px'
+                }}
+              />
+
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {[
+                  { id: 'All', label: 'All' },
+                  { id: 'Needs Assistance', label: `🆘 Needs Help (${safetyData?.summary?.needsHelpCount || 0})` },
+                  { id: 'At Evacuation Center', label: `🏛️ Evacuated (${safetyData?.summary?.evacuatedCount || 0})` },
+                  { id: 'Safe', label: `✅ Safe (${safetyData?.summary?.safeCount || 0})` }
+                ].map(tab => {
+                  const active = safetyFilter === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setSafetyFilter(tab.id)}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: '8px',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        border: active ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
+                        backgroundColor: active ? 'var(--primary-color)' : 'var(--card-alt)',
+                        color: active ? '#fff' : 'var(--text-light)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Scrollable Resident List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '55vh', paddingRight: '4px' }}>
+              {(() => {
+                const modalList = (safetyData?.recentCheckins || []).filter(item => {
+                  const matchStatus = safetyFilter === 'All' || item.status === safetyFilter;
+                  const q = safetySearch.toLowerCase();
+                  const matchQuery = !q ||
+                    item.full_name?.toLowerCase().includes(q) ||
+                    item.barangay?.toLowerCase().includes(q) ||
+                    item.phone?.includes(q);
+                  return matchStatus && matchQuery;
+                });
+
+                if (modalList.length === 0) {
+                  return (
+                    <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                      No matching resident check-ins found.
+                    </div>
+                  );
+                }
+
+                return modalList.map(item => {
+                  const isNeedsHelp = item.status === 'Needs Assistance';
+                  const isEvac = item.status === 'At Evacuation Center';
+                  return (
+                    <div
+                      key={item.id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '12px 14px',
+                        borderRadius: '10px',
+                        backgroundColor: isNeedsHelp ? 'rgba(239, 68, 68, 0.06)' : 'var(--card-alt)',
+                        border: `1px solid ${isNeedsHelp ? 'rgba(239, 68, 68, 0.35)' : 'var(--border-color)'}`
+                      }}
+                    >
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-main)' }}>
+                          {item.full_name} <span style={{ fontWeight: '600', color: 'var(--text-light)' }}>• Brgy. {item.barangay}</span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                          <a href={`tel:${item.phone}`} style={{ color: 'var(--primary-color)', fontWeight: '700', textDecoration: 'none' }}>
+                            📞 {item.phone}
+                          </a>
+                          <span>Updated {new Date(item.updated_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: '800',
+                          padding: '5px 10px',
+                          borderRadius: '6px',
+                          whiteSpace: 'nowrap',
+                          backgroundColor: item.status === 'Safe' ? '#d1fae5' : isEvac ? '#dbeafe' : '#dc2626',
+                          color: item.status === 'Safe' ? '#065f46' : isEvac ? '#1e40af' : '#fff'
+                        }}>
+                          {isNeedsHelp ? '🆘 Needs Help' : isEvac ? '🏛️ Evacuated' : '✅ Safe'}
+                        </span>
+
+                        {isNeedsHelp && (
+                          <button
+                            type="button"
+                            onClick={() => handleMarkResidentSafe(item.id)}
+                            style={{
+                              backgroundColor: '#059669',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '5px 10px',
+                              fontSize: '11px',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            ✓ Mark Assisted
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
           </div>
         </div>
       )}

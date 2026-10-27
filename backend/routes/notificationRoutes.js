@@ -284,14 +284,18 @@ router.get('/safety-checkins', async (req, res) => {
     let recentCheckins = [];
     if (req.user.role === 'Admin' || req.user.role === 'Responder') {
       const [recentRows] = await db.query(`
-        SELECT s.id, s.status, s.note, s.updated_at,
+        SELECT s.id, s.user_id, s.status, s.note, s.updated_at,
                u.full_name, u.barangay, u.phone
         FROM safety_checkins s
         JOIN users u ON s.user_id = u.id
         ORDER BY 
-          CASE WHEN s.status = 'Needs Assistance' THEN 1 ELSE 2 END ASC,
+          CASE 
+            WHEN s.status = 'Needs Assistance' THEN 1 
+            WHEN s.status = 'At Evacuation Center' THEN 2 
+            ELSE 3 
+          END ASC,
           s.updated_at DESC
-        LIMIT 15
+        LIMIT 200
       `);
       recentCheckins = recentRows;
     }
@@ -308,6 +312,30 @@ router.get('/safety-checkins', async (req, res) => {
   } catch (error) {
     console.error('Fetch safety checkins error:', error);
     return res.status(500).json({ message: 'Server error while fetching safety check-ins' });
+  }
+});
+
+// ADMIN / RESPONDER: Update a resident's safety check-in status (e.g., mark Needs Assistance as Safe after rescue)
+router.put('/safety-checkins/:id/status', requireRole(['Admin', 'Responder']), async (req, res) => {
+  const { status = 'Safe' } = req.body;
+  const validStatuses = ['Safe', 'At Evacuation Center', 'Needs Assistance'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ message: 'Invalid status' });
+  }
+
+  try {
+    await db.execute(
+      'UPDATE safety_checkins SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [status, req.params.id]
+    );
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('safety-checkin-updated', { id: req.params.id, status, updatedAt: new Date().toISOString() });
+    }
+    return res.json({ message: `Resident status updated to ${status}` });
+  } catch (error) {
+    console.error('Update resident checkin status error:', error);
+    return res.status(500).json({ message: 'Server error while updating resident safety status' });
   }
 });
 
