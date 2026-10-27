@@ -199,6 +199,11 @@ const CommandMap = ({ isWidget = false }) => {
   });
 
   useEffect(() => {
+    window.__goToIncident = (incId) => navigate(`/incidents/${incId}`);
+    return () => { delete window.__goToIncident; };
+  }, [navigate]);
+
+  useEffect(() => {
     if (!mapRef.current) return;
 
     if (incidentLayerRef.current) incidentLayerRef.current.clearLayers();
@@ -226,7 +231,7 @@ const CommandMap = ({ isWidget = false }) => {
             </div>
             <div class="popup-status">${inc.status}</div>
             <p class="popup-address">${inc.location_address || 'GPS Coordinates Only'}</p>
-            <button onclick="window.location.href='/incidents/${inc.id}'" class="popup-btn">View & Dispatch</button>
+            <button onclick="if(window.__goToIncident){window.__goToIncident('${inc.id}')}else{window.location.href='/incidents/${inc.id}'}" class="popup-btn">View & Dispatch</button>
           </div>
         `);
         incidentLayerRef.current.addLayer(marker);

@@ -105,7 +105,7 @@ const RootRedirect = () => {
 };
 
 window.globalAudioCtx = null;
-let isAudioUnlockedGlobal = false;
+let isAudioUnlockedGlobal = sessionStorage.getItem('audio_unlocked') === 'true';
 
 // Main App Layout Wrapper (Resolves titles dynamically to match templates)
 const AppLayout = ({ children }) => {
@@ -345,10 +345,12 @@ const AppLayout = ({ children }) => {
       
       setAudioUnlocked(true);
       isAudioUnlockedGlobal = true;
+      sessionStorage.setItem('audio_unlocked', 'true');
     } catch(e) {
       console.warn("Audio unlock failed:", e);
       setAudioUnlocked(true); // Fallback so they aren't stuck
       isAudioUnlockedGlobal = true;
+      sessionStorage.setItem('audio_unlocked', 'true');
     }
   };
 
