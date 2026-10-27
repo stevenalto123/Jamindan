@@ -559,39 +559,41 @@ const AdminDashboard = () => {
                         key={item.id}
                         style={{
                           display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          gap: '10px',
+                          flexDirection: 'column',
+                          gap: '6px',
                           padding: '10px 12px',
                           borderRadius: '10px',
                           backgroundColor: isNeedsHelp ? 'rgba(239, 68, 68, 0.06)' : 'var(--card-alt)',
                           border: `1px solid ${isNeedsHelp ? 'rgba(239, 68, 68, 0.35)' : 'var(--border-color)'}`
                         }}
                       >
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {item.full_name} <span style={{ fontWeight: '600', color: 'var(--text-light)' }}>({item.barangay})</span>
+                        {/* Top Row: Name and Status Badge */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item.full_name} <span style={{ fontWeight: '600', color: 'var(--text-light)', fontSize: '12px' }}>({item.barangay})</span>
                           </div>
-                          <div style={{ fontSize: '11px', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                            <a href={`tel:${item.phone}`} style={{ color: 'var(--primary-color)', textDecoration: 'none', fontWeight: '700' }}>
-                              📞 {item.phone}
-                            </a>
-                            <span>• {new Date(item.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                           <span style={{
                             fontSize: '10px',
                             fontWeight: '800',
-                            padding: '4px 8px',
+                            padding: '3px 8px',
                             borderRadius: '6px',
                             whiteSpace: 'nowrap',
+                            flexShrink: 0,
                             backgroundColor: item.status === 'Safe' ? '#d1fae5' : isEvac ? '#dbeafe' : '#dc2626',
                             color: item.status === 'Safe' ? '#065f46' : isEvac ? '#1e40af' : '#fff'
                           }}>
                             {isNeedsHelp ? '🆘 Needs Help' : isEvac ? '🏛️ Evacuated' : '✅ Safe'}
                           </span>
+                        </div>
+
+                        {/* Bottom Row: Phone, Time and Actions */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--text-light)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <a href={`tel:${item.phone}`} style={{ color: 'var(--primary-color)', textDecoration: 'none', fontWeight: '700' }}>
+                              📞 {item.phone}
+                            </a>
+                            <span>• {new Date(item.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
 
                           {isNeedsHelp && (
                             <button
@@ -603,11 +605,12 @@ const AdminDashboard = () => {
                                 color: '#fff',
                                 border: 'none',
                                 borderRadius: '6px',
-                                padding: '4px 8px',
+                                padding: '3px 8px',
                                 fontSize: '10px',
                                 fontWeight: '700',
                                 cursor: 'pointer',
-                                whiteSpace: 'nowrap'
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0
                               }}
                             >
                               ✓ Assisted
