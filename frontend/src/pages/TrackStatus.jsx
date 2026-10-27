@@ -45,6 +45,8 @@ const TrackStatus = () => {
   // Status edit states (for Admin / Responder)
   const [newStatus, setNewStatus] = useState('');
   const [comment, setComment] = useState('');
+  const [responseNotes, setResponseNotes] = useState('');
+  const [resourcesUsed, setResourcesUsed] = useState('');
   const [submittingStatus, setSubmittingStatus] = useState(false);
 
   // Live Stream State
@@ -54,6 +56,8 @@ const TrackStatus = () => {
 
   const [respondersList, setRespondersList] = useState([]);
   const [selectedResponder, setSelectedResponder] = useState('');
+  const [vehiclesList, setVehiclesList] = useState([]);
+  const [selectedVehicle, setSelectedVehicle] = useState('');
   const [assigning, setAssigning] = useState(false);
 
   // Agency Coordination State
@@ -61,11 +65,20 @@ const TrackStatus = () => {
   const [agencyNotes, setAgencyNotes] = useState('');
   const [savingAgency, setSavingAgency] = useState(false);
 
+  const fetchVehicles = () => {
+    if (user?.role === 'Admin') {
+      axios.get('/api/vehicles')
+        .then(res => setVehiclesList(Array.isArray(res.data) ? res.data : []))
+        .catch(err => console.error(err));
+    }
+  };
+
   useEffect(() => {
     if (user?.role === 'Admin') {
       axios.get('/api/users?role=Responder&limit=100')
         .then(res => setRespondersList(res.data.users || []))
         .catch(err => console.error(err));
+      fetchVehicles();
     }
   }, [user]);
 
@@ -93,6 +106,8 @@ const TrackStatus = () => {
       setHousehold(res.data.reporterHousehold || []);
       setLeadAgency(inc.lead_agency || 'MDRRMO');
       setAgencyNotes(inc.agency_notes || '');
+      setResponseNotes(inc.response_notes || '');
+      setResourcesUsed(inc.resources_used || '');
       // Wait to ensure the status isn't incorrectly mapped if it's an old one
       const oldStatus = inc.status;
       setNewStatus(STATUSES.includes(oldStatus) ? oldStatus : 'Acknowledged');
@@ -183,10 +198,13 @@ const TrackStatus = () => {
     try {
       await axios.put(`/api/incidents/${id}/status`, {
         status: newStatus,
-        comment: comment || `Status updated to ${newStatus}.`
+        comment: comment || `Status updated to ${newStatus}.`,
+        response_notes: responseNotes,
+        resources_used: resourcesUsed
       });
       setComment('');
       await fetchIncidentDetail();
+      fetchVehicles();
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || 'Failed to update status.');
@@ -227,10 +245,15 @@ const TrackStatus = () => {
     if (!selectedResponder) return;
     setAssigning(true);
     try {
-      await axios.put(`/api/incidents/${id}/assign`, { responder_id: selectedResponder });
+      await axios.put(`/api/incidents/${id}/assign`, {
+        responder_id: selectedResponder,
+        vehicle_id: selectedVehicle || null
+      });
       setSelectedResponder('');
+      setSelectedVehicle('');
       alert('Responder successfully dispatched!');
       await fetchIncidentDetail();
+      fetchVehicles();
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || 'Failed to assign responder.');
@@ -410,15 +433,27 @@ const TrackStatus = () => {
         </div>
       )}
 
-      {/* Closure Summary */}
-      {isResolved && closureComment && (
+      {/* Closure Summary & Post-Incident Action Report */}
+      {(isResolved || incident.response_notes || incident.resources_used) && (
         <div className="card" style={{ marginBottom: '24px', backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0' }}>
           <h3 className="card-title" style={{ color: '#065f46', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <CheckCircle2 size={18} /> Closure Summary
+            <CheckCircle2 size={18} /> {isResolved ? 'Official Closure & Post-Incident Action Report' : 'On-Scene Responder Action Log'}
           </h3>
-          <p style={{ margin: 0, fontSize: '14px', color: '#047857' }}>
-            {closureComment}
-          </p>
+          {closureComment && (
+            <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#047857' }}>
+              <strong>Closure Note:</strong> {closureComment}
+            </p>
+          )}
+          {incident.response_notes && (
+            <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#065f46', lineHeight: 1.5 }}>
+              <strong>📋 Action Taken on Scene:</strong> {incident.response_notes}
+            </p>
+          )}
+          {incident.resources_used && (
+            <p style={{ margin: 0, fontSize: '13px', color: '#065f46', lineHeight: 1.5 }}>
+              <strong>🎒 Equipment & Resources Deployed:</strong> {incident.resources_used}
+            </p>
+          )}
         </div>
       )}
 
@@ -487,6 +522,11 @@ const TrackStatus = () => {
                 {incident.responder_id && (
                   <p style={{ fontSize: '12px', color: '#1e3a8a', margin: '0 0 6px 0', fontWeight: '700' }}>
                     Assigned Primary Responder: {incident.responder_name || 'Responder'} {incident.responder_phone ? `(${incident.responder_phone})` : ''}
+                  </p>
+                )}
+                {incident.vehicle_name && (
+                  <p style={{ fontSize: '12px', color: '#0369a1', margin: '0 0 6px 0', fontWeight: '700' }}>
+                    🚑 Dispatched Emergency Vehicle: {incident.vehicle_name} ({incident.vehicle_type} • {incident.vehicle_agency})
                   </p>
                 )}
                 <p style={{ fontSize: '13px', color: incident.agency_notes ? 'var(--text-main)' : 'var(--text-muted)', margin: '0 0 12px 0', lineHeight: '1.5' }}>
@@ -689,6 +729,11 @@ const TrackStatus = () => {
                   <p style={{ margin: 0, fontSize: '14px', color: '#1e3a8a' }}>
                     <strong>Primary Assigned:</strong> {incident.responder_name || 'Responder'} ({incident.responder_phone || 'No Phone Provided'})
                   </p>
+                  {incident.vehicle_name && (
+                    <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#0369a1', fontWeight: '700' }}>
+                      🚑 <strong>Assigned Vehicle:</strong> {incident.vehicle_name} ({incident.vehicle_type} • {incident.vehicle_agency})
+                    </p>
+                  )}
                   {incident.agency_notes && incident.agency_notes.includes('[Backup Dispatched:') && (
                     <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#047857', fontWeight: '700' }}>
                       ➕ {incident.agency_notes.split('|').filter(n => n.includes('[Backup Dispatched:')).join(' • ')}
@@ -736,6 +781,26 @@ const TrackStatus = () => {
                       )}
                     </select>
                   </div>
+
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="vehicleSelect">
+                      Assign Emergency Vehicle (Optional — Auto-Syncs Fleet Status)
+                    </label>
+                    <select
+                      id="vehicleSelect"
+                      className="form-select"
+                      value={selectedVehicle}
+                      onChange={(e) => setSelectedVehicle(e.target.value)}
+                    >
+                      <option value="">-- No Vehicle / Personnel Only --</option>
+                      {vehiclesList.map(v => (
+                        <option key={v.id} value={v.id} disabled={v.status === 'Maintenance'}>
+                          [{v.agency}] {v.name} ({v.type}) — {v.status}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <button type="submit" className="btn btn-primary btn-full" disabled={assigning || !selectedResponder} style={{ height: '40px' }}>
                     {assigning
                       ? 'Dispatching...'
@@ -750,7 +815,7 @@ const TrackStatus = () => {
 
           {isStaff && (
             <div className="card no-print" style={{ borderColor: 'rgba(75, 142, 98, 0.3)' }}>
-              <h3 className="card-title">Update Status</h3>
+              <h3 className="card-title">Update Status & Action Report</h3>
               <form onSubmit={handleStatusUpdateSubmit}>
                 <div className="form-group">
                   <label className="form-label" htmlFor="newStatus">New Status</label>
@@ -768,20 +833,75 @@ const TrackStatus = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="comment">Comment</label>
+                  <label className="form-label" htmlFor="comment">Status Timeline Comment</label>
                   <textarea
                     id="comment"
                     className="form-textarea"
-                    style={{ minHeight: '60px' }}
+                    style={{ minHeight: '55px' }}
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     placeholder="Provide details about updates..."
                   />
                 </div>
 
+                <div className="form-group">
+                  <label className="form-label" htmlFor="responseNotes">
+                    📋 Action Taken / On-Scene Resolution Summary (Included in Official PDF)
+                  </label>
+                  <textarea
+                    id="responseNotes"
+                    className="form-textarea"
+                    style={{ minHeight: '60px' }}
+                    value={responseNotes}
+                    onChange={(e) => setResponseNotes(e.target.value)}
+                    placeholder="e.g. Administered first aid and oxygen therapy; transported patient to Mambusao District Hospital..."
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="resourcesUsed">
+                    🎒 Equipment & Resources Deployed
+                  </label>
+                  <input
+                    id="resourcesUsed"
+                    type="text"
+                    className="form-input"
+                    value={resourcesUsed}
+                    onChange={(e) => setResourcesUsed(e.target.value)}
+                    placeholder="e.g. Ambulance, 1x Stretcher, Trauma Kit, SCBA..."
+                  />
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                    {getRecommendedResources().map((resItem, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setResourcesUsed(prev => {
+                            if (!prev) return resItem;
+                            if (prev.includes(resItem)) return prev;
+                            return `${prev}, ${resItem}`;
+                          });
+                        }}
+                        style={{
+                          padding: '3px 8px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          borderRadius: '12px',
+                          border: '1px solid var(--border-color)',
+                          backgroundColor: 'var(--bg-color)',
+                          color: 'var(--text-main)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        + {resItem}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <button type="submit" className="btn btn-primary btn-full" disabled={submittingStatus} style={{ height: '40px' }}>
                   <Send size={14} />
-                  {submittingStatus ? 'Updating...' : 'Log Status Update'}
+                  {submittingStatus ? 'Updating...' : 'Log Status & Action Report'}
                 </button>
               </form>
             </div>

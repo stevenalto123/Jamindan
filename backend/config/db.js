@@ -171,6 +171,12 @@ const initializeDatabase = async () => {
       } catch (e) {
         // Column already exists or table doesn't exist yet, which is fine
       }
+      try {
+        await pool.query('ALTER TABLE incidents ADD COLUMN vehicle_id INT NULL AFTER responder_id');
+        console.log('Successfully injected vehicle_id column into existing incidents table.');
+      } catch (e) {
+        // Column already exists or table doesn't exist yet, which is fine
+      }
     }
 
     // 3. Create Tables
@@ -251,6 +257,7 @@ const initializeDatabase = async () => {
         code VARCHAR(50) UNIQUE NOT NULL, -- Format: #YYYY-MM-XXXX
         reporter_id INT NOT NULL,
         responder_id INT NULL,
+        vehicle_id INT NULL,
         type VARCHAR(50) NOT NULL, -- 'Fire', 'Medical', 'Flood', 'Accident', 'Other', 'Landslide'
         lead_agency VARCHAR(50) NULL, -- 'MDRRMO', 'BFP', 'RHU'
         description TEXT NOT NULL,
@@ -372,6 +379,31 @@ const initializeDatabase = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS safety_checkins (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL UNIQUE,
+        status VARCHAR(50) NOT NULL DEFAULT 'Safe',
+        note VARCHAR(255) NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Seed Default Emergency Vehicles if empty
+    const [vehicleCountRows] = await pool.query('SELECT COUNT(*) as count FROM vehicles');
+    if (vehicleCountRows[0].count === 0) {
+      await pool.query(`
+        INSERT INTO vehicles (name, type, agency, status)
+        VALUES
+        ('MDRRMO Rescue Van 1', 'Rescue Truck', 'MDRRMO', 'Available'),
+        ('MDRRMO Emergency Ambulance 1', 'Ambulance', 'MDRRMO', 'Available'),
+        ('BFP Jamindan Fire Engine 1', 'Fire Truck', 'BFP', 'Available'),
+        ('RHU Medical Transport Ambulance', 'Ambulance', 'RHU', 'Available')
+      `);
+      console.log('Seeded default Jamindan emergency vehicles.');
+    }
 
     // 4. Seed Initial Data
     const [userRows] = await pool.query('SELECT COUNT(*) as count FROM users');

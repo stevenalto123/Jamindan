@@ -23,6 +23,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import CommandMap from './CommandMap';
+import JamindanWeatherWidget from '../components/JamindanWeatherWidget';
 
 const NDRRMC_PRESETS = [
   {
@@ -59,6 +60,7 @@ const AdminDashboard = () => {
   const { t } = useLanguage();
   const { user, setUser } = useAuth();
   const [data, setData] = useState(null);
+  const [safetyData, setSafetyData] = useState({ summary: { safeCount: 0, evacuatedCount: 0, needsHelpCount: 0 }, recentCheckins: [] });
   const [loading, setLoading] = useState(true);
   const [togglingDuty, setTogglingDuty] = useState(false);
   const [broadcastTitle, setBroadcastTitle] = useState('');
@@ -78,8 +80,14 @@ const AdminDashboard = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      const res = await axios.get('/api/dashboard/stats');
+      const [res, safetyRes] = await Promise.all([
+        axios.get('/api/dashboard/stats'),
+        axios.get('/api/notifications/safety-checkins').catch(() => ({ data: null }))
+      ]);
       setData(res.data);
+      if (safetyRes.data) {
+        setSafetyData(safetyRes.data);
+      }
     } catch (err) {
       console.error('Error fetching admin stats', err);
     } finally {
@@ -144,6 +152,9 @@ const AdminDashboard = () => {
 
   return (
     <div className="content-body" style={{ padding: '24px', margin: '0 auto', maxWidth: '1200px', paddingBottom: '80px' }}>
+
+      {/* Live Jamindan Weather & Flood Hazard Telemetry Widget */}
+      <JamindanWeatherWidget />
 
       {/* Admin Exclusive: Top Metrics */}
       {user?.role === 'Admin' && (
@@ -406,7 +417,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Admin Call Logs & Lifetime Stats */}
+      {/* Admin Call Logs, Resident Safety Check-In Monitor & Lifetime Stats */}
       {user?.role === 'Admin' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
           
@@ -425,6 +436,70 @@ const AdminDashboard = () => {
               </div>
               <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--text-main)' }}>{data?.metrics?.totalReports || 0}</div>
             </div>
+          </div>
+
+          {/* Resident Safety Check-In Monitor */}
+          <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+            <div style={{ fontWeight: '800', fontSize: '18px', color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle size={20} color="#059669" /> Resident Safety Check-In Monitor
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '14px' }}>
+              <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '22px', fontWeight: '800', color: '#059669' }}>{safetyData?.summary?.safeCount || 0}</div>
+                <div style={{ fontSize: '11px', fontWeight: '700', color: '#065f46' }}>✅ Safe</div>
+              </div>
+              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '22px', fontWeight: '800', color: '#2563eb' }}>{safetyData?.summary?.evacuatedCount || 0}</div>
+                <div style={{ fontSize: '11px', fontWeight: '700', color: '#1e40af' }}>🏛️ Evacuated</div>
+              </div>
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '22px', fontWeight: '800', color: '#dc2626' }}>{safetyData?.summary?.needsHelpCount || 0}</div>
+                <div style={{ fontSize: '11px', fontWeight: '700', color: '#991b1b' }}>🆘 Needs Help</div>
+              </div>
+            </div>
+
+            {safetyData?.recentCheckins?.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '190px', overflowY: 'auto' }}>
+                {safetyData.recentCheckins.slice(0, 5).map(item => (
+                  <div
+                    key={item.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '8px 12px',
+                      borderRadius: '10px',
+                      backgroundColor: item.status === 'Needs Assistance' ? '#fef2f2' : '#f8fafc',
+                      border: `1px solid ${item.status === 'Needs Assistance' ? '#fca5a5' : '#e2e8f0'}`
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>
+                        {item.full_name} <span style={{ fontWeight: '600', color: 'var(--text-light)' }}>({item.barangay})</span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-light)' }}>
+                        📞 {item.phone} • {new Date(item.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      padding: '3px 8px',
+                      borderRadius: '999px',
+                      backgroundColor: item.status === 'Safe' ? '#d1fae5' : item.status === 'At Evacuation Center' ? '#dbeafe' : '#dc2626',
+                      color: item.status === 'Safe' ? '#065f46' : item.status === 'At Evacuation Center' ? '#1e40af' : '#fff'
+                    }}>
+                      {item.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: '12px', color: 'var(--text-light)', textAlign: 'center', padding: '12px 0' }}>
+                No resident check-ins recorded yet.
+              </div>
+            )}
           </div>
 
           {data?.recentCallLogs && data.recentCallLogs.length > 0 && (

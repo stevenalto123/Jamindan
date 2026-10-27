@@ -552,33 +552,67 @@ const EmergencyBroadcastHandler = () => {
                 </div>
               )}
 
-              {/* Big Acknowledge / Silence Siren Button */}
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAcknowledgeBroadcast(e);
-                }}
-                onTouchStart={(e) => e.stopPropagation()}
-                style={{
-                  width: '100%',
-                  padding: '16px 20px',
-                  fontSize: '15px',
-                  fontWeight: '900',
-                  backgroundColor: accentColor,
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '14px',
-                  cursor: 'pointer',
-                  boxShadow: `0 8px 25px ${accentGlow}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  marginTop: '4px'
-                }}
-              >
-                <span>🔕</span> ACKNOWLEDGE & SILENCE ALARM
-              </button>
+              {/* Big Acknowledge / Silence Siren Button + Quick "I Am Safe" Check-In */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginTop: '4px' }}>
+                {user && (
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        await axios.post('/api/notifications/safety-checkin', { status: 'Safe' });
+                      } catch (err) {
+                        console.warn('Could not record safety check-in:', err);
+                      }
+                      handleAcknowledgeBroadcast(e);
+                    }}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    style={{
+                      width: '100%',
+                      padding: '14px 20px',
+                      fontSize: '14px',
+                      fontWeight: '900',
+                      backgroundColor: '#059669',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '14px',
+                      cursor: 'pointer',
+                      boxShadow: '0 6px 20px rgba(5, 150, 105, 0.35)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <span>✅</span> I AM SAFE (CHECK IN & SILENCE ALARM)
+                  </button>
+                )}
+
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAcknowledgeBroadcast(e);
+                  }}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  style={{
+                    width: '100%',
+                    padding: '14px 20px',
+                    fontSize: '14px',
+                    fontWeight: '900',
+                    backgroundColor: accentColor,
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '14px',
+                    cursor: 'pointer',
+                    boxShadow: `0 8px 25px ${accentGlow}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>🔕</span> ACKNOWLEDGE & SILENCE ALARM
+                </button>
+              </div>
 
               {/* Regulatory citation */}
               <div style={{ fontSize: '10px', color: '#94a3b8', lineHeight: '1.4' }}>

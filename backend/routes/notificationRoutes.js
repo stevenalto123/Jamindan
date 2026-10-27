@@ -233,4 +233,82 @@ router.post('/broadcast-evacuation', requireRole(['Admin']), async (req, res) =>
   }
 });
 
+// Resident Safety Check-In ("I Am Safe" / "At Evacuation Center" / "Needs Assistance")
+router.post('/safety-checkin', async (req, res) => {
+  const { status = 'Safe', note = '' } = req.body;
+  const validStatuses = ['Safe', 'At Evacuation Center', 'Needs Assistance'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ message: 'Invalid safety status' });
+  }
+
+  try {
+    await db.execute(
+      `INSERT INTO safety_checkins (user_id, status, note, updated_at)
+       VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+       ON DUPLICATE KEY UPDATE status = VALUES(status), note = VALUES(note), updated_at = CURRENT_TIMESTAMP`,
+      [req.user.id, status, note ? note.trim().slice(0, 250) : null]
+    );
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('safety-checkin-updated', {
+        userId: req.user.id,
+        status,
+        updatedAt: new Date().toISOString()
+      });
+    }
+
+    return res.json({ message: `Safety status updated to "${status}".`, status });
+  } catch (error) {
+    console.error('Safety check-in error:', error);
+    return res.status(500).json({ message: 'Server error while saving safety check-in' });
+  }
+});
+
+// Get Safety Check-In Summary & Current User Status
+router.get('/safety-checkins', async (req, res) => {
+  try {
+    const [counts] = await db.query(`
+      SELECT 
+        SUM(CASE WHEN status = 'Safe' THEN 1 ELSE 0 END) as safeCount,
+        SUM(CASE WHEN status = 'At Evacuation Center' THEN 1 ELSE 0 END) as evacuatedCount,
+        SUM(CASE WHEN status = 'Needs Assistance' THEN 1 ELSE 0 END) as needsHelpCount
+      FROM safety_checkins
+    `);
+
+    const [myRows] = await db.query(
+      'SELECT status, note, updated_at FROM safety_checkins WHERE user_id = ?',
+      [req.user.id]
+    );
+
+    let recentCheckins = [];
+    if (req.user.role === 'Admin' || req.user.role === 'Responder') {
+      const [recentRows] = await db.query(`
+        SELECT s.id, s.status, s.note, s.updated_at,
+               u.full_name, u.barangay, u.phone
+        FROM safety_checkins s
+        JOIN users u ON s.user_id = u.id
+        ORDER BY 
+          CASE WHEN s.status = 'Needs Assistance' THEN 1 ELSE 2 END ASC,
+          s.updated_at DESC
+        LIMIT 15
+      `);
+      recentCheckins = recentRows;
+    }
+
+    return res.json({
+      summary: {
+        safeCount: Number(counts[0]?.safeCount || 0),
+        evacuatedCount: Number(counts[0]?.evacuatedCount || 0),
+        needsHelpCount: Number(counts[0]?.needsHelpCount || 0)
+      },
+      myCheckin: myRows[0] || null,
+      recentCheckins
+    });
+  } catch (error) {
+    console.error('Fetch safety checkins error:', error);
+    return res.status(500).json({ message: 'Server error while fetching safety check-ins' });
+  }
+});
+
 module.exports = router;

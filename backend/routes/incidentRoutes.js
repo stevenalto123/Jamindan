@@ -286,10 +286,14 @@ router.get('/:id', authRequired, async (req, res) => {
              resp.full_name as responder_name,
              resp.phone as responder_phone,
              resp.current_lat as responder_lat,
-             resp.current_lng as responder_lng
+             resp.current_lng as responder_lng,
+             v.name as vehicle_name,
+             v.type as vehicle_type,
+             v.agency as vehicle_agency
       FROM incidents i
       JOIN users u ON i.reporter_id = u.id
       LEFT JOIN users resp ON i.responder_id = resp.id
+      LEFT JOIN vehicles v ON i.vehicle_id = v.id
       WHERE i.id = ?
     `, [id]);
 
@@ -370,7 +374,7 @@ router.get('/:id/responder-location', authRequired, async (req, res) => {
 // Update Incident Status (Admin / Responder only)
 router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), async (req, res) => {
   const { id } = req.params;
-  const { status, comment } = req.body;
+  const { status, comment, response_notes, resources_used } = req.body;
 
   const validStatuses = ['Pending', 'Acknowledged', 'Responding', 'On Scene', 'Resolved', 'False Alarm'];
   if (!status || !validStatuses.includes(status)) {
@@ -378,20 +382,30 @@ router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), asy
   }
 
   try {
-    const [incidentRows] = await db.query('SELECT code, reporter_id, status, responder_id FROM incidents WHERE id = ?', [id]);
+    const [incidentRows] = await db.query('SELECT code, reporter_id, status, responder_id, vehicle_id FROM incidents WHERE id = ?', [id]);
     const incident = incidentRows[0];
     if (!incident) {
       return res.status(404).json({ message: 'Incident not found' });
     }
 
-    if (incident.status === status) {
+    if (incident.status === status && !response_notes && !resources_used) {
       return res.status(400).json({ message: `Incident is already marked as ${status}` });
     }
 
     await db.transaction(async (conn) => {
-      // 1. Update status (and auto-assign Responder if they are the first to change it from Pending)
-      let updateQuery = 'UPDATE incidents SET status = ?, updated_at = CURRENT_TIMESTAMP';
-      const updateParams = [status];
+      // 1. Update status, response_notes, resources_used (and auto-assign Responder if they are the first to change it from Pending)
+      let updateQuery = `
+        UPDATE incidents 
+        SET status = ?, 
+            response_notes = COALESCE(?, response_notes), 
+            resources_used = COALESCE(?, resources_used), 
+            updated_at = CURRENT_TIMESTAMP
+      `;
+      const updateParams = [
+        status,
+        response_notes && response_notes.trim() !== '' ? response_notes.trim() : null,
+        resources_used && resources_used.trim() !== '' ? resources_used.trim() : null
+      ];
       
       if (req.user.role === 'Responder' && incident.responder_id === null) {
         updateQuery += ', responder_id = ?';
@@ -403,11 +417,22 @@ router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), asy
 
       await conn.execute(updateQuery, updateParams);
 
+      // Auto-release assigned emergency vehicle when incident is Resolved or False Alarm
+      if ((status === 'Resolved' || status === 'False Alarm') && incident.vehicle_id) {
+        await conn.execute("UPDATE vehicles SET status = 'Available' WHERE id = ?", [incident.vehicle_id]);
+      }
+
       // 2. Insert into history
+      const fullComment = [
+        comment || `Status updated to ${status}.`,
+        response_notes && response_notes.trim() ? `Action Taken: ${response_notes.trim()}` : null,
+        resources_used && resources_used.trim() ? `Resources Used: ${resources_used.trim()}` : null
+      ].filter(Boolean).join(' • ');
+
       await conn.execute(`
         INSERT INTO incident_status_history (incident_id, status, comment, updated_by)
         VALUES (?, ?, ?, ?)
-      `, [id, status, comment || `Status updated to ${status}.`, req.user.id]);
+      `, [id, status, fullComment, req.user.id]);
 
       // 3. Notify resident
       await conn.execute(`
@@ -619,17 +644,17 @@ router.post('/:id/chat', authRequired, async (req, res) => {
   }
 });
 
-// Assign Responder (Admin only) - supports initial dispatch AND additional backup/medical dispatch
+// Assign Responder (Admin only) - supports initial dispatch AND additional backup/medical dispatch + vehicle fleet sync
 router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res) => {
   const { id } = req.params;
-  const { responder_id } = req.body;
+  const { responder_id, vehicle_id } = req.body;
   
   if (!responder_id) {
     return res.status(400).json({ message: 'responder_id is required' });
   }
 
   try {
-    const [incRows] = await db.query('SELECT reporter_id, responder_id, status, code, agency_notes FROM incidents WHERE id = ?', [id]);
+    const [incRows] = await db.query('SELECT reporter_id, responder_id, vehicle_id, status, code, agency_notes FROM incidents WHERE id = ?', [id]);
     const incident = incRows[0];
 
     if (!incident) {
@@ -642,31 +667,43 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
       ? `${assignedResponder.full_name} (${assignedResponder.agency_type || 'MDRRMO'})`
       : `Responder #${responder_id}`;
 
+    let assignedVehicle = null;
+    if (vehicle_id) {
+      const [vehRows] = await db.query('SELECT id, name, type, agency FROM vehicles WHERE id = ?', [vehicle_id]);
+      assignedVehicle = vehRows[0] || null;
+      if (assignedVehicle) {
+        await db.query("UPDATE vehicles SET status = 'Dispatched' WHERE id = ?", [assignedVehicle.id]);
+      }
+    }
+
+    const vehicleLabel = assignedVehicle ? ` with ${assignedVehicle.name} (${assignedVehicle.type})` : '';
     const nextStatus = ['Pending', 'Acknowledged'].includes(incident.status) ? 'Responding' : incident.status;
 
     if (incident.responder_id && String(incident.responder_id) !== String(responder_id)) {
       // Additional / Backup Responder Dispatched (e.g. RHU Medical dispatched to support BFP Fire)
-      const coNote = `[Backup Dispatched: ${respLabel}]`;
+      const coNote = `[Backup Dispatched: ${respLabel}${vehicleLabel}]`;
       const updatedNotes = incident.agency_notes
         ? (incident.agency_notes.includes(coNote) ? incident.agency_notes : `${incident.agency_notes} | ${coNote}`)
         : coNote;
+      const newVehicleId = incident.vehicle_id || (assignedVehicle ? assignedVehicle.id : null);
       await db.query(
-        'UPDATE incidents SET status = ?, agency_notes = ? WHERE id = ?',
-        [nextStatus, updatedNotes, id]
+        'UPDATE incidents SET status = ?, agency_notes = ?, vehicle_id = ? WHERE id = ?',
+        [nextStatus, updatedNotes, newVehicleId, id]
       );
       await db.query(
         'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, ?, ?, ?)',
-        [id, nextStatus, `Additional support unit dispatched: ${respLabel}`, req.user.id]
+        [id, nextStatus, `Additional support unit dispatched: ${respLabel}${vehicleLabel}`, req.user.id]
       );
     } else {
       // Primary Responder Dispatched
+      const newVehicleId = assignedVehicle ? assignedVehicle.id : incident.vehicle_id;
       await db.query(
-        'UPDATE incidents SET responder_id = ?, status = ? WHERE id = ?',
-        [responder_id, nextStatus, id]
+        'UPDATE incidents SET responder_id = ?, vehicle_id = ?, status = ? WHERE id = ?',
+        [responder_id, newVehicleId, nextStatus, id]
       );
       await db.query(
         'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, ?, ?, ?)',
-        [id, nextStatus, `Incident dispatched to ${respLabel}`, req.user.id]
+        [id, nextStatus, `Incident dispatched to ${respLabel}${vehicleLabel}`, req.user.id]
       );
     }
 
@@ -677,7 +714,7 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
         [
           responder_id,
           '🚨 Dispatch Alert',
-          'You have been dispatched to Incident ' + incident.code + '. Please respond immediately.',
+          `You have been dispatched to Incident ${incident.code}${vehicleLabel}. Please respond immediately.`,
           'incident',
           id
         ]
@@ -689,7 +726,7 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
           const webpush = require('web-push');
           const payload = JSON.stringify({
             title: '🚨 DISPATCH ALERT',
-            body: 'You have been dispatched to Incident ' + incident.code + '. Please respond immediately!',
+            body: `You have been dispatched to Incident ${incident.code}${vehicleLabel}. Please respond immediately!`,
             icon: '/logo.png',
             url: '/incidents/' + id
           });
