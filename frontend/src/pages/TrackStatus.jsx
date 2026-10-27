@@ -69,12 +69,20 @@ const TrackStatus = () => {
     }
   }, [user]);
 
-  // Printing State
-  const printRef = useRef();
-  const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    documentTitle: `Incident_Report_${id}`,
+  // Printing State (react-to-print v3 requires contentRef)
+  const printRef = useRef(null);
+  const reactToPrintFn = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Jamindan_MDRRMO_Incident_Report_${incident?.code || id}`,
+    onPrintError: () => window.print(),
   });
+  const handlePrint = () => {
+    if (printRef.current) {
+      reactToPrintFn();
+    } else {
+      window.print();
+    }
+  };
 
   const fetchIncidentDetail = async () => {
     try {
@@ -323,6 +331,39 @@ const TrackStatus = () => {
 
   return (
     <div className="content-body" ref={printRef} style={{ padding: '20px', backgroundColor: '#fff', color: '#000' }}>
+      <style>{`
+        .print-only { display: none !important; }
+        @media print {
+          .print-only { display: block !important; }
+          .no-print { display: none !important; }
+          .content-body { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+        }
+      `}</style>
+
+      {/* Official Government Header (Visible on PRINT / PDF) */}
+      <div className="print-only" style={{ textAlign: 'center', marginBottom: '20px', borderBottom: '2px solid #dc2626', paddingBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+          <img src="/logo.png" alt="Jamindan Seal" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1.2px', color: '#475569' }}>
+              Republic of the Philippines • Province of Capiz
+            </div>
+            <h1 style={{ margin: '3px 0', fontSize: '20px', fontWeight: '900', color: '#0f172a', letterSpacing: '0.5px' }}>
+              MUNICIPALITY OF JAMINDAN
+            </h1>
+            <div style={{ fontSize: '13px', fontWeight: '800', color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+              Municipal Disaster Risk Reduction & Management Office (MDRRMO)
+            </div>
+          </div>
+        </div>
+        <div style={{ fontSize: '12px', fontWeight: '700', color: '#1e293b', marginTop: '10px', textTransform: 'uppercase' }}>
+          Official Emergency Incident Report — #{incident.code} ({incident.status})
+        </div>
+        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+          Generated on {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} at {new Date().toLocaleTimeString()}
+        </div>
+      </div>
+
       <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="no-print">
         <Link to="/incidents" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '13px', height: '36px' }}>
           <ArrowLeft size={16} /> Back to list
@@ -334,7 +375,7 @@ const TrackStatus = () => {
             </button>
           )}
           {user?.role === 'Admin' && (
-            <button onClick={handlePrint} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '13px', height: '36px' }}>
+            <button type="button" onClick={handlePrint} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '13px', height: '36px', cursor: 'pointer' }}>
               <Printer size={16} /> Download Official PDF
             </button>
           )}
@@ -443,12 +484,17 @@ const TrackStatus = () => {
                     {incident.lead_agency || 'MDRRMO'} Assigned Lead
                   </span>
                 </div>
+                {incident.responder_id && (
+                  <p style={{ fontSize: '12px', color: '#1e3a8a', margin: '0 0 6px 0', fontWeight: '700' }}>
+                    Assigned Primary Responder: {incident.responder_name || 'Responder'} {incident.responder_phone ? `(${incident.responder_phone})` : ''}
+                  </p>
+                )}
                 <p style={{ fontSize: '13px', color: incident.agency_notes ? 'var(--text-main)' : 'var(--text-muted)', margin: '0 0 12px 0', lineHeight: '1.5' }}>
                   {incident.agency_notes ? incident.agency_notes : 'No specific inter-agency handoff notes recorded yet.'}
                 </p>
 
                 {isStaff && (
-                  <form onSubmit={handleUpdateAgency} style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <form onSubmit={handleUpdateAgency} className="no-print" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px' }}>
                       <div>
                         <label style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-light)', display: 'block', marginBottom: '4px' }}>Lead Agency</label>
@@ -483,7 +529,7 @@ const TrackStatus = () => {
 
                 {/* External Law Enforcement / PNP Notification Module */}
                 {isStaff && (
-                  <div style={{ marginTop: '14px', padding: '12px 14px', backgroundColor: 'rgba(2, 132, 199, 0.08)', border: '1px dashed #0284c7', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="no-print" style={{ marginTop: '14px', padding: '12px 14px', backgroundColor: 'rgba(2, 132, 199, 0.08)', border: '1px dashed #0284c7', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '800', color: '#0369a1' }}>
                         <span>🚓 External Law Enforcement Coordination (Jamindan PNP)</span>
@@ -862,6 +908,24 @@ const TrackStatus = () => {
       {/* Live Incident Chat Section */}
       <div style={{ marginTop: '24px' }} className="no-print">
         <IncidentChat incidentId={id} incidentStatus={incident.status} />
+      </div>
+
+      {/* Official Signatory Certification Block (Visible on PRINT / PDF) */}
+      <div className="print-only" style={{ marginTop: '36px', paddingTop: '20px', borderTop: '1px solid #cbd5e1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+        <div>
+          <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '28px' }}>Prepared & Verified By:</div>
+          <div style={{ borderBottom: '1px solid #0f172a', width: '240px', marginBottom: '4px', fontWeight: '800', fontSize: '13px', color: '#0f172a' }}>
+            {user?.full_name || 'MDRRMO Command Center'}
+          </div>
+          <div style={{ fontSize: '11px', color: '#475569' }}>MDRRMO Operations & Warning Officer</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '28px' }}>Noted & Approved By:</div>
+          <div style={{ borderBottom: '1px solid #0f172a', width: '240px', marginBottom: '4px', fontWeight: '800', fontSize: '13px', color: '#0f172a' }}>
+            &nbsp;
+          </div>
+          <div style={{ fontSize: '11px', color: '#475569' }}>Municipal DRRM Officer — Jamindan, Capiz</div>
+        </div>
       </div>
     </div>
   );
