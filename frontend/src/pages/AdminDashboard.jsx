@@ -425,9 +425,9 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Admin Call Logs & Resident Safety Check-In Monitor */}
+      {/* Resident Safety Check-In Monitor */}
       {user?.role === 'Admin' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px' }}>
+        <div style={{ marginBottom: '24px' }}>
 
           {/* Resident Safety Check-In Monitor */}
           <div style={{ background: 'var(--card-bg)', padding: '22px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
@@ -602,35 +602,10 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                     );
-                  })}
                 </div>
               );
             })()}
           </div>
-
-          {data?.recentCallLogs && data.recentCallLogs.length > 0 && (
-            <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800', fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px' }}>
-                <PhoneCall size={20} color="#2563eb" /> {t('recentHotlineCalls') || 'Recent Hotline Calls'}
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {data.recentCallLogs.slice(0, 5).map((log) => (
-                  <div key={log.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px 16px', background: '#f8fafc', borderRadius: '12px', borderLeft: '4px solid #2563eb', borderTop: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-main)' }}>{log.hotline_name}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
-                        <Clock size={12} /> {new Date(log.called_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '500' }}>
-                      {t('dialedWord')} <strong style={{ color: 'var(--text-main)' }}>{log.hotline_number}</strong> {t('byWord')} <strong style={{ color: 'var(--text-main)' }}>{log.caller_name}</strong>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 

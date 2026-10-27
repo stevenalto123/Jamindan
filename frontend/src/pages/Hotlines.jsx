@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   PhoneCall, ShieldAlert, Heart, MapPin, Plus, Edit, Trash2,
-  X, Search, Clock, Zap, Siren, Copy, Check, Building2
+  X, Search, Clock, Zap, Siren, Copy, Check, Building2, History
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -74,6 +74,21 @@ const Hotlines = () => {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ agency_name: '', contact_number: '', barangay: '' });
 
+  // Admin Call Logs State
+  const [callLogs, setCallLogs] = useState([]);
+  const [showCallLogsModal, setShowCallLogsModal] = useState(false);
+  const [callLogSearch, setCallLogSearch] = useState('');
+
+  const fetchCallLogs = async () => {
+    if (!isAdmin) return;
+    try {
+      const res = await axios.get('/api/emergency/hotlines/logs');
+      setCallLogs(res.data || []);
+    } catch (err) {
+      console.warn('Failed to fetch call logs', err);
+    }
+  };
+
   const fetchHotlines = async () => {
     try {
       const res = await axios.get('/api/emergency/hotlines');
@@ -92,7 +107,10 @@ const Hotlines = () => {
     }
   };
 
-  useEffect(() => { fetchHotlines(); }, []);
+  useEffect(() => {
+    fetchHotlines();
+    if (isAdmin) fetchCallLogs();
+  }, [isAdmin]);
 
   const handleOpenModal = (hotline = null) => {
     if (hotline) {
@@ -429,13 +447,23 @@ const Hotlines = () => {
           })}
 
           {isAdmin && (
-            <button
-              onClick={() => handleOpenModal()}
-              className="btn btn-primary"
-              style={{ padding: '8px 14px', fontSize: '12px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}
-            >
-              <Plus size={15} /> Add Hotline
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => { setShowCallLogsModal(true); fetchCallLogs(); }}
+                className="btn btn-secondary"
+                style={{ padding: '8px 12px', fontSize: '12px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}
+              >
+                <History size={15} /> Call Logs ({callLogs.length})
+              </button>
+              <button
+                onClick={() => handleOpenModal()}
+                className="btn btn-primary"
+                style={{ padding: '8px 14px', fontSize: '12px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}
+              >
+                <Plus size={15} /> Add Hotline
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -599,6 +627,127 @@ const Hotlines = () => {
                 <PhoneCall size={16} /> {editingId ? 'Save Changes' : 'Add Hotline'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Admin Hotline Call Activity Logs Modal ──────────────── */}
+      {showCallLogsModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            zIndex: 3000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setShowCallLogsModal(false)}
+        >
+          <div
+            className="glass-card"
+            style={{
+              width: '100%',
+              maxWidth: '680px',
+              maxHeight: '85vh',
+              borderRadius: '16px',
+              padding: '20px 22px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              backgroundColor: 'var(--card-bg)',
+              border: '1px solid var(--border-color)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800', fontSize: '16px', color: 'var(--text-main)' }}>
+                <History size={20} color="var(--primary-color)" />
+                Hotline Call Activity Logs ({callLogs.length})
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCallLogsModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div style={{ position: 'relative' }}>
+              <Search size={15} style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+              <input
+                type="text"
+                placeholder="Search by caller name, agency, or number..."
+                value={callLogSearch}
+                onChange={e => setCallLogSearch(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px 8px 34px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--card-alt)',
+                  color: 'var(--text-main)',
+                  fontSize: '13px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Call Logs List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '55vh', paddingRight: '4px' }}>
+              {(() => {
+                const filteredLogs = callLogs.filter(log => {
+                  const q = callLogSearch.toLowerCase();
+                  return !q ||
+                    log.caller_name?.toLowerCase().includes(q) ||
+                    log.hotline_name?.toLowerCase().includes(q) ||
+                    log.hotline_number?.includes(q);
+                });
+
+                if (filteredLogs.length === 0) {
+                  return (
+                    <div style={{ padding: '36px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                      No hotline calls recorded yet.
+                    </div>
+                  );
+                }
+
+                return filteredLogs.map(log => (
+                  <div
+                    key={log.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      backgroundColor: 'var(--card-alt)',
+                      border: '1px solid var(--border-color)'
+                    }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-main)' }}>
+                        {log.hotline_name}
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '2px' }}>
+                        Dialed <strong style={{ color: 'var(--text-main)' }}>{log.hotline_number}</strong> by <strong style={{ color: 'var(--text-main)' }}>{log.caller_name || 'Resident'}</strong>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
+                        <Clock size={12} /> {new Date(log.called_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
           </div>
         </div>
       )}
