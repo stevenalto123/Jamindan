@@ -76,17 +76,55 @@ const TrackStatus = () => {
     documentTitle: `Incident_Report_${id}`,
   });
 
+  // Jamindan MDRRMO Command Center default coordinates (Poblacion, Jamindan)
+  const JAMINDAN_CENTER_LAT = 11.4090;
+  const JAMINDAN_CENTER_LNG = 122.5008;
+
+  // Helper: If PC browser IP-geolocation points outside Jamindan (>25km away or low accuracy),
+  // anchor the Responder's starting point to Jamindan MDRRMO Command Center
+  const normalizeResponderCoords = (lat, lng, accuracy = 0) => {
+    const numLat = parseFloat(lat);
+    const numLng = parseFloat(lng);
+    if (isNaN(numLat) || isNaN(numLng)) {
+      return { lat: JAMINDAN_CENTER_LAT, lng: JAMINDAN_CENTER_LNG };
+    }
+    const R = 6371; // Earth radius in km
+    const dLat = ((numLat - JAMINDAN_CENTER_LAT) * Math.PI) / 180;
+    const dLng = ((numLng - JAMINDAN_CENTER_LNG) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((JAMINDAN_CENTER_LAT * Math.PI) / 180) *
+        Math.cos((numLat * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const distanceKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    // If detected location is outside Jamindan (>25km) or coarse ISP IP location (>3500m accuracy)
+    if (distanceKm > 25 || (accuracy && accuracy > 3500)) {
+      return { lat: JAMINDAN_CENTER_LAT, lng: JAMINDAN_CENTER_LNG };
+    }
+    return { lat: numLat, lng: numLng };
+  };
+
   const fetchIncidentDetail = async () => {
     try {
       const res = await axios.get(`/api/incidents/${id}?_t=${Date.now()}`);
-      setIncident(res.data.incident);
+      const inc = res.data.incident;
+      setIncident(inc);
       setHistory(res.data.history);
       setHousehold(res.data.reporterHousehold || []);
-      setLeadAgency(res.data.incident.lead_agency || 'MDRRMO');
-      setAgencyNotes(res.data.incident.agency_notes || '');
+      setLeadAgency(inc.lead_agency || 'MDRRMO');
+      setAgencyNotes(inc.agency_notes || '');
       // Wait to ensure the status isn't incorrectly mapped if it's an old one
-      const oldStatus = res.data.incident.status;
+      const oldStatus = inc.status;
       setNewStatus(STATUSES.includes(oldStatus) ? oldStatus : 'Acknowledged');
+
+      // For Admin / Resident tabs (or initial load), sync assigned responder's location
+      if (inc.responder_id || ['Acknowledged', 'Responding', 'On Scene'].includes(inc.status)) {
+        const norm = normalizeResponderCoords(inc.responder_lat, inc.responder_lng);
+        setResponderLat(norm.lat);
+        setResponderLng(norm.lng);
+      }
     } catch (err) {
       console.error(err);
       setError('Could not fetch incident report details.');
@@ -122,17 +160,29 @@ const TrackStatus = () => {
 
   // Track Responder's own location
   useEffect(() => {
-    if (user?.role === 'Responder') {
+    if (user?.role === 'Responder' || user?.role === 'Admin') {
       const getLoc = () => {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
-              setResponderLat(pos.coords.latitude);
-              setResponderLng(pos.coords.longitude);
+              const norm = normalizeResponderCoords(
+                pos.coords.latitude,
+                pos.coords.longitude,
+                pos.coords.accuracy
+              );
+              setResponderLat(norm.lat);
+              setResponderLng(norm.lng);
             },
-            (err) => console.warn("GPS location unavailable", err),
+            (err) => {
+              console.warn("GPS location unavailable, using Jamindan Command Center", err);
+              setResponderLat(JAMINDAN_CENTER_LAT);
+              setResponderLng(JAMINDAN_CENTER_LNG);
+            },
             { enableHighAccuracy: true, timeout: 5000 }
           );
+        } else {
+          setResponderLat(JAMINDAN_CENTER_LAT);
+          setResponderLng(JAMINDAN_CENTER_LNG);
         }
       };
       
@@ -708,7 +758,7 @@ const TrackStatus = () => {
             </p>
             {isStaff && (
               <a 
-                href={`https://www.google.com/maps/dir/?api=1&destination=${incident.location_lat},${incident.location_lng}&dir_action=navigate`}
+                href={`https://www.google.com/maps/dir/?api=1&origin=${responderLat || JAMINDAN_CENTER_LAT},${responderLng || JAMINDAN_CENTER_LNG}&destination=${incident.location_lat},${incident.location_lng}&travelmode=driving&dir_action=navigate`}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="btn btn-primary no-print"

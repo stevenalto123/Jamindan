@@ -13,16 +13,16 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token') || sessionStorage.getItem('token') || null);
+  const [token, setToken] = useState(sessionStorage.getItem('token') || localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
 
   // Sync token to Axios headers
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      sessionStorage.setItem('token', token);
     } else {
       delete axios.defaults.headers.common['Authorization'];
-      localStorage.removeItem('token');
       sessionStorage.removeItem('token');
     }
   }, [token]);
@@ -37,6 +37,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const res = await axios.get('/api/auth/me');
         setUser(res.data);
+        sessionStorage.setItem('cached_user', JSON.stringify(res.data));
         localStorage.setItem('cached_user', JSON.stringify(res.data));
         
         // Auto-subscribe ALL users to Web Push Notifications (so Residents get mass broadcasts)
@@ -47,7 +48,7 @@ export const AuthProvider = ({ children }) => {
         console.error('Failed to load user profile on startup', err);
         // If it's a network error (offline), DO NOT log them out. Just use cached user.
         if (!err.response || (err.response.status !== 401 && err.response.status !== 403)) {
-          const cachedUser = localStorage.getItem('cached_user') || sessionStorage.getItem('cached_user');
+          const cachedUser = sessionStorage.getItem('cached_user') || localStorage.getItem('cached_user');
           if (cachedUser) {
             setUser(JSON.parse(cachedUser));
           }
@@ -55,8 +56,8 @@ export const AuthProvider = ({ children }) => {
           // If the server explicitly says the token is invalid (e.g. 401), then log out
           setToken(null);
           setUser(null);
-          localStorage.removeItem('cached_user');
           sessionStorage.removeItem('cached_user');
+          localStorage.removeItem('cached_user');
         }
       } finally {
         setLoading(false);
@@ -117,13 +118,10 @@ export const AuthProvider = ({ children }) => {
 
     const res = await axios.post('/api/auth/login', { username, password });
     
-    if (true) {
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('cached_user', JSON.stringify(res.data.user));
-    } else {
-      sessionStorage.setItem('token', res.data.token);
-      sessionStorage.setItem('cached_user', JSON.stringify(res.data.user));
-    }
+    sessionStorage.setItem('token', res.data.token);
+    sessionStorage.setItem('cached_user', JSON.stringify(res.data.user));
+    localStorage.setItem('token', res.data.token);
+    localStorage.setItem('cached_user', JSON.stringify(res.data.user));
     
     setToken(res.data.token);
     setUser(res.data.user);
@@ -148,8 +146,10 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setToken(null);
       setUser(null);
-      localStorage.removeItem('cached_user');
+      sessionStorage.removeItem('token');
       sessionStorage.removeItem('cached_user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('cached_user');
     }
   };
 
@@ -160,10 +160,11 @@ export const AuthProvider = ({ children }) => {
     setUser(res.data);
     
     // Update the cache so it doesn't revert on refresh
+    if (sessionStorage.getItem('token')) {
+      sessionStorage.setItem('cached_user', JSON.stringify(res.data));
+    }
     if (localStorage.getItem('token')) {
       localStorage.setItem('cached_user', JSON.stringify(res.data));
-    } else if (sessionStorage.getItem('token')) {
-      sessionStorage.setItem('cached_user', JSON.stringify(res.data));
     }
   };
 

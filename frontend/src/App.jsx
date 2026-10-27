@@ -179,9 +179,33 @@ const AppLayout = ({ children }) => {
     if (!user) return;
 
     let watchId;
-    const sendLocation = async (latitude, longitude) => {
+    const JAMINDAN_CENTER_LAT = 11.4090;
+    const JAMINDAN_CENTER_LNG = 122.5008;
+
+    const sendLocation = async (latitude, longitude, accuracy = 0) => {
       try {
-        await axios.put('/api/auth/location', { latitude, longitude });
+        let finalLat = parseFloat(latitude);
+        let finalLng = parseFloat(longitude);
+        if (!isNaN(finalLat) && !isNaN(finalLng)) {
+          const R = 6371;
+          const dLat = ((finalLat - JAMINDAN_CENTER_LAT) * Math.PI) / 180;
+          const dLng = ((finalLng - JAMINDAN_CENTER_LNG) * Math.PI) / 180;
+          const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos((JAMINDAN_CENTER_LAT * Math.PI) / 180) *
+              Math.cos((finalLat * Math.PI) / 180) *
+              Math.sin(dLng / 2) *
+              Math.sin(dLng / 2);
+          const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          if (distKm > 25 || (accuracy && accuracy > 3500)) {
+            finalLat = JAMINDAN_CENTER_LAT;
+            finalLng = JAMINDAN_CENTER_LNG;
+          }
+        } else {
+          finalLat = JAMINDAN_CENTER_LAT;
+          finalLng = JAMINDAN_CENTER_LNG;
+        }
+        await axios.put('/api/auth/location', { latitude: finalLat, longitude: finalLng });
       } catch (err) {
         console.error('Failed to sync live location', err);
       }
@@ -199,13 +223,13 @@ const AppLayout = ({ children }) => {
           
           // Get initial
           const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
-          sendLocation(pos.coords.latitude, pos.coords.longitude);
+          sendLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
 
           // Watch
           watchId = await Geolocation.watchPosition(
             { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
             (pos, err) => {
-              if (pos) sendLocation(pos.coords.latitude, pos.coords.longitude);
+              if (pos) sendLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
             }
           );
         } catch (e) {
@@ -214,13 +238,16 @@ const AppLayout = ({ children }) => {
       } else {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
-            (pos) => sendLocation(pos.coords.latitude, pos.coords.longitude),
-            (err) => console.warn('Initial GPS query failed', err),
+            (pos) => sendLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+            (err) => {
+              console.warn('Initial GPS query failed', err);
+              sendLocation(JAMINDAN_CENTER_LAT, JAMINDAN_CENTER_LNG);
+            },
             { enableHighAccuracy: true }
           );
 
           watchId = navigator.geolocation.watchPosition(
-            (pos) => sendLocation(pos.coords.latitude, pos.coords.longitude),
+            (pos) => sendLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
             (err) => console.warn('GPS movement watch failed', err),
             { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
           );
