@@ -88,6 +88,25 @@ const NotificationHandler = () => {
       }
     });
 
+    socket.on('agency-handoff', (data) => {
+      if (user.role === 'Responder') {
+        const userAgency = (user.agency_type || 'MDRRMO').toUpperCase();
+        const target = (data.leadAgency || '').toUpperCase();
+        const isMatch =
+          userAgency === target ||
+          (target === 'RHU' && userAgency === 'MEDICAL') ||
+          (target === 'BFP' && userAgency === 'FIRE') ||
+          (target === 'MDRRMO' && userAgency === 'RESCUE');
+        if (isMatch) {
+          playSiren();
+          showNotification(
+            `🚨 Inter-Agency Handoff (${data.leadAgency})`,
+            `Incident ${data.code} has been handed off to ${data.leadAgency}.${data.notes ? ' Notes: ' + data.notes : ''}`
+          );
+        }
+      }
+    });
+
     socket.on('incident-status-updated', (data) => {
       if (user.role === 'Resident' && String(data.reporterId) === String(user.id)) {
         playChime(); // Gentle distinctive chime for resident status updates

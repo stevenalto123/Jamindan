@@ -460,28 +460,73 @@ router.put('/:id/agency', authRequired, requireRole(['Admin', 'Responder']), asy
   const { lead_agency, agency_notes } = req.body;
 
   try {
-    const [incRows] = await db.query('SELECT code, lead_agency FROM incidents WHERE id = ?', [id]);
+    const [incRows] = await db.query('SELECT code, type, lead_agency FROM incidents WHERE id = ?', [id]);
     const incident = incRows[0];
     if (!incident) {
       return res.status(404).json({ message: 'Incident not found' });
     }
+
+    const targetLead = lead_agency || incident.lead_agency || 'MDRRMO';
 
     await db.query(
       'UPDATE incidents SET lead_agency = COALESCE(?, lead_agency), agency_notes = COALESCE(?, agency_notes) WHERE id = ?',
       [lead_agency || null, agency_notes || null, id]
     );
 
-    const logDetail = `Agency update: Lead [${lead_agency || incident.lead_agency}]. Notes: ${agency_notes || 'None'}`;
+    const logDetail = `Agency update: Lead [${targetLead}]. Notes: ${agency_notes || 'None'}`;
     await db.query(
       'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, (SELECT status FROM incidents WHERE id = ?), ?, ?)',
       [id, id, logDetail, req.user.id]
     );
 
-    await db.logAudit(`Agency coordination updated for ${incident.code}: ${lead_agency || 'Updated'}`, req.user.username, req.ip);
+    await db.logAudit(`Agency coordination updated for ${incident.code}: ${targetLead}`, req.user.username, req.ip);
+
+    // Notify all active Responders belonging to the target Lead Agency (e.g., RHU, BFP, MDRRMO)
+    let agencyAliases = [targetLead];
+    if (targetLead === 'RHU') agencyAliases.push('Medical');
+    else if (targetLead === 'BFP') agencyAliases.push('Fire');
+    else if (targetLead === 'MDRRMO') agencyAliases.push('Rescue');
+
+    const [agencyResponders] = await db.query(
+      'SELECT id, push_subscription FROM users WHERE role = "Responder" AND is_active = 1 AND agency_type IN (?, ?)',
+      [agencyAliases[0], agencyAliases[1] || agencyAliases[0]]
+    );
+
+    const notifTitle = `🚨 Inter-Agency Handoff (${targetLead})`;
+    const notifBody = `Incident ${incident.code} (${incident.type}) is assigned to ${targetLead}.${agency_notes ? ' Notes: ' + agency_notes : ''}`;
+
+    for (const resp of agencyResponders) {
+      await db.execute(
+        'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES (?, ?, ?, ?, ?)',
+        [resp.id, notifTitle, notifBody, 'incident', id]
+      );
+
+      if (resp.push_subscription) {
+        try {
+          const subscription = JSON.parse(resp.push_subscription);
+          const webpush = require('web-push');
+          await webpush.sendNotification(subscription, JSON.stringify({
+            title: notifTitle,
+            body: notifBody,
+            icon: '/logo.png',
+            url: '/incidents/' + id
+          }));
+        } catch (pushErr) {
+          console.error('Failed to send agency handoff push to responder', resp.id);
+        }
+      }
+    }
 
     const io = req.app.get('io');
     if (io) {
       io.emit('incident-status-updated', { incidentId: id });
+      io.emit('agency-handoff', {
+        incidentId: id,
+        code: incident.code,
+        type: incident.type,
+        leadAgency: targetLead,
+        notes: agency_notes || ''
+      });
     }
 
     return res.json({ message: 'Agency coordination updated successfully.' });
