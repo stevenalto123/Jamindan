@@ -23,7 +23,6 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import CommandMap from './CommandMap';
-import JamindanWeatherWidget from '../components/JamindanWeatherWidget';
 
 const NDRRMC_PRESETS = [
   {
@@ -153,11 +152,9 @@ const AdminDashboard = () => {
   return (
     <div className="content-body" style={{ padding: '24px', margin: '0 auto', maxWidth: '1200px', paddingBottom: '80px' }}>
 
-      {/* Admin Exclusive: Weather Telemetry & Top Metrics */}
+      {/* Admin Exclusive: Top Metrics */}
       {user?.role === 'Admin' && (
         <>
-          <JamindanWeatherWidget />
-
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         
         {/* Pending */}

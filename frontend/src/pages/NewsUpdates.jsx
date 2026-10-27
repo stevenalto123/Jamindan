@@ -7,6 +7,7 @@ import {
   Megaphone, Newspaper, Layers, ChevronDown, ChevronUp, Clock, Search, ExternalLink
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import JamindanWeatherWidget from '../components/JamindanWeatherWidget';
 
 const CATEGORIES = ['News', 'Announcements', 'Advisories'];
 
@@ -215,6 +216,9 @@ const NewsUpdates = () => {
 
   return (
     <div className="content-body" style={{ maxWidth: '1140px', paddingBottom: '48px' }}>
+
+      {/* ─── Live Jamindan Weather & Barangay Rain Monitor ───────────── */}
+      <JamindanWeatherWidget />
 
       {/* ─── Unified Top Toolbar: Search + Category Filter + Publish ─── */}
       <div
