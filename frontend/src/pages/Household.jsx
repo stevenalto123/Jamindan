@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { UserPlus, Trash2, ShieldAlert, HeartPulse, Sparkles, Users, User, Info, Activity } from 'lucide-react';
+import { UserPlus, Trash2, Sparkles, Users, Info, Activity } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const Household = () => {
@@ -21,7 +21,7 @@ const Household = () => {
   const fetchMembers = async () => {
     try {
       const res = await axios.get('/api/household');
-      setMembers(res.data);
+      setMembers(res.data || []);
     } catch (err) {
       console.error(err);
       setError('Failed to fetch household members.');
@@ -65,8 +65,6 @@ const Household = () => {
         medicalNotes: ''
       });
       fetchMembers();
-      
-      // Auto-hide success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error(err);
@@ -84,7 +82,6 @@ const Household = () => {
       await axios.delete(`/api/household/${id}`);
       setSuccess('Household member removed successfully.');
       fetchMembers();
-      
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error(err);
@@ -92,7 +89,6 @@ const Household = () => {
     }
   };
 
-  // Helper for generating initials
   const getInitials = (name) => {
     if (!name) return '?';
     const parts = name.trim().split(' ');
@@ -100,15 +96,13 @@ const Household = () => {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
-  // Helper for age categories
   const getAgeCategory = (age) => {
-    if (age >= 60) return { label: 'Senior (60+)', color: '#8e44ad', bg: '#f4ecf7' };
-    if (age <= 12) return { label: 'Child (0-12)', color: '#e67e22', bg: '#fef5e7' };
-    if (age <= 17) return { label: 'Teen (13-17)', color: '#2980b9', bg: '#ebf5fb' };
-    return { label: 'Adult', color: '#27ae60', bg: '#eaeded' }; // Adult uses a neutral green/gray
+    if (age >= 60) return { label: 'Senior (60+)', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' };
+    if (age <= 12) return { label: 'Child (0-12)', color: '#d97706', bg: 'rgba(217, 119, 6, 0.12)' };
+    if (age <= 17) return { label: 'Teen (13-17)', color: '#2563eb', bg: 'rgba(37, 99, 235, 0.12)' };
+    return { label: 'Adult', color: '#059669', bg: 'rgba(5, 150, 105, 0.12)' };
   };
 
-  // Calculate summary stats
   const totalMembers = members.length;
   const seniorsCount = members.filter(m => m.age >= 60).length;
   const minorsCount = members.filter(m => m.age < 18).length;
@@ -123,41 +117,41 @@ const Household = () => {
   }
 
   return (
-    <div className="content-body" style={{ maxWidth: '1000px', paddingBottom: '60px' }}>
+    <div className="content-body" style={{ maxWidth: '1100px', paddingBottom: '48px' }}>
 
-      {success && <div className="alert alert-success" style={{ fontSize: '13px', padding: '12px 16px', marginBottom: '20px', borderRadius: '8px', animation: 'fadeIn 0.3s ease-out' }}>{success}</div>}
-      {error && <div className="alert alert-danger" style={{ fontSize: '13px', padding: '12px 16px', marginBottom: '20px', borderRadius: '8px', animation: 'fadeIn 0.3s ease-out' }}>{error}</div>}
+      {success && <div className="alert alert-success" style={{ fontSize: '13px', padding: '12px 16px', marginBottom: '16px', borderRadius: '8px' }}>{success}</div>}
+      {error && <div className="alert alert-danger" style={{ fontSize: '13px', padding: '12px 16px', marginBottom: '16px', borderRadius: '8px' }}>{error}</div>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }} className="responsive-grid-col">
-        
-        {/* Members List Section */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          
+      <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: '20px' }} className="responsive-grid-col">
+
+        {/* Left Column: Summary Stats & Members List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
           {/* Summary Stats Card */}
-          <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="glass-card" style={{ padding: '16px 18px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '14px', boxShadow: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                 <Users size={20} color="var(--primary-color)" />
-                 {t('householdHeadcount')}
-               </h3>
-               <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '600' }}>
-                 {totalMembers} {totalMembers === 1 ? t('memberSingle') : t('memberPlural')}
-               </span>
+              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Users size={18} color="var(--primary-color)" />
+                {t('householdHeadcount')}
+              </h3>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', backgroundColor: 'var(--card-alt)', padding: '3px 10px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                {totalMembers} {totalMembers === 1 ? t('memberSingle') : t('memberPlural')}
+              </span>
             </div>
-            
+
             {totalMembers > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-                <div style={{ backgroundColor: '#f4ecf7', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '20px', fontWeight: '800', color: '#8e44ad' }}>{seniorsCount}</div>
-                  <div style={{ fontSize: '11px', color: '#6c3483', fontWeight: '600' }}>Seniors</div>
+                <div style={{ backgroundColor: 'var(--card-alt)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>{seniorsCount}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>Seniors</div>
                 </div>
-                <div style={{ backgroundColor: '#ebf5fb', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '20px', fontWeight: '800', color: '#2980b9' }}>{minorsCount}</div>
-                  <div style={{ fontSize: '11px', color: '#1f618d', fontWeight: '600' }}>Minors</div>
+                <div style={{ backgroundColor: 'var(--card-alt)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>{minorsCount}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>Minors</div>
                 </div>
-                <div style={{ backgroundColor: '#fdf2f2', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '20px', fontWeight: '800', color: '#c0392b' }}>{medicalCount}</div>
-                  <div style={{ fontSize: '11px', color: '#922b21', fontWeight: '600' }}>Medical Needs</div>
+                <div style={{ backgroundColor: 'var(--card-alt)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '18px', fontWeight: '800', color: medicalCount > 0 ? '#ef4444' : 'var(--text-main)' }}>{medicalCount}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>Medical Needs</div>
                 </div>
               </div>
             )}
@@ -165,99 +159,94 @@ const Household = () => {
 
           {/* Members List */}
           {members.length === 0 ? (
-            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px', textAlign: 'center', border: '1px dashed var(--border-color)' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'rgba(var(--primary-rgb, 46,204,113), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)', marginBottom: '16px' }}>
-                <Sparkles size={28} />
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '36px 20px', textAlign: 'center', borderRadius: '12px', border: '1px dashed var(--border-color)', boxShadow: 'none' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'var(--card-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)', marginBottom: '12px' }}>
+                <Sparkles size={22} />
               </div>
-              <h4 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '6px' }}>{t('noHouseholdListed')}</h4>
+              <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 6px 0' }}>{t('noHouseholdListed')}</h4>
               <p style={{ fontSize: '13px', color: 'var(--text-light)', maxWidth: '320px', margin: 0, lineHeight: '1.5' }}>{t('householdInfo')}</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {members.map((member) => {
                 const hasMedical = member.medical_notes && member.medical_notes.trim().length > 0;
                 const ageCat = getAgeCategory(member.age);
-                
+
                 return (
-                  <div 
-                    key={member.id} 
+                  <div
+                    key={member.id}
                     className="glass-card"
-                    style={{ 
-                      padding: '16px', 
-                      display: 'flex', 
+                    style={{
+                      padding: '14px 16px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
                       alignItems: 'flex-start',
-                      gap: '16px',
-                      borderLeft: hasMedical ? '4px solid #e74c3c' : '4px solid #2ecc71',
-                      transition: 'transform 0.2s',
+                      gap: '14px',
+                      boxShadow: 'none'
                     }}
                   >
-                    {/* Professional Initials Avatar */}
-                    <div style={{ 
-                      width: '46px', 
-                      height: '46px', 
-                      borderRadius: '12px', 
-                      backgroundColor: hasMedical ? '#fdf2f2' : '#ebf5fb', 
-                      color: hasMedical ? '#c0392b' : '#2980b9', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      fontSize: '16px', 
-                      fontWeight: '800', 
-                      flexShrink: 0 
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '10px',
+                      backgroundColor: 'var(--card-alt)',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--primary-color)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      flexShrink: 0
                     }}>
                       {getInitials(member.full_name)}
                     </div>
-                    
+
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                        <span style={{ fontWeight: '700', fontSize: '15px', color: 'var(--text-main)' }}>{member.full_name}</span>
-                        
-                        {/* Gender Badge */}
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', backgroundColor: '#f0f2f5', padding: '2px 8px', borderRadius: '12px', fontWeight: '600' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '3px' }}>
+                        <span style={{ fontWeight: '700', fontSize: '14px', color: 'var(--text-main)' }}>{member.full_name}</span>
+
+                        <span style={{ fontSize: '10px', color: 'var(--text-light)', backgroundColor: 'var(--card-alt)', border: '1px solid var(--border-color)', padding: '2px 7px', borderRadius: '8px', fontWeight: '600' }}>
                           {t(member.gender.toLowerCase()) || member.gender}
                         </span>
-                        
-                        {/* Age Category Badge */}
-                        <span style={{ fontSize: '11px', color: ageCat.color, backgroundColor: ageCat.bg, padding: '2px 8px', borderRadius: '12px', fontWeight: '700' }}>
+
+                        <span style={{ fontSize: '10px', color: ageCat.color, backgroundColor: ageCat.bg, padding: '2px 7px', borderRadius: '8px', fontWeight: '700' }}>
                           {ageCat.label}
                         </span>
                       </div>
-                      
-                      <div style={{ fontSize: '13px', color: 'var(--text-light)', marginBottom: '8px' }}>
+
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: hasMedical ? '8px' : 0 }}>
                         {member.age} {t('yrsOld')}
                       </div>
 
-                      {/* Medical Notes Highlight */}
-                      {hasMedical ? (
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: '#c0392b', fontSize: '13px', backgroundColor: '#fdf2f2', padding: '8px 12px', borderRadius: '8px', borderLeft: '2px solid #e74c3c' }}>
-                          <Activity size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                      {hasMedical && (
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: '#ef4444', fontSize: '12px', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '7px 10px', borderRadius: '8px' }}>
+                          <Activity size={14} style={{ flexShrink: 0, marginTop: '2px' }} />
                           <div>
-                            <span style={{ fontWeight: '700', display: 'block', marginBottom: '2px' }}>Medical Condition</span>
-                            <span style={{ fontWeight: '500', lineHeight: '1.4' }}>{member.medical_notes}</span>
+                            <span style={{ fontWeight: '700', marginRight: '4px' }}>Medical Note:</span>
+                            <span style={{ color: 'var(--text-main)' }}>{member.medical_notes}</span>
                           </div>
                         </div>
-                      ) : null}
+                      )}
                     </div>
-                    
-                    <button 
-                      onClick={() => handleDeleteMember(member.id)} 
-                      style={{ 
-                        background: 'none', 
-                        border: 'none', 
-                        color: 'var(--text-muted)', 
-                        cursor: 'pointer', 
-                        padding: '8px', 
-                        borderRadius: '8px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        transition: 'all 0.2s'
+
+                    <button
+                      onClick={() => handleDeleteMember(member.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        padding: '6px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#fdf2f2'; e.currentTarget.style.color = '#e74c3c'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
                       title="Remove Member"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 );
@@ -266,50 +255,50 @@ const Household = () => {
           )}
         </div>
 
-        {/* Add Member Form Section */}
+        {/* Right Column: Add Member Form */}
         <div>
-          <div className="glass-card" style={{ position: 'sticky', top: '24px', padding: '24px' }}>
-            <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <UserPlus size={20} color="var(--primary-color)" />
+          <div className="glass-card" style={{ position: 'sticky', top: '20px', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'none' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <UserPlus size={18} color="var(--primary-color)" />
               {t('addFamilyMember')}
             </h3>
-            
-            <form onSubmit={handleAddMember} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+            <form onSubmit={handleAddMember} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">{t('fullName')}</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="fullName"
-                  className="form-input" 
-                  placeholder={t('enterCompleteName')} 
-                  value={formData.fullName} 
+                  className="form-input"
+                  placeholder={t('enterCompleteName')}
+                  value={formData.fullName}
                   onChange={handleChange}
-                  required 
+                  required
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">{t('ageStar')}</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     name="age"
-                    className="form-input" 
-                    placeholder={t('ageLabel')} 
-                    value={formData.age} 
+                    className="form-input"
+                    placeholder={t('ageLabel')}
+                    value={formData.age}
                     onChange={handleChange}
                     min="0"
                     max="125"
-                    required 
+                    required
                   />
                 </div>
 
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">{t('genderStar')}</label>
-                  <select 
+                  <select
                     name="gender"
-                    className="form-select" 
-                    value={formData.gender} 
+                    className="form-select"
+                    value={formData.gender}
                     onChange={handleChange}
                     required
                   >
@@ -323,50 +312,40 @@ const Household = () => {
 
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">{t('medicalNotesLabel')}</label>
-                <textarea 
+                <textarea
                   name="medicalNotes"
-                  className="form-input" 
+                  className="form-input"
                   placeholder={t('medicalPlaceholder')}
-                  value={formData.medicalNotes} 
+                  value={formData.medicalNotes}
                   onChange={handleChange}
-                  rows={3}
-                  style={{ resize: 'vertical', minHeight: '80px' }}
+                  rows={2}
+                  style={{ resize: 'vertical', minHeight: '64px' }}
                 />
               </div>
 
-              {/* Enhanced Submit Button */}
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
-                disabled={submitting} 
-                style={{ 
-                  height: '48px', 
-                  marginTop: '8px', 
-                  fontSize: '15px', 
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={submitting}
+                style={{
+                  height: '42px',
+                  marginTop: '4px',
+                  fontSize: '14px',
                   fontWeight: '700',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(var(--primary-rgb, 46,204,113), 0.3)'
+                  borderRadius: '10px'
                 }}
               >
-                {submitting ? (
-                  t('addingLabel')
-                ) : (
-                  <>
-                    <UserPlus size={18} />
-                    {t('addMemberBtn')}
-                  </>
-                )}
+                {submitting ? t('addingLabel') : <><UserPlus size={16} /> {t('addMemberBtn')}</>}
               </button>
             </form>
 
-            {/* Safer Tip Box (no dangerouslySetInnerHTML) */}
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', backgroundColor: '#fef9e7', border: '1px solid #f9e79f', borderRadius: '12px', padding: '16px', marginTop: '24px' }}>
-              <Info size={20} style={{ color: '#d4ac0d', flexShrink: 0, marginTop: '2px' }} />
-              <div style={{ fontSize: '13px', color: '#7d6608', lineHeight: '1.5' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', backgroundColor: 'var(--card-alt)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '12px 14px', marginTop: '18px' }}>
+              <Info size={16} style={{ color: 'var(--primary-color)', flexShrink: 0, marginTop: '2px' }} />
+              <div style={{ fontSize: '12px', color: 'var(--text-light)', lineHeight: '1.5' }}>
                 <strong>{t('disasterTip').split(':')[0]}:</strong>
                 {t('disasterTip').substring(t('disasterTip').indexOf(':') + 1)}
               </div>

@@ -2,17 +2,19 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useAuth, BACKEND_URL } from '../context/AuthContext';
-import { Radio, PlusCircle, Trash2, Edit2, X, Upload, AlertTriangle, Megaphone, Newspaper, Layers, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import {
+  PlusCircle, Trash2, Edit2, X, Upload, AlertTriangle,
+  Megaphone, Newspaper, Layers, ChevronDown, ChevronUp, Clock, Search, ExternalLink
+} from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const CATEGORIES = ['News', 'Announcements', 'Advisories'];
 
-// Helper for relative time
 const getRelativeTime = (dateString) => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
-  
+
   if (diffInSeconds < 60) return 'Just now';
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
@@ -20,19 +22,18 @@ const getRelativeTime = (dateString) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-// Expanded Text Component
-const ExpandableText = ({ text }) => {
+const ExpandableText = ({ text = '' }) => {
   const [expanded, setExpanded] = useState(false);
-  const isLong = text.length > 150;
-  
+  const isLong = text.length > 160;
+
   return (
     <div>
-      <p style={{ 
-        whiteSpace: 'pre-wrap', 
-        fontSize: '13px', 
-        color: 'var(--text-light)', 
-        lineHeight: '1.5',
-        margin: '0 0 8px 0',
+      <p style={{
+        whiteSpace: 'pre-wrap',
+        fontSize: '13px',
+        color: 'var(--text-light)',
+        lineHeight: '1.55',
+        margin: '0 0 6px 0',
         display: expanded ? 'block' : '-webkit-box',
         WebkitLineClamp: expanded ? 'unset' : 3,
         WebkitBoxOrient: 'vertical',
@@ -41,9 +42,9 @@ const ExpandableText = ({ text }) => {
         {text}
       </p>
       {isLong && (
-        <button 
+        <button
           onClick={() => setExpanded(!expanded)}
-          style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '12px', fontWeight: '700', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '4px' }}
+          style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '12px', fontWeight: '700', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
         >
           {expanded ? <>Read Less <ChevronUp size={12} /></> : <>Read More <ChevronDown size={12} /></>}
         </button>
@@ -58,6 +59,7 @@ const NewsUpdates = () => {
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Modal states for CRUD
   const [showModal, setShowModal] = useState(false);
@@ -71,13 +73,11 @@ const NewsUpdates = () => {
   const fetchFeed = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Local Feed
       const res = await axios.get('/api/news', {
         params: { category: categoryFilter }
       });
-      let localFeed = res.data;
+      const localFeed = res.data || [];
 
-      // 2. Fetch External Automated News
       let autoFeed = [];
       if (categoryFilter === 'All' || categoryFilter === 'News') {
         try {
@@ -87,10 +87,10 @@ const NewsUpdates = () => {
             autoFeed = rssRes.data.items.map(item => ({
               id: `auto-${item.guid || item.link}`,
               title: item.title,
-              content: item.description.replace(/<[^>]+>/g, ''), // Basic HTML strip
-              category: 'News', // Automated news falls under News
+              content: (item.description || '').replace(/<[^>]+>/g, ''),
+              category: 'News',
               image_path: item.thumbnail || null,
-              author_name: item.source || 'Auto News Feed',
+              author_name: item.source || 'Regional News Feed',
               created_at: item.pubDate,
               is_auto: true,
               link: item.link
@@ -101,7 +101,6 @@ const NewsUpdates = () => {
         }
       }
 
-      // 3. Merge and Sort by Date
       const combined = [...localFeed, ...autoFeed].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       setFeed(combined);
     } catch (err) {
@@ -114,14 +113,9 @@ const NewsUpdates = () => {
   useEffect(() => {
     fetchFeed();
 
-    // Listen for real-time news updates
     const socketUrl = axios.defaults.baseURL || '';
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
-    
-    socket.on('new-news', () => {
-      fetchFeed();
-    });
-
+    socket.on('new-news', () => fetchFeed());
     return () => socket.disconnect();
   }, [categoryFilter]);
 
@@ -184,7 +178,6 @@ const NewsUpdates = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this announcement?')) return;
-
     try {
       await axios.delete(`/api/news/${id}`);
       fetchFeed();
@@ -196,10 +189,10 @@ const NewsUpdates = () => {
 
   const getCategoryStyle = (cat) => {
     switch (cat) {
-      case 'Advisories': return { backgroundColor: '#fdf2f2', color: '#c0392b', icon: AlertTriangle, border: '#c0392b' };
-      case 'Announcements': return { backgroundColor: '#ebf5fb', color: '#2980b9', icon: Megaphone, border: 'transparent' };
-      case 'News': return { backgroundColor: '#eaf5ee', color: '#2e7d32', icon: Newspaper, border: 'transparent' };
-      default: return { backgroundColor: '#f4f5f4', color: '#7f8c8d', icon: Newspaper, border: 'transparent' };
+      case 'Advisories': return { bg: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', icon: AlertTriangle };
+      case 'Announcements': return { bg: 'rgba(37, 99, 235, 0.12)', color: '#2563eb', icon: Megaphone };
+      case 'News': return { bg: 'rgba(16, 185, 129, 0.12)', color: '#059669', icon: Newspaper };
+      default: return { bg: 'rgba(100, 116, 139, 0.12)', color: '#64748b', icon: Newspaper };
     }
   };
 
@@ -214,144 +207,207 @@ const NewsUpdates = () => {
 
   const isAdmin = user?.role === 'Admin';
 
+  const filteredFeed = feed.filter(item =>
+    !searchQuery ||
+    item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.content?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="content-body" style={{ maxWidth: '800px' }}>
-      
-      {/* Header & Filter Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '15px' }}>
-        
-        {/* Category Tabs */}
-        <div className="scroll-hide" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+    <div className="content-body" style={{ maxWidth: '1140px', paddingBottom: '48px' }}>
+
+      {/* ─── Unified Top Toolbar: Search + Category Filter + Publish ─── */}
+      <div
+        className="glass-card"
+        style={{
+          padding: '14px 16px',
+          marginBottom: '20px',
+          borderRadius: '12px',
+          border: '1px solid var(--border-color)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          boxShadow: 'none'
+        }}
+      >
+        <div style={{ position: 'relative', flex: '1 1 240px', minWidth: '200px' }}>
+          <Search size={15} style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+          <input
+            type="text"
+            placeholder="Search news, advisories, or announcements..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px 30px 8px 34px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-color)',
+              fontSize: '13px',
+              backgroundColor: 'var(--card-alt)',
+              color: 'var(--text-main)',
+              boxSizing: 'border-box'
+            }}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              style={{ position: 'absolute', top: '50%', right: '8px', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', display: 'flex' }}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
           {['All', 'News', 'Announcements', 'Advisories'].map((cat) => {
             const Icon = getFilterIcon(cat);
+            const active = categoryFilter === cat;
             return (
               <button
                 key={cat}
+                type="button"
                 onClick={() => setCategoryFilter(cat)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap',
-                  padding: '8px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: '700',
-                  border: 'none', cursor: 'pointer', transition: 'all 0.2s ease',
-                  backgroundColor: categoryFilter === cat ? 'var(--primary-color)' : 'var(--card-bg)',
-                  color: categoryFilter === cat ? '#fff' : 'var(--text-light)',
-                  boxShadow: categoryFilter === cat ? '0 4px 10px rgba(46,204,113,0.3)' : 'var(--shadow-sm)'
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: active ? '700' : '600',
+                  border: active ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  backgroundColor: active ? 'var(--primary-color)' : 'var(--card-alt)',
+                  color: active ? '#fff' : 'var(--text-light)'
                 }}
               >
-                <Icon size={14} /> {cat}
+                <Icon size={13} /> {cat}
               </button>
-            )
+            );
           })}
-        </div>
 
-        {isAdmin && (
-          <button className="btn btn-primary" onClick={handleOpenCreateModal} style={{ height: '36px', padding: '0 16px', fontSize: '13px' }}>
-            <PlusCircle size={16} /> <span className="hide-on-mobile">{t('addAnnouncement') || 'Publish'}</span>
-          </button>
-        )}
+          {isAdmin && (
+            <button
+              className="btn btn-primary"
+              onClick={handleOpenCreateModal}
+              style={{ padding: '8px 14px', fontSize: '12px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}
+            >
+              <PlusCircle size={15} /> {t('addAnnouncement') || 'Publish'}
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Feed Content */}
+      {/* ─── Feed Content ──────────────────────────────────────────── */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>{t('loadingBulletins') || 'Loading feed...'}</div>
-      ) : feed.length === 0 ? (
-        <div className="glass-card" style={{ padding: '60px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-          <Newspaper size={48} color="var(--border-color)" />
-          <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '18px' }}>{t('noAnnouncements') || 'No updates right now'}</h3>
-          <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '14px' }}>Check back later for news and advisories.</p>
+      ) : filteredFeed.length === 0 ? (
+        <div className="glass-card" style={{ padding: '48px 20px', textAlign: 'center', borderRadius: '12px', border: '1px dashed var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', boxShadow: 'none' }}>
+          <Newspaper size={36} color="var(--text-muted)" />
+          <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '16px' }}>{t('noAnnouncements') || 'No updates right now'}</h3>
+          <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '13px' }}>Check back later for news and advisories.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {feed.map((article, index) => {
-            const isHero = index === 0 && categoryFilter === 'All'; // First item is hero card
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
+          {filteredFeed.map((article) => {
             const style = getCategoryStyle(article.category);
             const CatIcon = style.icon;
+            const hasImage = Boolean(article.image_path);
 
             return (
-              <div key={article.id} className="glass-card" style={{ 
-                display: 'flex', 
-                flexDirection: isHero ? 'column' : (window.innerWidth > 600 ? 'row' : 'column'),
-                overflow: 'hidden',
-                borderLeft: article.category === 'Advisories' ? `4px solid ${style.color}` : '1px solid var(--border-color)',
-                position: 'relative'
-              }}>
-                
-                {/* Image Section */}
-                {article.image_path ? (
-                  <img 
-                    src={(article.is_auto || article.image_path.startsWith('http')) ? article.image_path : `${BACKEND_URL}${article.image_path}`} 
-                    alt={article.title} 
-                    style={{ 
-                      width: isHero ? '100%' : (window.innerWidth > 600 ? '200px' : '100%'), 
-                      height: isHero ? '250px' : (window.innerWidth > 600 ? '100%' : '180px'),
-                      objectFit: 'cover',
-                      flexShrink: 0
-                    }} 
-                  />
-                ) : (
-                  <div style={{ 
-                    width: isHero ? '100%' : (window.innerWidth > 600 ? '160px' : '100%'), 
-                    height: isHero ? '180px' : (window.innerWidth > 600 ? '100%' : '140px'),
-                    backgroundColor: '#f8fafc',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, borderRight: isHero ? 'none' : '1px solid var(--border-color)', borderBottom: isHero ? '1px solid var(--border-color)' : 'none'
-                  }}>
-                    {article.is_auto ? (
-                      <Newspaper size={isHero ? 48 : 32} style={{ opacity: 0.2, color: 'var(--primary-color)' }} />
-                    ) : (
-                      <Radio size={isHero ? 48 : 32} style={{ opacity: 0.2, color: 'var(--primary-color)' }} />
-                    )}
-                  </div>
-                )}
+              <div
+                key={article.id}
+                className="glass-card"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  overflow: 'hidden',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-color)',
+                  boxShadow: 'none'
+                }}
+              >
+                <div>
+                  {/* Image Banner (Only rendered when an actual image exists) */}
+                  {hasImage && (
+                    <img
+                      src={(article.is_auto || article.image_path.startsWith('http')) ? article.image_path : `${BACKEND_URL}${article.image_path}`}
+                      alt={article.title}
+                      style={{
+                        width: '100%',
+                        height: '170px',
+                        objectFit: 'cover',
+                        borderBottom: '1px solid var(--border-color)'
+                      }}
+                    />
+                  )}
 
-                {/* Content Section */}
-                <div style={{ padding: isHero ? '24px' : '20px', flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                  
-                  {/* Meta Row */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ 
-                        backgroundColor: style.backgroundColor, color: style.color, 
-                        padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px',
-                        display: 'flex', alignItems: 'center', gap: '4px'
-                      }}>
-                        <CatIcon size={12} /> {article.category}
-                      </span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }} title={new Date(article.created_at).toLocaleString()}>
-                        <Clock size={12} /> {getRelativeTime(article.created_at)}
-                      </span>
+                  <div style={{ padding: '16px 18px 12px 18px' }}>
+                    {/* Meta Row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{
+                          backgroundColor: style.bg,
+                          color: style.color,
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          fontSize: '10px',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.4px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          <CatIcon size={11} /> {article.category}
+                        </span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }} title={new Date(article.created_at).toLocaleString()}>
+                          <Clock size={11} /> {getRelativeTime(article.created_at)}
+                        </span>
+                      </div>
+
+                      {isAdmin && !article.is_auto && (
+                        <div style={{ display: 'flex', gap: '2px' }}>
+                          <button onClick={() => handleOpenEditModal(article)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }} title="Edit"><Edit2 size={14} /></button>
+                          <button onClick={() => handleDelete(article.id)} style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', padding: '4px' }} title="Delete"><Trash2 size={14} /></button>
+                        </div>
+                      )}
                     </div>
 
-                    {isAdmin && (
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <button onClick={() => handleOpenEditModal(article)} style={{ background: 'none', border: 'none', color: 'var(--text-light)', cursor: 'pointer', padding: '4px' }}><Edit2 size={16} /></button>
-                        <button onClick={() => handleDelete(article.id)} style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', padding: '4px' }}><Trash2 size={16} /></button>
-                      </div>
-                    )}
-                  </div>
+                    {/* Title & Body */}
+                    <h3 style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: '700', color: 'var(--text-main)', lineHeight: '1.35' }}>
+                      {article.title}
+                    </h3>
 
-                  {/* Title & Body */}
-                  <h3 style={{ margin: '0 0 10px 0', fontSize: isHero ? '22px' : '16px', fontWeight: '800', color: 'var(--text-main)', lineHeight: '1.3' }}>
-                    {article.title}
-                  </h3>
-                  
-                  <div style={{ flex: 1 }}>
                     <ExpandableText text={article.content} />
                   </div>
+                </div>
 
-                  {/* Footer */}
-                  <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>
-                      {article.is_auto ? (
-                        <span style={{ backgroundColor: '#e2e8f0', color: '#475569', padding: '2px 6px', borderRadius: '4px', marginRight: '6px' }}>AUTO</span>
-                      ) : null}
-                      {t('by') || 'Posted by'} {article.author_name}
-                    </div>
-                    {article.is_auto && article.link && (
-                      <a href={article.link} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', fontWeight: '700', color: 'var(--primary-color)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        Read Source <ChevronDown size={14} style={{ transform: 'rotate(-90deg)' }} />
-                      </a>
+                {/* Footer */}
+                <div style={{ margin: '0 18px', padding: '10px 0 14px 0', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {article.is_auto && (
+                      <span style={{ backgroundColor: 'var(--card-alt)', border: '1px solid var(--border-color)', color: 'var(--text-light)', padding: '1px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: '700' }}>
+                        RSS
+                      </span>
                     )}
+                    <span>{t('by') || 'By'} {article.author_name}</span>
                   </div>
+                  {article.is_auto && article.link && (
+                    <a
+                      href={article.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: '11px', fontWeight: '700', color: 'var(--primary-color)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      Source <ExternalLink size={12} />
+                    </a>
+                  )}
                 </div>
               </div>
             );
@@ -387,7 +443,7 @@ const NewsUpdates = () => {
 
                 <div className="form-group">
                   <label className="form-label" htmlFor="m-content">Content Body</label>
-                  <textarea id="m-content" className="form-textarea" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write details of news, advisory, or community bulletin..." required style={{ minHeight: '150px' }} />
+                  <textarea id="m-content" className="form-textarea" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write details of news, advisory, or community bulletin..." required style={{ minHeight: '140px' }} />
                 </div>
 
                 <div className="form-group">
