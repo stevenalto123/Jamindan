@@ -425,26 +425,9 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Admin Call Logs, Resident Safety Check-In Monitor & Lifetime Stats */}
+      {/* Admin Call Logs & Resident Safety Check-In Monitor */}
       {user?.role === 'Admin' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-          
-          <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-            <div style={{ fontWeight: '800', fontSize: '18px', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Activity size={20} color="var(--primary-color)" /> {t('systemOverview')}
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              <div style={{ padding: '12px', background: '#e0e7ff', borderRadius: '12px', color: '#4338ca' }}>
-                <AlertTriangle size={24} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>{t('totalLifetimeReports') || 'Lifetime Reports'}</div>
-                <div style={{ fontSize: '13px', color: 'var(--text-light)', fontWeight: '600' }}>{t('sinceLaunch') || 'Since launch'}</div>
-              </div>
-              <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--text-main)' }}>{data?.metrics?.totalReports || 0}</div>
-            </div>
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px' }}>
 
           {/* Resident Safety Check-In Monitor */}
           <div style={{ background: 'var(--card-bg)', padding: '22px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
