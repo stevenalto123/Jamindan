@@ -102,7 +102,7 @@ const AdminViewUser = () => {
           
           <div style={{ textAlign: 'center' }}>
             {profile.avatar ? (
-              <img src={`https://jamindan.onrender.com${profile.avatar}`} alt="Avatar" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', marginBottom: '16px', border: '4px solid #f1f5f9' }} />
+              <img src={profile.avatar.startsWith('http') ? profile.avatar : `https://jamindan.onrender.com${profile.avatar}`} alt="Avatar" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', marginBottom: '16px', border: '4px solid #f1f5f9' }} />
             ) : (
               <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', border: '4px solid #e2e8f0' }}>
                 <User size={48} color="#94a3b8" />

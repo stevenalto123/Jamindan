@@ -7,7 +7,7 @@ import { FileText, Search, PlusCircle, Eye, Trash2, Download, Printer, Flame, He
 import { useLanguage } from '../context/LanguageContext';
 
 export const INCIDENT_TYPES = ['Fire', 'Medical', 'Flood', 'Crime', 'Accident', 'Other', 'Landslide'];
-export const STATUSES = ['Pending', 'Acknowledged', 'Responding', 'On Scene', 'Resolved'];
+export const STATUSES = ['Pending', 'Acknowledged', 'Responding', 'On Scene', 'Resolved', 'False Alarm'];
 
 const TYPE_META = {
   Fire:      { icon: Flame,       color: '#e74c3c', bg: 'rgba(231,76,60,0.1)'   },
@@ -25,6 +25,7 @@ const STATUS_STYLE = {
   'Responding':  { color: '#6d28d9', bg: '#ede9fe', label: 'Responding'  },
   'On Scene':    { color: '#0f766e', bg: '#ccfbf1', label: 'On Scene'    },
   'Resolved':    { color: '#15803d', bg: '#dcfce7', label: 'Resolved'    },
+  'False Alarm': { color: '#991b1b', bg: '#fef2f2', label: 'False Alarm' },
 };
 
 const IncidentList = () => {
@@ -74,7 +75,10 @@ const IncidentList = () => {
   useEffect(() => {
     const socketUrl = axios.defaults.baseURL || '';
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
-    socket.on('incident-status-updated', () => fetchIncidents());
+    socket.on('new-incident', () => fetchIncidents(true));
+    socket.on('incident-status-updated', () => fetchIncidents(true));
+    socket.on('responder-dispatched', () => fetchIncidents(true));
+    socket.on('agency-handoff', () => fetchIncidents(true));
     return () => socket.disconnect();
   }, []);
 

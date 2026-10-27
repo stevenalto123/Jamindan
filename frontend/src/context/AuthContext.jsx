@@ -118,6 +118,7 @@ export const AuthProvider = ({ children }) => {
 
     const res = await axios.post('/api/auth/login', { username, password });
     
+    axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
     sessionStorage.setItem('token', res.data.token);
     sessionStorage.setItem('cached_user', JSON.stringify(res.data.user));
     localStorage.setItem('token', res.data.token);

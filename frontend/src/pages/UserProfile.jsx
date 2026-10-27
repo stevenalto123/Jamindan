@@ -188,7 +188,18 @@ const UserProfile = () => {
                     className="form-input" 
                     style={{ width: '100%', minWidth: 0, paddingLeft: '8px', paddingRight: '8px', backgroundColor: user?.role !== 'Admin' ? '#f0f2f0' : 'white', color: user?.role !== 'Admin' ? '#666' : 'inherit', cursor: user?.role !== 'Admin' ? 'not-allowed' : 'text' }}
                     value={dateOfBirth} 
-                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    onChange={(e) => {
+                      const dobVal = e.target.value;
+                      setDateOfBirth(dobVal);
+                      if (dobVal) {
+                        const birthDate = new Date(dobVal);
+                        const today = new Date();
+                        let calcAge = today.getFullYear() - birthDate.getFullYear();
+                        const m = today.getMonth() - birthDate.getMonth();
+                        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) calcAge--;
+                        if (calcAge >= 0) setAge(calcAge);
+                      }
+                    }}
                     disabled={user?.role !== 'Admin'}
                   />
                 </div>

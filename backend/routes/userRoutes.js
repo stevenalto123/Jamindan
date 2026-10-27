@@ -18,7 +18,7 @@ router.post('/', requireRole(['Admin']), upload.fields([
   { name: 'id_photo', maxCount: 1 },
   { name: 'selfie_photo', maxCount: 1 }
 ]), async (req, res) => {
-  const { username, password, full_name, phone, barangay, role, agency_type } = req.body;
+  const { username, email, password, full_name, phone, barangay, role, agency_type, age, date_of_birth } = req.body;
 
   if (!username || !password || !full_name || !phone || !barangay || !role) {
     return res.status(400).json({ message: 'All fields are required' });
@@ -57,6 +57,9 @@ router.post('/', requireRole(['Admin']), upload.fields([
     const password_hash = bcrypt.hashSync(password, salt);
 
     const finalAgency = role === 'Responder' ? (agency_type || null) : null;
+    const finalEmail = email && email.trim() ? email.trim().toLowerCase() : `${username.trim().toLowerCase()}@jamindan.gov.ph`;
+    const finalAge = age && !isNaN(parseInt(age)) ? parseInt(age) : 18;
+    const finalDob = date_of_birth || null;
     
     const id_photo_path = req.files && req.files['id_photo'] ? req.files['id_photo'][0].path : null;
     const selfie_photo_path = req.files && req.files['selfie_photo'] ? req.files['selfie_photo'][0].path : null;
@@ -64,9 +67,9 @@ router.post('/', requireRole(['Admin']), upload.fields([
     const is_verified = 1;
 
     await db.execute(`
-      INSERT INTO users (username, password_hash, role, agency_type, full_name, phone, barangay, id_photo_path, selfie_photo_path, is_verified)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [username.trim().toLowerCase(), password_hash, role, finalAgency, full_name.trim(), phone.trim(), barangay.trim(), id_photo_path, selfie_photo_path, is_verified]);
+      INSERT INTO users (username, email, password_hash, role, agency_type, full_name, age, date_of_birth, phone, barangay, id_photo_path, selfie_photo_path, is_verified)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [username.trim().toLowerCase(), finalEmail, password_hash, role, finalAgency, full_name.trim(), finalAge, finalDob, phone.trim(), barangay.trim(), id_photo_path, selfie_photo_path, is_verified]);
 
     await db.logAudit(`User account created by admin: @${username.trim().toLowerCase()} (Role: ${role}, Agency: ${finalAgency || 'N/A'})`, req.user.username, req.ip);
     return res.status(201).json({ message: 'User created successfully' });

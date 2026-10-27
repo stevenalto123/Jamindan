@@ -108,13 +108,17 @@ const NotificationHandler = () => {
     });
 
     socket.on('incident-status-updated', (data) => {
-      if (user.role === 'Resident' && String(data.reporterId) === String(user.id)) {
+      if (user.role === 'Resident' && String(data.reporterId) === String(user.id) && data.status) {
         playChime(); // Gentle distinctive chime for resident status updates
         let message = 'Your incident ' + (data.code || '') + ' status was updated to ' + data.status + '.';
-        if (data.status === 'In Progress') {
-          message = 'Help is on the way! Responders have been dispatched to your location for ' + data.code + '.';
+        if (data.status === 'Acknowledged') {
+          message = 'Command Center has acknowledged your report ' + (data.code || '') + ' and is preparing dispatch.';
+        } else if (data.status === 'Responding' || data.status === 'In Progress') {
+          message = 'Help is on the way! Responders have been dispatched to your location for ' + (data.code || '') + '.';
+        } else if (data.status === 'On Scene') {
+          message = 'Responders have arrived on scene for ' + (data.code || '') + '.';
         } else if (data.status === 'Resolved') {
-          message = 'Your incident ' + data.code + ' has been resolved.';
+          message = 'Your incident ' + (data.code || '') + ' has been resolved.';
         }
         showNotification('Update on your Emergency', message);
       }

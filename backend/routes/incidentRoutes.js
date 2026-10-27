@@ -49,8 +49,8 @@ const generateIncidentCode = async () => {
   const randomHex = Math.floor(Math.random() * 65535).toString(16).toUpperCase().padStart(4, '0');
   return `#${year}-${month}-${randomHex}`;};
 
-// Create Incident Report (Residents only)
-router.post('/', authRequired, requireRole(['Resident']), upload.single('photo'), async (req, res) => {
+// Create Incident Report (Residents, Admins, and Responders)
+router.post('/', authRequired, requireRole(['Resident', 'Admin', 'Responder']), upload.single('photo'), async (req, res) => {
   const { type, description, location_lat, location_lng, location_address, details } = req.body;
 
   if (!type || !description) {

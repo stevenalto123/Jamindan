@@ -680,7 +680,7 @@ const ReportIncident = () => {
 
             <button
               type="button"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(user?.role === 'Resident' ? '/dashboard' : '/admin')}
               disabled={loading}
               style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer', padding: '6px', textDecoration: 'underline' }}
             >

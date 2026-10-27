@@ -20,10 +20,10 @@ const getRelativeTime = (dateString) => {
 // Helper for dynamic icons and colors
 const getNotifStyle = (type, title = '') => {
   const t = title.toLowerCase();
-  if (type === 'incident' || t.includes('critical') || t.includes('emergency')) {
+  if (type === 'incident' || type === 'evacuation' || (type && type.startsWith('broadcast:extreme')) || t.includes('critical') || t.includes('emergency')) {
     return { icon: AlertTriangle, color: 'var(--danger-color)', bg: 'rgba(231, 76, 60, 0.1)' };
   }
-  if (type === 'news' || t.includes('announcement') || t.includes('broadcast')) {
+  if (type === 'news' || (type && type.startsWith('broadcast')) || t.includes('announcement') || t.includes('broadcast')) {
     return { icon: Megaphone, color: '#3498db', bg: 'rgba(52, 152, 219, 0.1)' };
   }
   if (t.includes('success') || t.includes('verified') || t.includes('resolved')) {
@@ -59,10 +59,12 @@ const NotificationsPage = () => {
       setNotifications(prev =>
         prev.map(n => (n.id === id ? { ...n, is_read: 1 } : n))
       );
-      if (refType === 'incident') {
+      if (refType === 'incident' && refId) {
         navigate(`/incidents/${refId}`);
       } else if (refType === 'news') {
         navigate('/news');
+      } else if (refType === 'evacuation') {
+        navigate('/evacuation');
       }
     } catch (err) {
       console.error(err);

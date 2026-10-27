@@ -161,8 +161,12 @@ router.post('/login', authLimiter, async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
+        email: user.email,
         role: user.role,
+        agency_type: user.agency_type,
         full_name: user.full_name,
+        age: user.age,
+        date_of_birth: user.date_of_birth,
         phone: user.phone,
         barangay: user.barangay,
         purok_sitio: user.purok_sitio,
@@ -171,7 +175,8 @@ router.post('/login', authLimiter, async (req, res) => {
         medical_conditions: user.medical_conditions,
         emergency_contact_name: user.emergency_contact_name,
         emergency_contact_phone: user.emergency_contact_phone,
-        avatar: user.avatar
+        avatar: user.avatar,
+        is_on_duty: user.is_on_duty
       }
     });
   } catch (error) {

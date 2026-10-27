@@ -5,7 +5,7 @@ import { Bell, Globe, Moon, Shield, LogOut, ChevronRight, Mail, MessageSquare } 
 import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
-  const { language, toggleLanguage, t } = useLanguage();
+  const { lang, toggleLanguage, t } = useLanguage();
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -48,7 +48,7 @@ const Settings = () => {
             </div>
             <div>
               <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text-color)' }}>{t('language')}</div>
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{language === 'en' ? 'English' : 'Hiligaynon'}</div>
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{lang === 'en' ? 'English' : 'Hiligaynon'}</div>
             </div>
           </div>
           <ChevronRight size={20} color="#ccc" />

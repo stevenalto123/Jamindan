@@ -552,7 +552,7 @@ const TrackStatus = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          const alertMsg = `[MDRRMO EMERGENCY ALERT] Incident #${incident.code} (${incident.type}) at ${incident.barangay ? `Brgy. ${incident.barangay}` : incident.location_address || 'Jamindan'}. Details: ${incident.description}. Requesting PNP assistance / scene control.`;
+                          const alertMsg = `[MDRRMO EMERGENCY ALERT] Incident #${incident.code} (${incident.type}) at ${incident.location_address || (incident.reporter_barangay ? `Brgy. ${incident.reporter_barangay}` : 'Jamindan')}. Details: ${incident.description}. Requesting PNP assistance / scene control.`;
                           navigator.clipboard.writeText(alertMsg);
                           alert('Copied alert dispatch details to clipboard! You can paste and send via SMS to Jamindan PNP (0908-641-5589).');
                         }}
@@ -911,20 +911,22 @@ const TrackStatus = () => {
       </div>
 
       {/* Official Signatory Certification Block (Visible on PRINT / PDF) */}
-      <div className="print-only" style={{ marginTop: '36px', paddingTop: '20px', borderTop: '1px solid #cbd5e1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-        <div>
-          <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '28px' }}>Prepared & Verified By:</div>
-          <div style={{ borderBottom: '1px solid #0f172a', width: '240px', marginBottom: '4px', fontWeight: '800', fontSize: '13px', color: '#0f172a' }}>
-            {user?.full_name || 'MDRRMO Command Center'}
+      <div className="print-only" style={{ marginTop: '36px', paddingTop: '20px', borderTop: '1px solid #cbd5e1' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+          <div>
+            <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '28px' }}>Prepared & Verified By:</div>
+            <div style={{ borderBottom: '1px solid #0f172a', width: '240px', marginBottom: '4px', fontWeight: '800', fontSize: '13px', color: '#0f172a' }}>
+              {user?.full_name || 'MDRRMO Command Center'}
+            </div>
+            <div style={{ fontSize: '11px', color: '#475569' }}>MDRRMO Operations & Warning Officer</div>
           </div>
-          <div style={{ fontSize: '11px', color: '#475569' }}>MDRRMO Operations & Warning Officer</div>
-        </div>
-        <div>
-          <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '28px' }}>Noted & Approved By:</div>
-          <div style={{ borderBottom: '1px solid #0f172a', width: '240px', marginBottom: '4px', fontWeight: '800', fontSize: '13px', color: '#0f172a' }}>
-            &nbsp;
+          <div>
+            <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '28px' }}>Noted & Approved By:</div>
+            <div style={{ borderBottom: '1px solid #0f172a', width: '240px', marginBottom: '4px', fontWeight: '800', fontSize: '13px', color: '#0f172a' }}>
+              &nbsp;
+            </div>
+            <div style={{ fontSize: '11px', color: '#475569' }}>Municipal DRRM Officer — Jamindan, Capiz</div>
           </div>
-          <div style={{ fontSize: '11px', color: '#475569' }}>Municipal DRRM Officer — Jamindan, Capiz</div>
         </div>
       </div>
     </div>

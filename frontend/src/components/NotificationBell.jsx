@@ -37,7 +37,7 @@ const NotificationBell = () => {
     if (unread > prevUnreadCount.current) {
       const freshNotifs = unreadNotifications.slice(0, unread - prevUnreadCount.current);
       const isEmergencyOrBroadcast = freshNotifs.some(n => 
-        n.reference_type === 'broadcast' ||
+        (n.reference_type && (n.reference_type.startsWith('broadcast') || n.reference_type === 'evacuation')) ||
         (n.title && (n.title.toLowerCase().includes('emergency') || n.title.toLowerCase().includes('broadcast') || n.title.toLowerCase().includes('evacuation') || n.title.toLowerCase().includes('alert'))) || 
         (n.message && (n.message.toLowerCase().includes('sos') || n.message.toLowerCase().includes('evacuate') || n.message.toLowerCase().includes('siren')))
       );
@@ -110,10 +110,12 @@ const NotificationBell = () => {
       setIsOpen(false);
 
       // Navigate based on reference
-      if (refType === 'incident') {
+      if (refType === 'incident' && refId) {
         navigate(`/incidents/${refId}`);
       } else if (refType === 'news') {
         navigate('/news');
+      } else if (refType === 'evacuation') {
+        navigate('/evacuation');
       }
     } catch (err) {
       console.error('Error marking notification as read', err);

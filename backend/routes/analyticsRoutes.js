@@ -165,7 +165,12 @@ router.get('/reports/master-log', async (req, res) => {
     `;
 
     const [rows] = await db.query(query, params);
-    return res.json({ reports: rows, count: rows.length });
+    const criticalKeywords = /(unconscious|bleeding|fire|trapped|armed|heart attack|stroke|not breathing|critical|severe|gun|knife|suicide|explosion)/i;
+    const processedRows = rows.map(r => ({
+      ...r,
+      priority: (r.description && criticalKeywords.test(r.description)) ? 'CRITICAL' : 'Normal'
+    }));
+    return res.json({ reports: processedRows, count: processedRows.length });
   } catch (error) {
     console.error('Master log report error:', error);
     res.status(500).json({ message: 'Server error while generating master log' });
