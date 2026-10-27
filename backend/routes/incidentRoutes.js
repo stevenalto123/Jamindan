@@ -550,6 +550,14 @@ router.put('/:id/agency', authRequired, requireRole(['Admin', 'Responder']), asy
 router.get('/:id/chat', authRequired, async (req, res) => {
   const { id } = req.params;
   try {
+    const [incRows] = await db.query('SELECT reporter_id FROM incidents WHERE id = ?', [id]);
+    if (!incRows[0]) {
+      return res.status(404).json({ message: 'Incident not found' });
+    }
+    if (req.user.role === 'Resident' && incRows[0].reporter_id !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
     const [messages] = await db.query(`
       SELECT c.*, u.full_name, u.role, u.avatar 
       FROM incident_chats c
@@ -574,6 +582,14 @@ router.post('/:id/chat', authRequired, async (req, res) => {
   }
 
   try {
+    const [incRows] = await db.query('SELECT reporter_id FROM incidents WHERE id = ?', [id]);
+    if (!incRows[0]) {
+      return res.status(404).json({ message: 'Incident not found' });
+    }
+    if (req.user.role === 'Resident' && incRows[0].reporter_id !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
     // Save to database
     const [result] = await db.query(
       'INSERT INTO incident_chats (incident_id, sender_id, message) VALUES (?, ?, ?)',

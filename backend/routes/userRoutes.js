@@ -3,11 +3,21 @@ const router = express.Router();
 const db = require('../config/db');
 const { authRequired, requireRole } = require('../middleware/auth');
 const multer = require('multer');
+const path = require('path');
 const { storage } = require('../config/cloudinary');
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png|webp|heic|heif/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('SECURITY ERROR: Only image files (JPG, PNG, WEBP, HEIC) are allowed.'));
+  }
 });
 
 // Apply auth to all routes in this file
@@ -117,9 +127,10 @@ router.get('/', requireRole(['Admin', 'Responder']), async (req, res) => {
     const [countResult] = await db.query(countQuery, params);
     const totalCount = countResult[0].count;
 
-    // Get paginated users
+    // Get paginated users (only Admin receives KYC ID/selfie document paths)
+    const kycFields = req.user.role === 'Admin' ? ', id_photo_path, selfie_photo_path, id_type' : '';
     const dataQuery = `
-      SELECT id, username, role, agency_type, full_name, age, date_of_birth, phone, barangay, avatar, is_active, is_on_duty, current_lat, current_lng, created_at, id_photo_path, selfie_photo_path, id_type
+      SELECT id, username, role, agency_type, full_name, age, date_of_birth, phone, barangay, avatar, is_active, is_on_duty, current_lat, current_lng, created_at${kycFields}
       ${baseQuery}
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?

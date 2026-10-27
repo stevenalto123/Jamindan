@@ -15,8 +15,8 @@ const authRequired = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
     
-    // Verify user still exists and is active in DB
-    const [rows] = await db.execute('SELECT id, username, role, agency_type, is_active FROM users WHERE id = ?', [decoded.id]);
+    // Verify user still exists, is active, and (if Resident) is verified in DB
+    const [rows] = await db.execute('SELECT id, username, role, agency_type, is_active, is_verified FROM users WHERE id = ?', [decoded.id]);
     const user = rows[0];
 
     if (!user) {
@@ -24,6 +24,9 @@ const authRequired = async (req, res, next) => {
     }
     if (!user.is_active) {
       return res.status(403).json({ message: 'Account is deactivated. Please contact administrator.' });
+    }
+    if (user.role === 'Resident' && !user.is_verified) {
+      return res.status(403).json({ message: 'Account pending verification.' });
     }
 
     req.user = {
