@@ -220,7 +220,8 @@ const TrackStatus = () => {
     setAssigning(true);
     try {
       await axios.put(`/api/incidents/${id}/assign`, { responder_id: selectedResponder });
-      alert('Responder successfully assigned!');
+      setSelectedResponder('');
+      alert('Responder successfully dispatched!');
       await fetchIncidentDetail();
     } catch (err) {
       console.error(err);
@@ -637,16 +638,27 @@ const TrackStatus = () => {
                 <Navigation size={18} /> Dispatch Responder
               </h3>
               
-              {incident.responder_id ? (
+              {incident.responder_id && (
                 <div style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe', marginBottom: '12px' }}>
                   <p style={{ margin: 0, fontSize: '14px', color: '#1e3a8a' }}>
-                    <strong>Assigned To:</strong> {incident.responder_name || 'Responder'} ({incident.responder_phone || 'No Phone Provided'})
+                    <strong>Primary Assigned:</strong> {incident.responder_name || 'Responder'} ({incident.responder_phone || 'No Phone Provided'})
                   </p>
+                  {incident.agency_notes && incident.agency_notes.includes('[Backup Dispatched:') && (
+                    <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#047857', fontWeight: '700' }}>
+                      ➕ {incident.agency_notes.split('|').filter(n => n.includes('[Backup Dispatched:')).join(' • ')}
+                    </p>
+                  )}
                 </div>
-              ) : (
+              )}
+
+              {incident.status !== 'Resolved' && (
                 <form onSubmit={handleAssignResponder}>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="responderSelect">Select Responder to Dispatch (By Agency)</label>
+                    <label className="form-label" htmlFor="responderSelect">
+                      {incident.responder_id
+                        ? 'Dispatch Additional / Backup Responder (e.g. RHU Medical / BFP / MDRRMO)'
+                        : 'Select Responder to Dispatch (By Agency)'}
+                    </label>
                     <select
                       id="responderSelect"
                       className="form-select"
@@ -679,7 +691,11 @@ const TrackStatus = () => {
                     </select>
                   </div>
                   <button type="submit" className="btn btn-primary btn-full" disabled={assigning || !selectedResponder} style={{ height: '40px' }}>
-                    {assigning ? 'Dispatching...' : 'Dispatch Responder'}
+                    {assigning
+                      ? 'Dispatching...'
+                      : incident.responder_id
+                        ? '➕ Dispatch Additional / Backup Unit'
+                        : 'Dispatch Responder'}
                   </button>
                 </form>
               )}

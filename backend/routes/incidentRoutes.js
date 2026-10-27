@@ -176,18 +176,25 @@ router.get('/', authRequired, async (req, res) => {
       params.push(req.user.id);
     } else if (req.user.role === 'Responder') {
       if (req.user.agency_type) {
-        // Responders see incidents dispatched to them OR unassigned active incidents for their agency
+        // Responders see incidents dispatched to them (primary or co-dispatched) OR active incidents for their agency
         let targetAgencies = [req.user.agency_type];
         if (req.user.agency_type === 'Fire') targetAgencies.push('BFP');
         if (req.user.agency_type === 'BFP') targetAgencies.push('Fire');
         if (req.user.agency_type === 'Medical') targetAgencies.push('RHU');
         if (req.user.agency_type === 'RHU') targetAgencies.push('Medical');
 
-        conditions.push('(i.responder_id = ? OR (i.lead_agency IN (?, ?) AND (i.responder_id IS NULL OR i.status != "Resolved")))');
-        params.push(req.user.id, targetAgencies[0], targetAgencies[1] || targetAgencies[0]);
+        conditions.push(`(
+          i.responder_id = ?
+          OR (i.lead_agency IN (?, ?) AND (i.responder_id IS NULL OR i.status != "Resolved"))
+          OR i.id IN (SELECT reference_id FROM notifications WHERE user_id = ? AND reference_type = 'incident')
+        )`);
+        params.push(req.user.id, targetAgencies[0], targetAgencies[1] || targetAgencies[0], req.user.id);
       } else {
-        conditions.push('i.responder_id = ?');
-        params.push(req.user.id);
+        conditions.push(`(
+          i.responder_id = ?
+          OR i.id IN (SELECT reference_id FROM notifications WHERE user_id = ? AND reference_type = 'incident')
+        )`);
+        params.push(req.user.id, req.user.id);
       }
     }
 
@@ -595,7 +602,7 @@ router.post('/:id/chat', authRequired, async (req, res) => {
   }
 });
 
-// Assign Responder (Admin only)
+// Assign Responder (Admin only) - supports initial dispatch AND additional backup/medical dispatch
 router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res) => {
   const { id } = req.params;
   const { responder_id } = req.body;
@@ -605,34 +612,55 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
   }
 
   try {
-    const [incRows] = await db.query('SELECT reporter_id, code FROM incidents WHERE id = ?', [id]);
+    const [incRows] = await db.query('SELECT reporter_id, responder_id, status, code, agency_notes FROM incidents WHERE id = ?', [id]);
     const incident = incRows[0];
 
     if (!incident) {
       return res.status(404).json({ message: 'Incident not found.' });
     }
 
-    const [result] = await db.query(
-      'UPDATE incidents SET responder_id = ?, status = ? WHERE id = ?',
-      [responder_id, 'In Progress', id]
-    );
+    const [respRows] = await db.query('SELECT id, full_name, agency_type, push_subscription FROM users WHERE id = ?', [responder_id]);
+    const assignedResponder = respRows[0];
+    const respLabel = assignedResponder
+      ? `${assignedResponder.full_name} (${assignedResponder.agency_type || 'MDRRMO'})`
+      : `Responder #${responder_id}`;
 
-    // Log the action
-    await db.query(
-      'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, ?, ?, ?)',
-      [id, 'In Progress', `Incident dispatched to responder #${responder_id}`, req.user.id]
-    );
+    const nextStatus = ['Pending', 'Acknowledged'].includes(incident.status) ? 'Responding' : incident.status;
 
-    // Send Database and Web Push Notification to the assigned responder
-    const [respRows] = await db.query('SELECT push_subscription FROM users WHERE id = ?', [responder_id]);
-    if (respRows.length > 0) {
-      const assignedResponder = respRows[0];
+    if (incident.responder_id && String(incident.responder_id) !== String(responder_id)) {
+      // Additional / Backup Responder Dispatched (e.g. RHU Medical dispatched to support BFP Fire)
+      const coNote = `[Backup Dispatched: ${respLabel}]`;
+      const updatedNotes = incident.agency_notes
+        ? (incident.agency_notes.includes(coNote) ? incident.agency_notes : `${incident.agency_notes} | ${coNote}`)
+        : coNote;
+      await db.query(
+        'UPDATE incidents SET status = ?, agency_notes = ? WHERE id = ?',
+        [nextStatus, updatedNotes, id]
+      );
+      await db.query(
+        'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, ?, ?, ?)',
+        [id, nextStatus, `Additional support unit dispatched: ${respLabel}`, req.user.id]
+      );
+    } else {
+      // Primary Responder Dispatched
+      await db.query(
+        'UPDATE incidents SET responder_id = ?, status = ? WHERE id = ?',
+        [responder_id, nextStatus, id]
+      );
+      await db.query(
+        'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, ?, ?, ?)',
+        [id, nextStatus, `Incident dispatched to ${respLabel}`, req.user.id]
+      );
+    }
+
+    // Send Database and Web Push Notification to the dispatched responder
+    if (assignedResponder) {
       await db.execute(
         'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES (?, ?, ?, ?, ?)',
         [
           responder_id,
-          'Dispatch Alert',
-          'You have been assigned to Incident ' + incident.code + '. Please respond immediately.',
+          '🚨 Dispatch Alert',
+          'You have been dispatched to Incident ' + incident.code + '. Please respond immediately.',
           'incident',
           id
         ]
@@ -643,8 +671,8 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
           const subscription = JSON.parse(assignedResponder.push_subscription);
           const webpush = require('web-push');
           const payload = JSON.stringify({
-            title: '?? DISPATCH ALERT',
-            body: 'You have been assigned to Incident ' + incident.code + '. Please respond immediately!',
+            title: '🚨 DISPATCH ALERT',
+            body: 'You have been dispatched to Incident ' + incident.code + '. Please respond immediately!',
             icon: '/logo.png',
             url: '/incidents/' + id
           });
@@ -655,26 +683,25 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
       }
     }
     
-    // Optionally emit event via socket
+    // Emit real-time events via Socket.io
     const io = req.app.get('io');
     if (io) {
       io.emit('responder-dispatched', { 
         id, 
-        status: 'In Progress', 
+        status: nextStatus, 
         responderId: responder_id, 
         reporterId: incident.reporter_id,
         code: incident.code
       });
-      // also emit status updated so list updates
       io.emit('incident-status-updated', { 
         incidentId: id, 
-        status: 'In Progress', 
+        status: nextStatus, 
         reporterId: incident.reporter_id, 
         code: incident.code 
       });
     }
 
-    return res.json({ message: 'Responder assigned successfully' });
+    return res.json({ message: 'Responder dispatched successfully' });
   } catch (error) {
     console.error('Assign responder error:', error);
     return res.status(500).json({ message: 'Server error while assigning responder' });
