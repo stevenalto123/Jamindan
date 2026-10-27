@@ -153,12 +153,10 @@ const AdminDashboard = () => {
   return (
     <div className="content-body" style={{ padding: '24px', margin: '0 auto', maxWidth: '1200px', paddingBottom: '80px' }}>
 
-      {/* Live Jamindan Weather & Flood Hazard Telemetry Widget */}
-      <JamindanWeatherWidget />
-
-      {/* Admin Exclusive: Top Metrics */}
+      {/* Admin Exclusive: Weather Telemetry & Top Metrics */}
       {user?.role === 'Admin' && (
         <>
+          <JamindanWeatherWidget />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         

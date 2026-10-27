@@ -5,7 +5,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { Shield, Flame, HeartPulse, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import SosPanicButton from '../components/SosPanicButton';
-import JamindanWeatherWidget from '../components/JamindanWeatherWidget';
 
 const ResidentDashboard = () => {
   const { user } = useAuth();
@@ -106,9 +105,6 @@ const ResidentDashboard = () => {
           </div>
         </a>
       </div>
-
-      {/* Live Jamindan Weather & Flood Hazard Widget */}
-      <JamindanWeatherWidget compact={true} />
 
       {/* "I Am Safe" Resident Safety Check-In Card */}
       <div className="glass-card" style={{ marginBottom: '20px', padding: '18px' }}>
