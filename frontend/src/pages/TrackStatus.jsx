@@ -76,36 +76,6 @@ const TrackStatus = () => {
     documentTitle: `Incident_Report_${id}`,
   });
 
-  // Jamindan MDRRMO Command Center default coordinates (Poblacion, Jamindan)
-  const JAMINDAN_CENTER_LAT = 11.4090;
-  const JAMINDAN_CENTER_LNG = 122.5008;
-
-  // Helper: If PC browser IP-geolocation points outside Jamindan (>25km away or low accuracy),
-  // anchor the Responder's starting point to Jamindan MDRRMO Command Center
-  const normalizeResponderCoords = (lat, lng, accuracy = 0) => {
-    const numLat = parseFloat(lat);
-    const numLng = parseFloat(lng);
-    if (isNaN(numLat) || isNaN(numLng)) {
-      return { lat: JAMINDAN_CENTER_LAT, lng: JAMINDAN_CENTER_LNG };
-    }
-    const R = 6371; // Earth radius in km
-    const dLat = ((numLat - JAMINDAN_CENTER_LAT) * Math.PI) / 180;
-    const dLng = ((numLng - JAMINDAN_CENTER_LNG) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((JAMINDAN_CENTER_LAT * Math.PI) / 180) *
-        Math.cos((numLat * Math.PI) / 180) *
-        Math.sin(dLng / 2) *
-        Math.sin(dLng / 2);
-    const distanceKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    // If detected location is outside Jamindan (>25km) or coarse ISP IP location (>3500m accuracy)
-    if (distanceKm > 25 || (accuracy && accuracy > 3500)) {
-      return { lat: JAMINDAN_CENTER_LAT, lng: JAMINDAN_CENTER_LNG };
-    }
-    return { lat: numLat, lng: numLng };
-  };
-
   const fetchIncidentDetail = async () => {
     try {
       const res = await axios.get(`/api/incidents/${id}?_t=${Date.now()}`);
@@ -119,11 +89,10 @@ const TrackStatus = () => {
       const oldStatus = inc.status;
       setNewStatus(STATUSES.includes(oldStatus) ? oldStatus : 'Acknowledged');
 
-      // For Admin / Resident tabs (or initial load), sync assigned responder's location
-      if (inc.responder_id || ['Acknowledged', 'Responding', 'On Scene'].includes(inc.status)) {
-        const norm = normalizeResponderCoords(inc.responder_lat, inc.responder_lng);
-        setResponderLat(norm.lat);
-        setResponderLng(norm.lng);
+      // For Admin / Resident tabs, show the assigned responder's real live location from DB
+      if (user?.role !== 'Responder' && inc.responder_lat && inc.responder_lng) {
+        setResponderLat(parseFloat(inc.responder_lat));
+        setResponderLng(parseFloat(inc.responder_lng));
       }
     } catch (err) {
       console.error(err);
@@ -158,39 +127,45 @@ const TrackStatus = () => {
     };
   }, [id]);
 
-  // Track Responder's own location
+  // Track Responder's real live GPS location (works both inside and outside Jamindan)
   useEffect(() => {
-    if (user?.role === 'Responder' || user?.role === 'Admin') {
+    if (user?.role === 'Responder') {
       const getLoc = () => {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
-              const norm = normalizeResponderCoords(
-                pos.coords.latitude,
-                pos.coords.longitude,
-                pos.coords.accuracy
-              );
-              setResponderLat(norm.lat);
-              setResponderLng(norm.lng);
+              const realLat = pos.coords.latitude;
+              const realLng = pos.coords.longitude;
+              setResponderLat(realLat);
+              setResponderLng(realLng);
+              axios.put('/api/auth/location', { latitude: realLat, longitude: realLng }).catch(() => {});
             },
-            (err) => {
-              console.warn("GPS location unavailable, using Jamindan Command Center", err);
-              setResponderLat(JAMINDAN_CENTER_LAT);
-              setResponderLng(JAMINDAN_CENTER_LNG);
-            },
-            { enableHighAccuracy: true, timeout: 5000 }
+            (err) => console.warn("GPS location unavailable", err),
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
           );
-        } else {
-          setResponderLat(JAMINDAN_CENTER_LAT);
-          setResponderLng(JAMINDAN_CENTER_LNG);
         }
       };
       
       getLoc();
       const interval = setInterval(getLoc, 10000); // update every 10s
       return () => clearInterval(interval);
+    } else if (user && id) {
+      // For Admin and Resident tabs: poll the assigned Responder's real location
+      const pollResponderLoc = () => {
+        axios.get(`/api/incidents/${id}/responder-location`)
+          .then(res => {
+            if (res.data?.lat && res.data?.lng) {
+              setResponderLat(parseFloat(res.data.lat));
+              setResponderLng(parseFloat(res.data.lng));
+            }
+          })
+          .catch(() => {});
+      };
+      pollResponderLoc();
+      const interval = setInterval(pollResponderLoc, 10000);
+      return () => clearInterval(interval);
     }
-  }, [user]);
+  }, [user, id]);
 
   const handleStatusUpdateSubmit = async (e) => {
     e.preventDefault();
@@ -758,7 +733,7 @@ const TrackStatus = () => {
             </p>
             {isStaff && (
               <a 
-                href={`https://www.google.com/maps/dir/?api=1&origin=${responderLat || JAMINDAN_CENTER_LAT},${responderLng || JAMINDAN_CENTER_LNG}&destination=${incident.location_lat},${incident.location_lng}&travelmode=driving&dir_action=navigate`}
+                href={`https://www.google.com/maps/dir/?api=1${responderLat && responderLng ? `&origin=${responderLat},${responderLng}` : ''}&destination=${incident.location_lat},${incident.location_lng}&travelmode=driving&dir_action=navigate`}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="btn btn-primary no-print"
@@ -772,6 +747,11 @@ const TrackStatus = () => {
               lng={incident.location_lng} 
               responderLat={responderLat}
               responderLng={responderLng}
+              onResponderMove={user?.role === 'Responder' ? (newLat, newLng) => {
+                setResponderLat(newLat);
+                setResponderLng(newLng);
+                axios.put('/api/auth/location', { latitude: newLat, longitude: newLng }).catch(() => {});
+              } : null}
             />
           </div>
 

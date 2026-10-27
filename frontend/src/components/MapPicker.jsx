@@ -13,27 +13,6 @@ const MapPicker = ({ lat, lng, onChange }) => {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
 
-  const JAMINDAN_LAT = 11.4090;
-  const JAMINDAN_LNG = 122.5008;
-
-  const isInsideJamindan = (checkLat, checkLng, accuracy = 0) => {
-    const nLat = parseFloat(checkLat);
-    const nLng = parseFloat(checkLng);
-    if (isNaN(nLat) || isNaN(nLng)) return false;
-    const R = 6371;
-    const dLat = ((nLat - JAMINDAN_LAT) * Math.PI) / 180;
-    const dLng = ((nLng - JAMINDAN_LNG) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((JAMINDAN_LAT * Math.PI) / 180) *
-        Math.cos((nLat * Math.PI) / 180) *
-        Math.sin(dLng / 2) *
-        Math.sin(dLng / 2);
-    const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    if (distKm > 25 || (accuracy && accuracy > 3500)) return false;
-    return true;
-  };
-
   useEffect(() => {
     const startLat = lat || 11.4287; // Jamindan, Capiz Center
     const startLng = lng || 122.4842;
@@ -67,32 +46,28 @@ const MapPicker = ({ lat, lng, onChange }) => {
         }
       }).setView([startLat, startLng], 14);
 
-      // Auto-detect real GPS location on mount (only apply if physically inside Jamindan)
+      // Auto-detect real GPS location on mount
       if (Capacitor.isNativePlatform()) {
         Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 5000 }).then((coordinates) => {
           const gpsLat = coordinates.coords.latitude;
           const gpsLng = coordinates.coords.longitude;
-          if (isInsideJamindan(gpsLat, gpsLng, coordinates.coords.accuracy)) {
-            onChange(gpsLat, gpsLng);
-            if (mapRef.current && markerRef.current) {
-              mapRef.current.setView([gpsLat, gpsLng], 16);
-              markerRef.current.setLatLng([gpsLat, gpsLng]);
-            }
+          onChange(gpsLat, gpsLng);
+          if (mapRef.current && markerRef.current) {
+            mapRef.current.setView([gpsLat, gpsLng], 16);
+            markerRef.current.setLatLng([gpsLat, gpsLng]);
           }
         }).catch(err => console.warn("Auto GPS failed", err));
       } else if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
           const gpsLat = pos.coords.latitude;
           const gpsLng = pos.coords.longitude;
-          if (isInsideJamindan(gpsLat, gpsLng, pos.coords.accuracy)) {
-            onChange(gpsLat, gpsLng);
-            if (mapRef.current && markerRef.current) {
-              mapRef.current.setView([gpsLat, gpsLng], 16);
-              markerRef.current.setLatLng([gpsLat, gpsLng]);
-            }
+          onChange(gpsLat, gpsLng);
+          if (mapRef.current && markerRef.current) {
+            mapRef.current.setView([gpsLat, gpsLng], 16);
+            markerRef.current.setLatLng([gpsLat, gpsLng]);
           }
         }, (err) => {
-          console.warn("Browser Auto GPS failed, staying at Jamindan default", err);
+          console.warn("Browser Auto GPS failed", err);
         }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
       }
 
@@ -152,29 +127,17 @@ const MapPicker = ({ lat, lng, onChange }) => {
             (pos) => {
               const gpsLat = pos.coords.latitude;
               const gpsLng = pos.coords.longitude;
-              if (isInsideJamindan(gpsLat, gpsLng, pos.coords.accuracy)) {
-                onChange(gpsLat, gpsLng);
-                if (mapRef.current && markerRef.current) {
-                  mapRef.current.setView([gpsLat, gpsLng], 16);
-                  markerRef.current.setLatLng([gpsLat, gpsLng]);
-                }
-              } else {
-                onChange(JAMINDAN_LAT, JAMINDAN_LNG);
-                if (mapRef.current && markerRef.current) {
-                  mapRef.current.setView([JAMINDAN_LAT, JAMINDAN_LNG], 16);
-                  markerRef.current.setLatLng([JAMINDAN_LAT, JAMINDAN_LNG]);
-                }
+              onChange(gpsLat, gpsLng);
+              if (mapRef.current && markerRef.current) {
+                mapRef.current.setView([gpsLat, gpsLng], 16);
+                markerRef.current.setLatLng([gpsLat, gpsLng]);
               }
             },
             (error) => {
               console.error("GPS detection error", error);
-              onChange(JAMINDAN_LAT, JAMINDAN_LNG);
-              if (mapRef.current && markerRef.current) {
-                mapRef.current.setView([JAMINDAN_LAT, JAMINDAN_LNG], 16);
-                markerRef.current.setLatLng([JAMINDAN_LAT, JAMINDAN_LNG]);
-              }
+              alert("Could not detect GPS location. Please click or drag the pin on the map manually.");
             },
-            { enableHighAccuracy: true, timeout: 10000 }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
           );
         } else {
           alert("Geolocation is not supported by your browser.");

@@ -73,9 +73,7 @@ const EvacuationCenters = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const nLat = pos.coords.latitude, nLng = pos.coords.longitude, acc = pos.coords.accuracy || 0;
-          const dist = Math.hypot(nLat - 11.4090, nLng - 122.5008) * 111;
-          setUserLocation(dist > 25 || acc > 3500 ? [11.4090, 122.5008] : [nLat, nLng]);
+          setUserLocation([pos.coords.latitude, pos.coords.longitude]);
           setLocationError('');
         },
         (err) => {

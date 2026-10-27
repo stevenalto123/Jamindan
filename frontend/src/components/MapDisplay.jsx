@@ -6,7 +6,7 @@ import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import 'leaflet.fullscreen';
 import '../../node_modules/leaflet.fullscreen/dist/Control.FullScreen.css';
 import { Maximize, Minimize, Navigation, LocateFixed, Clock, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
-const MapDisplay = ({ lat, lng, responderLat, responderLng, onMapClick, drawRoute = true }) => {
+const MapDisplay = ({ lat, lng, responderLat, responderLng, onMapClick, onResponderMove, drawRoute = true }) => {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -117,7 +117,16 @@ const MapDisplay = ({ lat, lng, responderLat, responderLng, onMapClick, drawRout
 
     if (responderLat && responderLng) {
       if (!responderMarkerRef.current) {
-        responderMarkerRef.current = L.marker([responderLat, responderLng], { icon: responderIcon }).addTo(mapRef.current);
+        responderMarkerRef.current = L.marker([responderLat, responderLng], {
+          icon: responderIcon,
+          draggable: Boolean(onResponderMove)
+        }).addTo(mapRef.current);
+        if (onResponderMove) {
+          responderMarkerRef.current.on('dragend', () => {
+            const pos = responderMarkerRef.current.getLatLng();
+            onResponderMove(pos.lat, pos.lng);
+          });
+        }
       } else {
         responderMarkerRef.current.setLatLng([responderLat, responderLng]);
       }
