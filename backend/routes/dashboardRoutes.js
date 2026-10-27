@@ -23,8 +23,17 @@ router.get('/stats', requireRole(['Admin', 'Responder']), async (req, res) => {
     const [pendingReportsRows] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE status = 'Pending'");
     const pendingReports = pendingReportsRows[0].count;
 
-    const [resolvedReportsRows] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE status = 'Resolved'");
-    const resolvedReports = resolvedReportsRows[0].count;
+    // Calculate Resolved Today (in Philippine Standard Time) and Total Lifetime Resolved
+    const [resolvedRows] = await db.query(
+      "SELECT id, updated_at, created_at FROM incidents WHERE status = 'Resolved'"
+    );
+    const totalResolved = resolvedRows.length;
+    const todayPst = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+    const resolvedToday = resolvedRows.filter(r => {
+      const dateStr = new Date(r.updated_at || r.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+      return dateStr === todayPst;
+    }).length;
+    const resolvedReports = resolvedToday;
 
     // Weekly incident trend chart data (last 7 days)
     const weeklyTrends = [];
@@ -79,7 +88,9 @@ router.get('/stats', requireRole(['Admin', 'Responder']), async (req, res) => {
         activeIncidents,
         respondersOnDuty,
         pendingReports,
-        resolvedReports
+        resolvedReports,
+        resolvedToday,
+        totalResolved
       },
       weeklyTrends,
       recentIncidents,

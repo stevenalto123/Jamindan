@@ -238,10 +238,15 @@ const AdminDashboard = () => {
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '36px', fontWeight: '800', lineHeight: '1' }}>{data?.metrics?.resolvedReports || 0}</span>
+            <span style={{ fontSize: '36px', fontWeight: '800', lineHeight: '1' }}>
+              {data?.metrics?.resolvedToday ?? data?.metrics?.resolvedReports ?? 0}
+            </span>
             <CheckCircle size={24} color="rgba(255,255,255,0.7)" />
           </div>
           <span style={{ fontSize: '15px', fontWeight: '600', color: 'rgba(255,255,255,0.9)' }}>{t('resolvedToday')}</span>
+          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', fontWeight: '500', marginTop: '-4px' }}>
+            {data?.metrics?.totalResolved || 0} total resolved
+          </span>
         </div>
 
         {/* Active Responders */}
