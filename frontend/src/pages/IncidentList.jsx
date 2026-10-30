@@ -3,7 +3,7 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { FileText, Search, PlusCircle, Eye, Trash2, Download, Printer, Flame, HeartPulse, Droplets, Car, ShieldAlert, HelpCircle, MapPin, Clock, ChevronRight, AlertTriangle, Filter, Shield } from 'lucide-react';
+import { FileText, Search, PlusCircle, Eye, Trash2, Download, Printer, Flame, HeartPulse, Droplets, Car, ShieldAlert, HelpCircle, MapPin, Clock, ChevronRight, AlertTriangle, Filter, Shield, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export const INCIDENT_TYPES = ['Fire', 'Medical', 'Flood', 'Crime', 'Accident', 'Other', 'Landslide'];
@@ -53,7 +53,6 @@ const IncidentList = () => {
     if (!isPolling) setLoading(true);
     try {
       const params = {};
-      if (statusFilter) params.status = statusFilter;
       if (typeFilter) params.type = typeFilter;
       if (agencyFilter) params.agency = agencyFilter;
       if (search) params.search = search;
@@ -70,7 +69,14 @@ const IncidentList = () => {
     fetchIncidents(false);
     const interval = setInterval(() => fetchIncidents(true), 3000);
     return () => clearInterval(interval);
-  }, [statusFilter, typeFilter, agencyFilter]);
+  }, [typeFilter, agencyFilter]);
+
+  // When search is cleared, refetch list immediately
+  useEffect(() => {
+    if (search === '') {
+      fetchIncidents(false);
+    }
+  }, [search]);
 
   useEffect(() => {
     const socketUrl = axios.defaults.baseURL || '';
@@ -80,23 +86,42 @@ const IncidentList = () => {
     socket.on('responder-dispatched', () => fetchIncidents(true));
     socket.on('agency-handoff', () => fetchIncidents(true));
     return () => socket.disconnect();
-  }, []);
+  }, [typeFilter, agencyFilter, search]);
 
-  // Pagination Logic
-  const totalPages = Math.ceil(incidents.length / itemsPerPage) || 1;
+  // Status counts for real-time pill badges
+  const statusCounts = useMemo(() => {
+    const counts = { All: incidents.length };
+    STATUSES.forEach(s => { counts[s] = 0; });
+    incidents.forEach(inc => {
+      if (counts[inc.status] !== undefined) {
+        counts[inc.status]++;
+      }
+    });
+    return counts;
+  }, [incidents]);
+
+  // Instant client-side status filtering
+  const filteredIncidents = useMemo(() => {
+    if (!statusFilter) return incidents;
+    return incidents.filter(inc => inc.status === statusFilter);
+  }, [incidents, statusFilter]);
+
+  // Pagination Logic based on filtered results
+  const totalPages = Math.ceil(filteredIncidents.length / itemsPerPage) || 1;
   const paginatedIncidents = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return incidents.slice(start, start + itemsPerPage);
-  }, [incidents, currentPage, itemsPerPage]);
+    return filteredIncidents.slice(start, start + itemsPerPage);
+  }, [filteredIncidents, currentPage, itemsPerPage]);
 
   useEffect(() => {
     setCurrentPage(1); // Reset page on filter changes
-  }, [statusFilter, typeFilter, agencyFilter, search, incidents.length]);
+  }, [statusFilter, typeFilter, agencyFilter, search]);
 
   const handleExportCSV = () => {
-    if (!incidents || incidents.length === 0) { alert(t('noReportsExport')); return; }
+    const target = filteredIncidents;
+    if (!target || target.length === 0) { alert(t('noReportsExport')); return; }
     const headers = ['Report Code', 'Incident Type', 'Priority', 'Description', 'Reporter Name', 'Reporter Phone', 'Location', 'Submitted Date', 'Status'];
-    const rows = incidents.map(inc => [
+    const rows = target.map(inc => [
       inc.code, inc.type, inc.priority,
       `"${(inc.description || '').replace(/"/g, '""')}"`,
       inc.reporter_name || '', inc.reporter_phone || '',
@@ -108,7 +133,7 @@ const IncidentList = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `Jamindan_Emergency_Incidents_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `Jamindan_Emergency_Incidents_${statusFilter || 'All'}_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -197,7 +222,7 @@ const IncidentList = () => {
             <div style={{ width: '32px', height: '32px', border: '3px solid var(--border-color)', borderTopColor: 'var(--primary-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
             {t('fetchingRecords')}
           </div>
-        ) : incidents.length === 0 ? (
+        ) : filteredIncidents.length === 0 ? (
           <div style={{ background: 'var(--card-bg)', padding: '60px 20px', textAlign: 'center', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
             <FileText size={48} style={{ color: '#cbd5e1', marginBottom: '16px' }} />
             <p style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '16px', margin: 0 }}>{t('noReportsMatching')}</p>
@@ -205,7 +230,7 @@ const IncidentList = () => {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {incidents.map((incident) => {
+            {filteredIncidents.map((incident) => {
               const meta = TYPE_META[incident.type] || TYPE_META['Other'];
               const Icon = meta.icon;
               const isCritical = incident.priority === 'CRITICAL';
@@ -318,91 +343,290 @@ const IncidentList = () => {
         </div>
       </div>
 
-      <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-        
-        <div style={{ display: 'flex', gap: '12px' }}>
+      {/* Official Top Bar with Title, Live Badge & Actions */}
+      <div className="no-print" style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '20px', 
+        flexWrap: 'wrap', 
+        gap: '16px' 
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '900', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>
+              Incident Inbox
+            </h1>
+            <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+              Official Municipal Incident Registry & Dispatch Log
+            </p>
+          </div>
+          <span style={{
+            fontSize: '12px',
+            fontWeight: '800',
+            padding: '4px 12px',
+            borderRadius: '999px',
+            backgroundColor: statusCounts.Pending > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+            color: statusCounts.Pending > 0 ? '#dc2626' : '#2563eb',
+            border: statusCounts.Pending > 0 ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(59, 130, 246, 0.25)'
+          }}>
+            {statusCounts.Pending > 0 ? `🚨 ${statusCounts.Pending} Needs Dispatch` : `${filteredIncidents.length} Reports`}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button 
+            type="button"
             onClick={handleExportCSV}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '10px 18px', borderRadius: '12px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'transform 0.2s' }}
-            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              background: 'var(--card-bg)', 
+              color: 'var(--text-main)', 
+              border: '1px solid var(--border-color)', 
+              padding: '10px 16px', 
+              borderRadius: '12px', 
+              fontSize: '13px', 
+              fontWeight: '700', 
+              cursor: 'pointer', 
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)', 
+              transition: 'all 0.2s' 
+            }}
+            title="Download CSV spreadsheet"
           >
-            <Download size={18} /> {t('exportCsv')}
+            <Download size={16} /> {t('exportCsv')}
           </button>
           <button 
+            type="button"
             onClick={() => window.print()}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#0f172a', color: 'white', border: 'none', padding: '10px 18px', borderRadius: '12px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.25)', transition: 'transform 0.2s' }}
-            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              background: '#0f172a', 
+              color: 'white', 
+              border: 'none', 
+              padding: '10px 18px', 
+              borderRadius: '12px', 
+              fontSize: '13px', 
+              fontWeight: '700', 
+              cursor: 'pointer', 
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.2)', 
+              transition: 'all 0.2s' 
+            }}
+            title="Print official dispatch report"
           >
-            <Printer size={18} /> {t('exportPdf')}
+            <Printer size={16} /> {t('exportPdf')}
           </button>
         </div>
       </div>
 
       <div className="glass-card" style={{ background: 'var(--card-bg)', borderRadius: '16px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: '600px' }}>
         
-        {/* Premium Toolbar */}
-        <div className="no-print" style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', background: '#f8fafc' }}>
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-            
-            <form onSubmit={handleSearchSubmit} style={{ flex: 1, minWidth: '280px', display: 'flex', gap: '8px' }}>
-              <div style={{ flex: 1 }}>
-                <input
-                  type="text"
-                  className="form-input"
-                  style={{ width: '100%', height: '44px', paddingLeft: '16px', paddingRight: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white' }}
-                  placeholder="Search by code, reporter, or location..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <button type="submit" style={{ height: '44px', width: '44px', borderRadius: '12px', background: 'var(--primary-color)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                <Search size={20} />
+        {/* Level 1: Quick Status Pill Tabs */}
+        <div className="no-print" style={{ 
+          padding: '12px 20px', 
+          borderBottom: '1px solid var(--border-color)', 
+          background: 'var(--card-bg)',
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px', 
+          overflowX: 'auto',
+          scrollbarWidth: 'none'
+        }}>
+          {[
+            { id: '', label: 'All Reports', count: statusCounts.All },
+            { id: 'Pending', label: '🚨 Pending', count: statusCounts.Pending, activeBg: '#d97706', urgent: statusCounts.Pending > 0 },
+            { id: 'Acknowledged', label: '📋 Acknowledged', count: statusCounts.Acknowledged, activeBg: '#0284c7' },
+            { id: 'Responding', label: '⚡ Responding', count: statusCounts.Responding, activeBg: '#7c3aed' },
+            { id: 'On Scene', label: '📍 On Scene', count: statusCounts['On Scene'], activeBg: '#0d9488' },
+            { id: 'Resolved', label: '✅ Resolved', count: statusCounts.Resolved, activeBg: '#16a34a' },
+            { id: 'False Alarm', label: '❌ False Alarm', count: statusCounts['False Alarm'], activeBg: '#dc2626' }
+          ].map(tab => {
+            const isActive = statusFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setStatusFilter(tab.id)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 14px',
+                  borderRadius: '999px',
+                  fontSize: '12px',
+                  fontWeight: '800',
+                  border: isActive ? '1px solid transparent' : '1px solid var(--border-color)',
+                  backgroundColor: isActive ? (tab.activeBg || '#0f172a') : 'var(--card-alt)',
+                  color: isActive ? '#ffffff' : 'var(--text-main)',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease',
+                  boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.12)' : 'none'
+                }}
+              >
+                <span>{tab.label}</span>
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: '900',
+                  padding: '1px 7px',
+                  borderRadius: '999px',
+                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.25)' : (tab.urgent ? '#ef4444' : 'var(--border-color)'),
+                  color: isActive ? '#ffffff' : (tab.urgent ? '#ffffff' : 'var(--text-muted)')
+                }}>
+                  {tab.count || 0}
+                </span>
               </button>
-            </form>
+            );
+          })}
+        </div>
 
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <div className="input-icon-wrapper" style={{ minWidth: '180px' }}>
-                <select
-                  className="form-select"
-                  style={{ height: '44px', paddingLeft: '40px', fontSize: '14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white' }}
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="">{t('allStatuses')}</option>
-                  {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-                <Filter size={18} className="input-icon-left" style={{ left: '14px', color: 'var(--text-muted)' }} />
-              </div>
-              <div className="input-icon-wrapper" style={{ minWidth: '180px' }}>
-                <select
-                  className="form-select"
-                  style={{ height: '44px', paddingLeft: '40px', fontSize: '14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white' }}
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                >
-                  <option value="">{t('allTypes')}</option>
-                  {INCIDENT_TYPES.map(tp => <option key={tp} value={tp}>{tp}</option>)}
-                </select>
-                <Filter size={18} className="input-icon-left" style={{ left: '14px', color: 'var(--text-muted)' }} />
-              </div>
-              <div className="input-icon-wrapper" style={{ minWidth: '180px' }}>
-                <select
-                  className="form-select"
-                  style={{ height: '44px', paddingLeft: '40px', fontSize: '14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white' }}
-                  value={agencyFilter}
-                  onChange={(e) => setAgencyFilter(e.target.value)}
-                >
-                  <option value="">All Agencies</option>
-                  <option value="MDRRMO">MDRRMO</option>
-                  <option value="BFP">BFP (Fire)</option>
-                  <option value="RHU">RHU (Medical)</option>
-                </select>
-                <Shield size={18} className="input-icon-left" style={{ left: '14px', color: 'var(--text-muted)' }} />
-              </div>
-            </div>
+        {/* Level 2: Modern Unified Command Bar (Search + Secondary Dropdowns + Reset) */}
+        <div className="no-print" style={{ 
+          padding: '14px 20px', 
+          borderBottom: '1px solid var(--border-color)', 
+          background: 'var(--card-alt)',
+          display: 'flex', 
+          gap: '12px', 
+          alignItems: 'center', 
+          flexWrap: 'wrap' 
+        }}>
+          {/* Integrated Search Input */}
+          <form onSubmit={handleSearchSubmit} style={{ flex: '1 1 280px', minWidth: '240px', margin: 0, position: 'relative' }}>
+            <Search 
+              size={17} 
+              style={{ 
+                position: 'absolute', 
+                left: '14px', 
+                top: '50%', 
+                transform: 'translateY(-50%)', 
+                color: 'var(--text-muted)',
+                pointerEvents: 'none'
+              }} 
+            />
+            <input
+              type="text"
+              className="form-input"
+              style={{ 
+                width: '100%', 
+                height: '42px', 
+                paddingLeft: '38px', 
+                paddingRight: search ? '36px' : '14px', 
+                borderRadius: '12px', 
+                border: '1px solid var(--border-color)', 
+                background: 'var(--card-bg)',
+                color: 'var(--text-main)',
+                fontSize: '13px'
+              }}
+              placeholder="Search by code, reporter, location, description..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Clear search"
+              >
+                <X size={15} />
+              </button>
+            )}
+          </form>
+
+          {/* Type Filter */}
+          <div className="input-icon-wrapper" style={{ flex: '0 1 180px', minWidth: '150px' }}>
+            <select
+              className="form-select"
+              style={{ 
+                height: '42px', 
+                paddingLeft: '38px', 
+                fontSize: '13px', 
+                fontWeight: '600',
+                borderRadius: '12px', 
+                border: '1px solid var(--border-color)', 
+                background: 'var(--card-bg)',
+                color: 'var(--text-main)'
+              }}
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
+              <option value="">All Types</option>
+              {INCIDENT_TYPES.map(tp => <option key={tp} value={tp}>{tp}</option>)}
+            </select>
+            <Filter size={16} className="input-icon-left" style={{ left: '12px', color: 'var(--text-muted)' }} />
           </div>
+
+          {/* Agency Filter */}
+          <div className="input-icon-wrapper" style={{ flex: '0 1 180px', minWidth: '150px' }}>
+            <select
+              className="form-select"
+              style={{ 
+                height: '42px', 
+                paddingLeft: '38px', 
+                fontSize: '13px', 
+                fontWeight: '600',
+                borderRadius: '12px', 
+                border: '1px solid var(--border-color)', 
+                background: 'var(--card-bg)',
+                color: 'var(--text-main)'
+              }}
+              value={agencyFilter}
+              onChange={(e) => setAgencyFilter(e.target.value)}
+            >
+              <option value="">All Agencies</option>
+              <option value="MDRRMO">MDRRMO</option>
+              <option value="BFP">BFP (Fire)</option>
+              <option value="RHU">RHU (Medical)</option>
+            </select>
+            <Shield size={16} className="input-icon-left" style={{ left: '12px', color: 'var(--text-muted)' }} />
+          </div>
+
+          {/* Reset Filters Shortcut */}
+          {(statusFilter || typeFilter || agencyFilter || search) && (
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter('');
+                setTypeFilter('');
+                setAgencyFilter('');
+                setSearch('');
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                height: '42px',
+                padding: '0 14px',
+                borderRadius: '12px',
+                background: 'none',
+                border: '1px dashed var(--border-color)',
+                color: 'var(--danger-color, #dc2626)',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+              title="Reset all active search and filter criteria"
+            >
+              <X size={14} /> Clear Filters
+            </button>
+          )}
         </div>
 
         {/* Table Content */}
