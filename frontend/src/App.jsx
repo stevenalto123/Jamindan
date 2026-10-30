@@ -19,6 +19,7 @@ import Header from './components/Header';
 import MobileBottomNav from './components/MobileBottomNav';
 import NotificationHandler from './components/NotificationHandler';
 import EmergencyBroadcastHandler from './components/EmergencyBroadcastHandler';
+import { syncOfflineQueue } from './utils/offlineQueue';
 
 // Pages
 import Login from './pages/Login';
@@ -141,7 +142,17 @@ const AppLayout = ({ children }) => {
       setInstallPrompt(e);
     };
     
-    const handleOnline = async () => { setIsOffline(false); };
+    const handleOnline = async () => { 
+      setIsOffline(false); 
+      try {
+        const syncRes = await syncOfflineQueue();
+        if (syncRes && syncRes.synced) {
+          console.log('[OfflineQueue] Successfully auto-synced queued offline SOS report:', syncRes);
+        }
+      } catch (e) {
+        console.warn('[OfflineQueue] Sync failed on reconnect:', e);
+      }
+    };
     if (navigator.onLine) {
       setTimeout(() => handleOnline(), 1000);
     }

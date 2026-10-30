@@ -58,11 +58,50 @@ router.post('/', authRequired, requireRole(['Resident', 'Admin', 'Responder']), 
   }
 
   try {
-    const code = await generateIncidentCode();
     const photo_path = req.file ? req.file.path : null;
     const lat = (location_lat !== null && location_lat !== undefined && !isNaN(parseFloat(location_lat))) ? parseFloat(location_lat) : null;
     const lng = (location_lng !== null && location_lng !== undefined && !isNaN(parseFloat(location_lng))) ? parseFloat(location_lng) : null;
     const address = location_address || (lat ? null : 'GPS Location Unavailable');
+
+    // Anti-Spam / Deduplication Guard: Check if this user already submitted a pending SOS within the last 5 minutes
+    if (type === 'SOS Panic') {
+      const [existingSos] = await db.query(`
+        SELECT id, code, location_lat, location_lng 
+        FROM incidents 
+        WHERE reporter_id = ? 
+          AND type = 'SOS Panic' 
+          AND status = 'Pending' 
+          AND created_at >= NOW() - INTERVAL 5 MINUTE
+        ORDER BY created_at DESC 
+        LIMIT 1
+      `, [req.user.id]);
+
+      if (existingSos && existingSos.length > 0) {
+        const existing = existingSos[0];
+        // If newer coordinates were provided, update the existing incident record
+        if (lat !== null && lng !== null) {
+          await db.query(`
+            UPDATE incidents 
+            SET location_lat = ?, location_lng = ?, location_address = COALESCE(?, location_address), updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `, [lat, lng, address, existing.id]);
+        }
+
+        const io = req.app.get('io');
+        if (io) {
+          io.emit('incident-status-updated', { incidentId: existing.id, status: 'Pending', type: 'SOS Panic' });
+        }
+
+        return res.status(200).json({
+          message: 'Existing SOS emergency alert updated with freshest GPS coordinates.',
+          code: existing.code,
+          incidentId: existing.id,
+          deduplicated: true
+        });
+      }
+    }
+
+    const code = await generateIncidentCode();
     let detailsJson = null;
     try {
       if (details) detailsJson = typeof details === 'string' ? details : JSON.stringify(details);
