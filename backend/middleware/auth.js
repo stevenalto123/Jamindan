@@ -43,12 +43,13 @@ const authRequired = async (req, res, next) => {
 };
 
 const requireRole = (allowedRoles) => {
-  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+  const roles = (Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]).map(r => String(r).toLowerCase());
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    if (!roles.includes(req.user.role)) {
+    const userRole = String(req.user.role || '').toLowerCase();
+    if (!roles.includes(userRole)) {
       return res.status(403).json({ message: 'Access denied: insufficient permissions' });
     }
     next();

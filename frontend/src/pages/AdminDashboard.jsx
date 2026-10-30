@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { 
   Bell, 
@@ -65,6 +66,7 @@ const AdminDashboard = () => {
   const [safetySearch, setSafetySearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [togglingDuty, setTogglingDuty] = useState(false);
+  const [updatingCheckinId, setUpdatingCheckinId] = useState(null);
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [broadcastSeverity, setBroadcastSeverity] = useState('extreme');
@@ -73,13 +75,46 @@ const AdminDashboard = () => {
   const [broadcasting, setBroadcasting] = useState(false);
   const navigate = useNavigate();
 
-  const handleMarkResidentSafe = async (checkinId) => {
+  const handleMarkResidentSafe = async (itemOrId) => {
+    const targetId = typeof itemOrId === 'object' && itemOrId !== null
+      ? (itemOrId.id || itemOrId.user_id)
+      : itemOrId;
+
+    if (!targetId) {
+      alert('Error: Resident check-in ID is missing.');
+      return;
+    }
+
+    setUpdatingCheckinId(targetId);
     try {
-      await axios.put(`/api/notifications/safety-checkins/${checkinId}/status`, { status: 'Safe' });
-      fetchDashboardStats();
+      // Optimistically update local safety data so UI updates immediately
+      setSafetyData(prev => {
+        if (!prev || !prev.recentCheckins) return prev;
+        const updatedCheckins = prev.recentCheckins.map(c => {
+          if (c.id === targetId || c.user_id === targetId) {
+            return { ...c, status: 'Safe' };
+          }
+          return c;
+        });
+        const safeCount = updatedCheckins.filter(c => c.status === 'Safe').length;
+        const evacCount = updatedCheckins.filter(c => c.status === 'At Evacuation Center').length;
+        const needsCount = updatedCheckins.filter(c => c.status === 'Needs Assistance').length;
+        return {
+          ...prev,
+          summary: { safeCount, evacuatedCount: evacCount, needsHelpCount: needsCount },
+          recentCheckins: updatedCheckins
+        };
+      });
+
+      await axios.put(`/api/notifications/safety-checkins/${targetId}/status`, { status: 'Safe' });
+      await fetchDashboardStats();
     } catch (err) {
       console.error('Failed to update resident status', err);
-      alert('Failed to update resident safety status.');
+      const errMsg = err.response?.data?.message || err.message || 'Unknown network error';
+      alert(`Failed to update resident safety status: ${errMsg}`);
+      fetchDashboardStats();
+    } finally {
+      setUpdatingCheckinId(null);
     }
   };
 
@@ -110,7 +145,17 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchDashboardStats();
     const interval = setInterval(fetchDashboardStats, 3000);
-    return () => clearInterval(interval);
+
+    const socketUrl = axios.defaults.baseURL || '';
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    socket.on('safety-checkin-updated', () => {
+      fetchDashboardStats();
+    });
+
+    return () => {
+      clearInterval(interval);
+      socket.disconnect();
+    };
   }, []);
 
   const handleBroadcast = async (e) => {
@@ -581,7 +626,8 @@ const AdminDashboard = () => {
                           {isNeedsHelp && (
                             <button
                               type="button"
-                              onClick={() => handleMarkResidentSafe(item.id)}
+                              disabled={updatingCheckinId === item.id || updatingCheckinId === item.user_id}
+                              onClick={() => handleMarkResidentSafe(item)}
                               title="Mark as Assisted / Safe"
                               style={{
                                 backgroundColor: '#059669',
@@ -591,12 +637,13 @@ const AdminDashboard = () => {
                                 padding: '3px 8px',
                                 fontSize: '10px',
                                 fontWeight: '700',
-                                cursor: 'pointer',
+                                cursor: (updatingCheckinId === item.id || updatingCheckinId === item.user_id) ? 'not-allowed' : 'pointer',
+                                opacity: (updatingCheckinId === item.id || updatingCheckinId === item.user_id) ? 0.6 : 1,
                                 whiteSpace: 'nowrap',
                                 flexShrink: 0
                               }}
                             >
-                              ✓ Assisted
+                              {(updatingCheckinId === item.id || updatingCheckinId === item.user_id) ? '⏳ Saving...' : '✓ Assisted'}
                             </button>
                           )}
                         </div>
@@ -1055,7 +1102,8 @@ const AdminDashboard = () => {
                         {isNeedsHelp && (
                           <button
                             type="button"
-                            onClick={() => handleMarkResidentSafe(item.id)}
+                            disabled={updatingCheckinId === item.id || updatingCheckinId === item.user_id}
+                            onClick={() => handleMarkResidentSafe(item)}
                             style={{
                               backgroundColor: '#059669',
                               color: '#fff',
@@ -1064,11 +1112,12 @@ const AdminDashboard = () => {
                               padding: '5px 10px',
                               fontSize: '11px',
                               fontWeight: '700',
-                              cursor: 'pointer',
+                              cursor: (updatingCheckinId === item.id || updatingCheckinId === item.user_id) ? 'not-allowed' : 'pointer',
+                              opacity: (updatingCheckinId === item.id || updatingCheckinId === item.user_id) ? 0.6 : 1,
                               whiteSpace: 'nowrap'
                             }}
                           >
-                            ✓ Mark Assisted
+                            {(updatingCheckinId === item.id || updatingCheckinId === item.user_id) ? '⏳ Saving...' : '✓ Mark Assisted'}
                           </button>
                         )}
                       </div>

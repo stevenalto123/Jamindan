@@ -320,22 +320,34 @@ router.put('/safety-checkins/:id/status', requireRole(['Admin', 'Responder']), a
   const { status = 'Safe' } = req.body;
   const validStatuses = ['Safe', 'At Evacuation Center', 'Needs Assistance'];
   if (!validStatuses.includes(status)) {
-    return res.status(400).json({ message: 'Invalid status' });
+    return res.status(400).json({ message: 'Invalid safety status' });
+  }
+
+  const rawId = req.params.id;
+  const targetId = parseInt(rawId, 10);
+  if (!rawId || isNaN(targetId) || targetId <= 0) {
+    return res.status(400).json({ message: 'Invalid resident check-in ID parameter' });
   }
 
   try {
-    await db.execute(
-      'UPDATE safety_checkins SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [status, req.params.id]
+    // Match by checkin id OR user_id to ensure reliable updates regardless of frontend parameter passed
+    const [result] = await db.query(
+      'UPDATE safety_checkins SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? OR user_id = ?',
+      [status, targetId, targetId]
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Resident check-in record not found' });
+    }
+
     const io = req.app.get('io');
     if (io) {
-      io.emit('safety-checkin-updated', { id: req.params.id, status, updatedAt: new Date().toISOString() });
+      io.emit('safety-checkin-updated', { id: targetId, status, updatedAt: new Date().toISOString() });
     }
     return res.json({ message: `Resident status updated to ${status}` });
   } catch (error) {
     console.error('Update resident checkin status error:', error);
-    return res.status(500).json({ message: 'Server error while updating resident safety status' });
+    return res.status(500).json({ message: error.message || 'Server error while updating resident safety status' });
   }
 });
 
