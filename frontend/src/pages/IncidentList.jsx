@@ -343,35 +343,35 @@ const IncidentList = () => {
         </div>
       </div>
 
-      {/* Official Top Bar with Title, Live Badge & Actions */}
+      {/* Action Bar (Live Status Badge & Export Actions) */}
       <div className="no-print" style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        marginBottom: '20px', 
+        marginBottom: '16px', 
         flexWrap: 'wrap', 
-        gap: '16px' 
+        gap: '12px' 
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '900', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>
-              Incident Inbox
-            </h1>
-            <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-              Official Municipal Incident Registry & Dispatch Log
-            </p>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span style={{
             fontSize: '12px',
             fontWeight: '800',
-            padding: '4px 12px',
+            padding: '5px 12px',
             borderRadius: '999px',
             backgroundColor: statusCounts.Pending > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)',
             color: statusCounts.Pending > 0 ? '#dc2626' : '#2563eb',
-            border: statusCounts.Pending > 0 ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(59, 130, 246, 0.25)'
+            border: statusCounts.Pending > 0 ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(59, 130, 246, 0.25)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px'
           }}>
-            {statusCounts.Pending > 0 ? `🚨 ${statusCounts.Pending} Needs Dispatch` : `${filteredIncidents.length} Reports`}
+            {statusCounts.Pending > 0 ? `🚨 ${statusCounts.Pending} Needs Dispatch` : `📋 ${filteredIncidents.length} Incident Records`}
           </span>
+          {statusFilter && (
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600' }}>
+              • Filtered by: <strong>{statusFilter}</strong>
+            </span>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
