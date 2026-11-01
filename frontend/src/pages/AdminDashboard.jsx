@@ -41,6 +41,13 @@ const NDRRMC_PRESETS = [
     message: 'Destructive typhoon-force winds and heavy torrential rains expected within 18 hours. Secure dwellings, prepare emergency go-bags, and complete pre-emptive evacuation before nightfall. Stay tuned to MDRRMO Jamindan operations.'
   },
   {
+    label: '⛰️ Landslide Warning',
+    severity: 'extreme',
+    title: 'LANDSLIDE ALERT & UPLAND EVACUATION ADVISORY',
+    area: 'Upland Barangays (Agtambi, Jaena Norte, San Jose, Lucero, Linambasan)',
+    message: 'Continuous torrential rains have saturated mountain slopes with critical risk of rain-induced landslides, rockfalls, and road blockages. Residents along mountain slopes must evacuate immediately to safe designated zones.'
+  },
+  {
     label: '🚨 Evacuation Order',
     severity: 'severe',
     title: 'MANDATORY EVACUATION ORDER',
@@ -61,6 +68,8 @@ const AdminDashboard = () => {
   const { user, setUser } = useAuth();
   const [data, setData] = useState(null);
   const [safetyData, setSafetyData] = useState({ summary: { safeCount: 0, evacuatedCount: 0, needsHelpCount: 0 }, recentCheckins: [] });
+  const [isCheckinActive, setIsCheckinActive] = useState(false);
+  const [togglingCheckin, setTogglingCheckin] = useState(false);
   const [safetyFilter, setSafetyFilter] = useState('All');
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [safetySearch, setSafetySearch] = useState('');
@@ -74,6 +83,23 @@ const AdminDashboard = () => {
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [broadcasting, setBroadcasting] = useState(false);
   const navigate = useNavigate();
+
+  const handleToggleSafetyCheckin = async () => {
+    setTogglingCheckin(true);
+    const targetMode = !isCheckinActive;
+    try {
+      await axios.post('/api/notifications/safety-checkin/toggle', { active: targetMode });
+      setIsCheckinActive(targetMode);
+      alert(targetMode ? t('checkinActivatedMsg') : t('checkinDeactivatedMsg'));
+      await fetchDashboardStats();
+    } catch (err) {
+      console.error('Failed to toggle safety check-in status', err);
+      const errMsg = err.response?.data?.message || err.message || 'Unknown network error';
+      alert(`Failed to update check-in status: ${errMsg}`);
+    } finally {
+      setTogglingCheckin(false);
+    }
+  };
 
   const handleMarkResidentSafe = async (itemOrId) => {
     const targetId = typeof itemOrId === 'object' && itemOrId !== null
@@ -134,6 +160,7 @@ const AdminDashboard = () => {
       setData(res.data);
       if (safetyRes.data) {
         setSafetyData(safetyRes.data);
+        setIsCheckinActive(Boolean(safetyRes.data.isCheckinActive));
       }
     } catch (err) {
       console.error('Error fetching admin stats', err);
@@ -149,6 +176,12 @@ const AdminDashboard = () => {
     const socketUrl = axios.defaults.baseURL || '';
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
     socket.on('safety-checkin-updated', () => {
+      fetchDashboardStats();
+    });
+    socket.on('safety-checkin-mode-changed', (msg) => {
+      if (msg && typeof msg.active === 'boolean') {
+        setIsCheckinActive(msg.active);
+      }
       fetchDashboardStats();
     });
 
@@ -476,29 +509,82 @@ const AdminDashboard = () => {
 
           {/* Resident Safety Check-In Monitor */}
           <div style={{ background: 'var(--card-bg)', padding: '22px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-              <div style={{ fontWeight: '800', fontSize: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <CheckCircle size={19} color="#059669" /> Resident Safety Check-In
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <div style={{ fontWeight: '800', fontSize: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <CheckCircle size={19} color="#059669" /> Resident Safety Check-In
+                </div>
+
+                {/* Live Status Badge */}
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  padding: '3px 10px',
+                  borderRadius: '999px',
+                  backgroundColor: isCheckinActive ? '#dcfce7' : '#f1f5f9',
+                  color: isCheckinActive ? '#15803d' : '#64748b',
+                  border: isCheckinActive ? '1px solid #86efac' : '1px solid #cbd5e1',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <span style={{
+                    width: '7px',
+                    height: '7px',
+                    borderRadius: '50%',
+                    backgroundColor: isCheckinActive ? '#16a34a' : '#94a3b8',
+                    boxShadow: isCheckinActive ? '0 0 8px rgba(22, 163, 74, 0.6)' : 'none'
+                  }} />
+                  {isCheckinActive ? t('checkinStatusActive') : t('checkinStatusInactive')}
+                </span>
               </div>
-              {safetyData?.recentCheckins?.length > 0 && (
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {/* Manual Activate / Deactivate Toggle Button */}
                 <button
                   type="button"
-                  onClick={() => setShowSafetyModal(true)}
+                  disabled={togglingCheckin}
+                  onClick={handleToggleSafetyCheckin}
                   style={{
-                    background: 'var(--card-alt)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    padding: '4px 10px',
+                    backgroundColor: isCheckinActive ? '#fee2e2' : '#059669',
+                    color: isCheckinActive ? '#991b1b' : '#ffffff',
+                    border: isCheckinActive ? '1px solid #fca5a5' : 'none',
+                    borderRadius: '9px',
+                    padding: '6px 12px',
                     fontSize: '11px',
-                    fontWeight: '700',
-                    color: 'var(--primary-color)',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap'
+                    fontWeight: '800',
+                    cursor: togglingCheckin ? 'not-allowed' : 'pointer',
+                    boxShadow: isCheckinActive ? 'none' : '0 2px 8px rgba(5, 150, 105, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease'
                   }}
+                  title={isCheckinActive ? 'Turn off safety check-in on resident dashboards' : 'Turn on safety check-in across all resident dashboards'}
                 >
-                  View All ({safetyData.recentCheckins.length})
+                  {togglingCheckin ? t('togglingCheckin') : (isCheckinActive ? t('deactivateSafetyCheckin') : t('activateSafetyCheckin'))}
                 </button>
-              )}
+
+                {safetyData?.recentCheckins?.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowSafetyModal(true)}
+                    style={{
+                      background: 'var(--card-alt)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '8px',
+                      padding: '5px 10px',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      color: 'var(--primary-color)',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    View All ({safetyData.recentCheckins.length})
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Interactive Filter Stat Boxes (Click to filter by status) */}

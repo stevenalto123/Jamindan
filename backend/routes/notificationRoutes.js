@@ -153,6 +153,23 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
       });
     }
 
+    // Automatically activate resident safety check-in on emergency broadcasts
+    if (severity === 'extreme' || severity === 'severe') {
+      try {
+        await db.query(`
+          INSERT INTO system_settings (setting_key, setting_value)
+          VALUES ('safety_checkin_active', 'true')
+          ON DUPLICATE KEY UPDATE setting_value = 'true'
+        `);
+        if (io) {
+          io.emit('safety-checkin-mode-changed', { active: true, reason: 'broadcast' });
+          io.emit('safety-checkin-updated');
+        }
+      } catch (e) {
+        console.warn('Could not auto-activate safety check-in:', e);
+      }
+    }
+
     return res.json({ message: `Broadcast sent to ${sentCount} devices successfully.` });
   } catch (error) {
     console.error('Broadcast error:', error);
@@ -281,6 +298,32 @@ router.get('/safety-checkins', async (req, res) => {
       [req.user.id]
     );
 
+    // Check if safety check-in is currently active (via manual setting or active emergency broadcast)
+    let isCheckinActive = false;
+    try {
+      const [settingRows] = await db.query(
+        "SELECT setting_value FROM system_settings WHERE setting_key = 'safety_checkin_active'"
+      );
+      if (settingRows && settingRows.length > 0) {
+        isCheckinActive = settingRows[0].setting_value === 'true';
+      }
+
+      // If not manually forced active, also check if there is an active emergency broadcast within last 4 hours
+      if (!isCheckinActive) {
+        const [activeBroadcasts] = await db.query(`
+          SELECT id FROM notifications 
+          WHERE reference_type LIKE 'broadcast%' 
+          AND created_at >= NOW() - INTERVAL 4 HOUR
+          LIMIT 1
+        `);
+        if (activeBroadcasts && activeBroadcasts.length > 0) {
+          isCheckinActive = true;
+        }
+      }
+    } catch (sErr) {
+      console.warn('Could not check safety check-in active status:', sErr.message);
+    }
+
     let recentCheckins = [];
     if (req.user.role === 'Admin' || req.user.role === 'Responder') {
       const [recentRows] = await db.query(`
@@ -301,6 +344,7 @@ router.get('/safety-checkins', async (req, res) => {
     }
 
     return res.json({
+      isCheckinActive,
       summary: {
         safeCount: Number(counts[0]?.safeCount || 0),
         evacuatedCount: Number(counts[0]?.evacuatedCount || 0),
@@ -312,6 +356,45 @@ router.get('/safety-checkins', async (req, res) => {
   } catch (error) {
     console.error('Fetch safety checkins error:', error);
     return res.status(500).json({ message: 'Server error while fetching safety check-ins' });
+  }
+});
+
+// ADMIN / RESPONDER: Manually toggle Safety Check-In mode (Active / Inactive)
+router.post('/safety-checkin/toggle', requireRole(['Admin', 'Responder']), async (req, res) => {
+  const { active } = req.body;
+  const isActive = Boolean(active);
+  const stringValue = isActive ? 'true' : 'false';
+
+  try {
+    await db.query(`
+      INSERT INTO system_settings (setting_key, setting_value)
+      VALUES ('safety_checkin_active', ?)
+      ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
+    `, [stringValue]);
+
+    await db.logAudit(
+      `${isActive ? 'Activated' : 'Deactivated'} Resident Safety Check-In`,
+      req.user.username,
+      req.ip
+    );
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('safety-checkin-mode-changed', {
+        active: isActive,
+        updatedBy: req.user.full_name || req.user.username,
+        updatedAt: new Date().toISOString()
+      });
+      io.emit('safety-checkin-updated');
+    }
+
+    return res.json({
+      message: `Resident Safety Check-In ${isActive ? 'activated' : 'deactivated'} successfully.`,
+      isCheckinActive: isActive
+    });
+  } catch (error) {
+    console.error('Safety check-in toggle error:', error);
+    return res.status(500).json({ message: 'Server error while updating safety check-in status' });
   }
 });
 

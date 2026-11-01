@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Shield, Flame, HeartPulse, ShieldCheck } from 'lucide-react';
+import { Shield, Flame, HeartPulse, ShieldCheck, AlertTriangle, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import SosPanicButton from '../components/SosPanicButton';
 
@@ -12,7 +13,9 @@ const ResidentDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [myCheckin, setMyCheckin] = useState(null);
+  const [isCheckinActive, setIsCheckinActive] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
+  const [showAssistanceConfirm, setShowAssistanceConfirm] = useState(false);
   const navigate = useNavigate();
 
   const handleQuickCall = async (e, agencyName, number, category) => {
@@ -46,6 +49,7 @@ const ResidentDashboard = () => {
     try {
       const res = await axios.get('/api/notifications/safety-checkins');
       setMyCheckin(res.data?.myCheckin || null);
+      setIsCheckinActive(Boolean(res.data?.isCheckinActive));
     } catch (err) {
       console.warn('Could not load safety check-in status');
     }
@@ -55,7 +59,23 @@ const ResidentDashboard = () => {
     fetchStats();
     fetchCheckin();
     const interval = setInterval(fetchStats, 3000);
-    return () => clearInterval(interval);
+
+    const socketUrl = axios.defaults.baseURL || '';
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    socket.on('safety-checkin-mode-changed', (msg) => {
+      if (msg && typeof msg.active === 'boolean') {
+        setIsCheckinActive(msg.active);
+      }
+      fetchCheckin();
+    });
+    socket.on('safety-checkin-updated', () => {
+      fetchCheckin();
+    });
+
+    return () => {
+      clearInterval(interval);
+      socket.disconnect();
+    };
   }, []);
 
   const handleSafetyCheckIn = async (statusLabel) => {
@@ -106,85 +126,220 @@ const ResidentDashboard = () => {
         </a>
       </div>
 
-      {/* "I Am Safe" Resident Safety Check-In Card */}
-      <div className="glass-card" style={{ marginBottom: '20px', padding: '18px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShieldCheck size={19} color="#059669" />
-            <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)' }}>
-              MDRRMO Resident Safety Check-In
-            </span>
+      {/* "I Am Safe" Resident Safety Check-In Card (Only active during emergencies / manual activation or when resident Needs Assistance) */}
+      {(isCheckinActive || (myCheckin && myCheckin.status === 'Needs Assistance')) && (
+        <div className="glass-card" style={{ marginBottom: '20px', padding: '18px', animation: 'fadeIn 0.3s ease' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShieldCheck size={19} color="#059669" />
+              <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-main)' }}>
+                {t('safetyCheckinTitle')}
+              </span>
+            </div>
+            {myCheckin && (
+              <span style={{
+                fontSize: '11px',
+                fontWeight: '700',
+                padding: '3px 10px',
+                borderRadius: '999px',
+                backgroundColor: myCheckin.status === 'Safe' ? '#d1fae5' : myCheckin.status === 'At Evacuation Center' ? '#dbeafe' : '#fee2e2',
+                color: myCheckin.status === 'Safe' ? '#065f46' : myCheckin.status === 'At Evacuation Center' ? '#1e40af' : '#991b1b'
+              }}>
+                {t('currentStatusLabel')} {myCheckin.status === 'Safe' ? t('statusSafeLabel') : myCheckin.status === 'At Evacuation Center' ? t('statusEvacuatedLabel') : t('statusNeedsHelpLabel')}
+              </span>
+            )}
           </div>
-          {myCheckin && (
-            <span style={{
-              fontSize: '11px',
-              fontWeight: '700',
-              padding: '3px 10px',
-              borderRadius: '999px',
-              backgroundColor: myCheckin.status === 'Safe' ? '#d1fae5' : myCheckin.status === 'At Evacuation Center' ? '#dbeafe' : '#fee2e2',
-              color: myCheckin.status === 'Safe' ? '#065f46' : myCheckin.status === 'At Evacuation Center' ? '#1e40af' : '#991b1b'
+          <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-light)', lineHeight: 1.4 }}>
+            {t('safetyCheckinDesc')}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: '8px' }}>
+            <button
+              type="button"
+              disabled={checkingIn}
+              onClick={() => handleSafetyCheckIn('Safe')}
+              style={{
+                padding: '10px 12px',
+                borderRadius: '10px',
+                border: myCheckin?.status === 'Safe' ? '2px solid #059669' : '1px solid #a7f3d0',
+                backgroundColor: myCheckin?.status === 'Safe' ? '#059669' : '#ecfdf5',
+                color: myCheckin?.status === 'Safe' ? '#fff' : '#065f46',
+                fontWeight: '700',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              {t('statusSafe')}
+            </button>
+            <button
+              type="button"
+              disabled={checkingIn}
+              onClick={() => handleSafetyCheckIn('At Evacuation Center')}
+              style={{
+                padding: '10px 12px',
+                borderRadius: '10px',
+                border: myCheckin?.status === 'At Evacuation Center' ? '2px solid #2563eb' : '1px solid #bfdbfe',
+                backgroundColor: myCheckin?.status === 'At Evacuation Center' ? '#2563eb' : '#eff6ff',
+                color: myCheckin?.status === 'At Evacuation Center' ? '#fff' : '#1e40af',
+                fontWeight: '700',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              {t('statusEvacuated')}
+            </button>
+            <button
+              type="button"
+              disabled={checkingIn}
+              onClick={() => setShowAssistanceConfirm(true)}
+              style={{
+                padding: '10px 12px',
+                borderRadius: '10px',
+                border: myCheckin?.status === 'Needs Assistance' ? '2px solid #dc2626' : '1px solid #fecaca',
+                backgroundColor: myCheckin?.status === 'Needs Assistance' ? '#dc2626' : '#fef2f2',
+                color: myCheckin?.status === 'Needs Assistance' ? '#fff' : '#991b1b',
+                fontWeight: '700',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              {t('statusNeedsHelp')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Dialog Modal for "Needs Assistance" to Prevent Accidental Clicks */}
+      {showAssistanceConfirm && (
+        <div 
+          onClick={() => setShowAssistanceConfirm(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              maxWidth: '440px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              position: 'relative'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  backgroundColor: '#fee2e2',
+                  color: '#dc2626',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <AlertTriangle size={22} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#0f172a' }}>
+                    {t('confirmAssistanceTitle')}
+                  </h3>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#dc2626', textTransform: 'uppercase' }}>
+                    {t('confirmAssistanceSub')}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAssistanceConfirm(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '6px'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p style={{ margin: '0 0 14px 0', fontSize: '13px', color: '#334155', lineHeight: 1.5 }}>
+              {t('confirmAssistanceDesc')}
+            </p>
+
+            <div style={{
+              backgroundColor: '#fff7ed',
+              border: '1px solid #fed7aa',
+              borderRadius: '10px',
+              padding: '10px 12px',
+              marginBottom: '20px',
+              fontSize: '12px',
+              color: '#9a3412',
+              lineHeight: 1.45
             }}>
-              Status: {myCheckin.status}
-            </span>
-          )}
+              🚨 <strong>{t('confirmAssistanceNote')}</strong>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setShowAssistanceConfirm(false)}
+                style={{
+                  padding: '12px 10px',
+                  borderRadius: '12px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#f8fafc',
+                  color: '#475569',
+                  fontWeight: '700',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'center'
+                }}
+              >
+                {t('confirmCancel')}
+              </button>
+              <button
+                type="button"
+                disabled={checkingIn}
+                onClick={async () => {
+                  setShowAssistanceConfirm(false);
+                  await handleSafetyCheckIn('Needs Assistance');
+                }}
+                style={{
+                  padding: '12px 10px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  backgroundColor: '#dc2626',
+                  color: '#ffffff',
+                  fontWeight: '800',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(220, 38, 38, 0.35)',
+                  textAlign: 'center'
+                }}
+              >
+                {checkingIn ? 'Sending...' : t('confirmProceed')}
+              </button>
+            </div>
+          </div>
         </div>
-        <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-light)', lineHeight: 1.4 }}>
-          During typhoons, floods, or municipal alerts, let the Jamindan MDRRMO Command Center know your current status:
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: '8px' }}>
-          <button
-            type="button"
-            disabled={checkingIn}
-            onClick={() => handleSafetyCheckIn('Safe')}
-            style={{
-              padding: '10px 12px',
-              borderRadius: '10px',
-              border: myCheckin?.status === 'Safe' ? '2px solid #059669' : '1px solid #a7f3d0',
-              backgroundColor: myCheckin?.status === 'Safe' ? '#059669' : '#ecfdf5',
-              color: myCheckin?.status === 'Safe' ? '#fff' : '#065f46',
-              fontWeight: '700',
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}
-          >
-            ✅ I Am Safe
-          </button>
-          <button
-            type="button"
-            disabled={checkingIn}
-            onClick={() => handleSafetyCheckIn('At Evacuation Center')}
-            style={{
-              padding: '10px 12px',
-              borderRadius: '10px',
-              border: myCheckin?.status === 'At Evacuation Center' ? '2px solid #2563eb' : '1px solid #bfdbfe',
-              backgroundColor: myCheckin?.status === 'At Evacuation Center' ? '#2563eb' : '#eff6ff',
-              color: myCheckin?.status === 'At Evacuation Center' ? '#fff' : '#1e40af',
-              fontWeight: '700',
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}
-          >
-            🏛️ At Evacuation Center
-          </button>
-          <button
-            type="button"
-            disabled={checkingIn}
-            onClick={() => handleSafetyCheckIn('Needs Assistance')}
-            style={{
-              padding: '10px 12px',
-              borderRadius: '10px',
-              border: myCheckin?.status === 'Needs Assistance' ? '2px solid #dc2626' : '1px solid #fecaca',
-              backgroundColor: myCheckin?.status === 'Needs Assistance' ? '#dc2626' : '#fef2f2',
-              color: myCheckin?.status === 'Needs Assistance' ? '#fff' : '#991b1b',
-              fontWeight: '700',
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}
-          >
-            🆘 Needs Assistance
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Announcements */}
       <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>

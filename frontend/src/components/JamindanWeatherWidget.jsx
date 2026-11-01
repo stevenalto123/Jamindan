@@ -99,6 +99,7 @@ const JamindanWeatherWidget = ({ compact = false }) => {
   const [updatedAt, setUpdatedAt] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const fetchWeather = async (isManual = false) => {
     if (isManual) setRefreshing(true);
@@ -167,20 +168,38 @@ const JamindanWeatherWidget = ({ compact = false }) => {
   const advisory = getHazardAdvisory(activeData.rainVal, activeData.wind, activeData.code, rainingBrgys, activeData.name);
 
   return (
-    <div style={{
+    <div className="weather-widget-card" style={{
       background: 'var(--card-bg, #fff)',
       borderRadius: '14px',
-      padding: compact ? '16px' : '18px 20px',
+      padding: compact ? '14px' : '16px 18px',
       marginBottom: '20px',
-      border: '1px solid var(--border-color, #e2e8f0)'
+      border: '1px solid var(--border-color, #e2e8f0)',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
     }}>
-      {/* ─── Header Row with Barangay Selector & Refresh ───────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .weather-coords { display: none !important; }
+          .weather-header-title { font-size: 14px !important; }
+          .weather-widget-card { padding: 12px 14px !important; }
+          .weather-metrics-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+          .weather-actions-group { width: 100% !important; justify-content: space-between !important; margin-top: 4px !important; }
+        }
+        .weather-pill-scroll::-webkit-scrollbar {
+          height: 4px;
+        }
+        .weather-pill-scroll::-webkit-scrollbar-thumb {
+          background-color: rgba(148, 163, 184, 0.4);
+          border-radius: 4px;
+        }
+      `}</style>
+
+      {/* ─── Header Row with Barangay Selector, Refresh & Minimize ──── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: isCollapsed ? 0 : '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '26px', lineHeight: 1 }}>{condition.icon}</span>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: '800', fontSize: '15px', color: 'var(--text-main, #0f172a)' }}>
+              <span className="weather-header-title" style={{ fontWeight: '800', fontSize: '15px', color: 'var(--text-main, #0f172a)' }}>
                 Jamindan Live Weather & Barangay Rain Monitor
               </span>
               <span style={{
@@ -196,16 +215,17 @@ const JamindanWeatherWidget = ({ compact = false }) => {
               </span>
             </div>
             <div style={{ fontSize: '12px', color: 'var(--text-light, #64748b)', fontWeight: '600', marginTop: '2px' }}>
-              Brgy. <strong>{activeData.name}</strong> ({activeData.zone}) • {condition.label} • {activeData.lat.toFixed(4)}° N, {activeData.lng.toFixed(4)}° E • Updated {updatedAt}
+              Brgy. <strong>{activeData.name}</strong> ({activeData.zone}) • {condition.label}
+              <span className="weather-coords"> • {activeData.lat.toFixed(4)}° N, {activeData.lng.toFixed(4)}° E</span>
+              {' '}• {updatedAt}
             </div>
           </div>
         </div>
 
-        {/* Barangay Dropdown + Refresh Button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--card-alt, #f8fafc)', border: '1px solid var(--border-color, #cbd5e1)', borderRadius: '8px', padding: '4px 10px' }}>
+        {/* Barangay Dropdown + Refresh Button + Collapse Toggle */}
+        <div className="weather-actions-group" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--card-alt, #f8fafc)', border: '1px solid var(--border-color, #cbd5e1)', borderRadius: '8px', padding: '4px 8px' }}>
             <MapPin size={13} color="var(--primary-color)" />
-            <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-muted)' }}>Barangay:</span>
             <select
               value={selectedBrgy}
               onChange={(e) => setSelectedBrgy(e.target.value)}
@@ -216,7 +236,8 @@ const JamindanWeatherWidget = ({ compact = false }) => {
                 fontWeight: '700',
                 color: 'var(--text-main)',
                 cursor: 'pointer',
-                outline: 'none'
+                outline: 'none',
+                maxWidth: '135px'
               }}
             >
               {brgyWeatherList.map(b => (
@@ -235,24 +256,93 @@ const JamindanWeatherWidget = ({ compact = false }) => {
               background: 'var(--card-alt, #f8fafc)',
               border: '1px solid var(--border-color, #cbd5e1)',
               borderRadius: '8px',
-              padding: '6px 12px',
+              padding: '6px 10px',
               fontSize: '12px',
               fontWeight: '700',
               color: 'var(--text-main, #334155)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '4px'
             }}
+            title="Refresh weather telemetry"
           >
-            <RefreshCw size={13} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
-            {refreshing ? 'Updating...' : 'Refresh'}
+            <RefreshCw size={12} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
+            <span className="weather-coords">{refreshing ? 'Updating...' : 'Refresh'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            style={{
+              background: 'var(--card-alt, #f8fafc)',
+              border: '1px solid var(--border-color, #cbd5e1)',
+              borderRadius: '8px',
+              padding: '6px 10px',
+              fontSize: '12px',
+              fontWeight: '700',
+              color: 'var(--text-main, #334155)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            title={isCollapsed ? 'Expand Weather Details' : 'Minimize Weather Widget'}
+          >
+            {isCollapsed ? (
+              <>
+                <ChevronDown size={13} />
+                <span>Expand</span>
+              </>
+            ) : (
+              <>
+                <ChevronUp size={13} />
+                <span>Minimize</span>
+              </>
+            )}
           </button>
         </div>
       </div>
 
+      {/* ─── Compact Summary Bar when Minimized ─────────────────────── */}
+      {isCollapsed && (
+        <div style={{
+          marginTop: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '8px',
+          padding: '8px 12px',
+          borderRadius: '10px',
+          backgroundColor: advisory.bg,
+          border: `1px solid ${advisory.border}`,
+          fontSize: '12px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: '800', color: 'var(--text-main)' }}>Brgy. {activeData.name}:</span>
+            <span style={{ fontWeight: '800', color: '#ea580c' }}>{activeData.temp}°C</span>
+            <span>•</span>
+            <span style={{ fontWeight: '800', color: '#2563eb' }}>{activeData.precipitation} mm rain</span>
+            <span>•</span>
+            <span style={{ fontWeight: '800', color: advisory.text }}>{advisory.level}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsCollapsed(false)}
+            style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '11px', fontWeight: '800', cursor: 'pointer', padding: 0 }}
+          >
+            Show Full Telemetry &rarr;
+          </button>
+        </div>
+      )}
+
+      {/* ─── Full Details (Shown when NOT collapsed) ────────────────── */}
+      {!isCollapsed && (
+        <>
+
       {/* ─── Metrics Row for Selected Barangay ─────────────────────── */}
-      <div style={{
+      <div className="weather-metrics-grid" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
         gap: '10px',
@@ -314,6 +404,11 @@ const JamindanWeatherWidget = ({ compact = false }) => {
                 {rainingBrgys.length} of {brgyWeatherList.length} Barangays Affected
               </span>
             )}
+            {rainingBrgys.length > 4 && (
+              <span className="weather-coords" style={{ fontSize: '10px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                (Swipe &rarr;)
+              </span>
+            )}
           </div>
 
           <button
@@ -336,9 +431,20 @@ const JamindanWeatherWidget = ({ compact = false }) => {
           </button>
         </div>
 
-        {/* Active Raining Barangay Pills (Always visible when it's raining in any barangay) */}
+        {/* Active Raining Barangay Pills (Single Row Horizontal Swipe Track) */}
         {rainingBrgys.length > 0 && !showAllBrgys && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+          <div 
+            className="weather-pill-scroll"
+            style={{
+              display: 'flex',
+              flexWrap: 'nowrap',
+              overflowX: 'auto',
+              gap: '6px',
+              marginTop: '8px',
+              paddingBottom: '6px',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
             {rainingBrgys.map(b => {
               const cond = getWeatherDescription(b.code);
               const isSelected = b.name === selectedBrgy;
@@ -348,11 +454,13 @@ const JamindanWeatherWidget = ({ compact = false }) => {
                   type="button"
                   onClick={() => setSelectedBrgy(b.name)}
                   style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
+                    padding: '5px 10px',
+                    borderRadius: '8px',
                     fontSize: '11px',
                     fontWeight: '700',
                     cursor: 'pointer',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
                     border: isSelected ? '1px solid #2563eb' : '1px solid var(--border-color)',
                     backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.12)' : 'var(--card-bg)',
                     color: 'var(--text-main)',
@@ -449,6 +557,8 @@ const JamindanWeatherWidget = ({ compact = false }) => {
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };
