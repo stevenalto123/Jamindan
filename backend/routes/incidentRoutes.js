@@ -433,17 +433,21 @@ router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), asy
 
     await db.transaction(async (conn) => {
       // 1. Update status, response_notes, resources_used (and auto-assign Responder if they are the first to change it from Pending)
+      const isSwitchingToFalseAlarm = status === 'False Alarm';
+      const providedNotes = response_notes && response_notes.trim() !== '' ? response_notes.trim() : null;
+      const providedResources = resources_used && resources_used.trim() !== '' ? resources_used.trim() : null;
+
       let updateQuery = `
         UPDATE incidents 
         SET status = ?, 
-            response_notes = COALESCE(?, response_notes), 
-            resources_used = COALESCE(?, resources_used), 
+            response_notes = ?, 
+            resources_used = ?, 
             updated_at = CURRENT_TIMESTAMP
       `;
       const updateParams = [
         status,
-        response_notes && response_notes.trim() !== '' ? response_notes.trim() : null,
-        resources_used && resources_used.trim() !== '' ? resources_used.trim() : null
+        isSwitchingToFalseAlarm ? providedNotes : (providedNotes !== null ? providedNotes : incident.response_notes),
+        isSwitchingToFalseAlarm ? providedResources : (providedResources !== null ? providedResources : incident.resources_used)
       ];
       
       if (req.user.role === 'Responder' && incident.responder_id === null) {

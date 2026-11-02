@@ -349,9 +349,12 @@ const TrackStatus = () => {
   // Check if we should show live stream to resident
   const canResidentSeeStream = incident.status !== 'Pending' && incident.status !== 'Resolved' && incident.status !== 'False Alarm';
 
-  // Check if resolved to show closure summary
+  // Check if resolved or false alarm to show appropriate closure summary
   const isResolved = incident.status === 'Resolved';
-  const closureComment = isResolved ? [...(history || [])].reverse().find(h => h.status === 'Resolved')?.comment : null;
+  const isFalseAlarm = incident.status === 'False Alarm';
+  const closureComment = isResolved
+    ? [...(history || [])].reverse().find(h => h.status === 'Resolved')?.comment
+    : (isFalseAlarm ? [...(history || [])].reverse().find(h => h.status === 'False Alarm')?.comment : null);
 
   return (
     <div className="content-body" ref={printRef} style={{ maxWidth: '1120px' }}>
@@ -434,8 +437,25 @@ const TrackStatus = () => {
         </div>
       )}
 
-      {/* Closure Summary & Post-Incident Action Report */}
-      {(isResolved || incident.response_notes || incident.resources_used) && (
+      {/* Official Incident Closure Notice for False Alarm */}
+      {isFalseAlarm && (
+        <div className="card" style={{ marginBottom: '20px', backgroundColor: '#fef2f2', border: '1px solid #fecaca' }}>
+          <h3 className="card-title" style={{ color: '#dc2626', display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 6px 0' }}>
+            <AlertTriangle size={18} /> Official Incident Closure — False Alarm
+          </h3>
+          <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#991b1b', lineHeight: 1.5 }}>
+            This incident was investigated and officially closed as a <strong>False Alarm</strong>. No active emergency, fire, or safety hazard was present on the scene.
+          </p>
+          {closureComment && (
+            <p style={{ margin: 0, fontSize: '12px', color: '#7f1d1d', lineHeight: 1.4 }}>
+              <strong>Verification Details:</strong> {closureComment}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Closure Summary & Post-Incident Action Report (For genuine incidents only) */}
+      {!isFalseAlarm && (isResolved || incident.response_notes || incident.resources_used) && (
         <div className="card" style={{ marginBottom: '20px', backgroundColor: 'var(--primary-light)', border: '1px solid var(--border-color)' }}>
           <h3 className="card-title" style={{ color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <CheckCircle2 size={18} /> {isResolved ? 'Official Closure & Post-Incident Action Report' : 'On-Scene Responder Action Log'}
