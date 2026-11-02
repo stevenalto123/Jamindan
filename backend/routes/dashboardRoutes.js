@@ -14,7 +14,7 @@ router.get('/stats', requireRole(['Admin', 'Responder']), async (req, res) => {
     const [totalReportsRows] = await db.query('SELECT COUNT(*) as count FROM incidents');
     const totalReports = totalReportsRows[0].count;
 
-    const [activeIncidentsRows] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE status NOT IN ('Pending', 'Resolved')");
+    const [activeIncidentsRows] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE status NOT IN ('Pending', 'Resolved', 'False Alarm')");
     const activeIncidents = activeIncidentsRows[0].count;
 
     const [respondersOnDutyRows] = await db.query("SELECT COUNT(*) as count FROM users WHERE role = 'Responder' AND is_active = 1 AND is_on_duty = 1");
@@ -62,7 +62,7 @@ router.get('/stats', requireRole(['Admin', 'Responder']), async (req, res) => {
       recentIncidentsParams.push(req.user.id);
     }
 
-    recentIncidentsQuery += ` ORDER BY i.created_at DESC LIMIT 5`;
+    recentIncidentsQuery += ` ORDER BY CASE WHEN i.status IN ('Resolved', 'False Alarm') THEN 2 ELSE 1 END ASC, i.created_at DESC LIMIT 5`;
 
     const [recentIncidents] = await db.query(recentIncidentsQuery, recentIncidentsParams);
 

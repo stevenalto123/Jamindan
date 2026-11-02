@@ -273,15 +273,17 @@ router.get('/', authRequired, async (req, res) => {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    // If Admin/Responder, force Critical-keyword incidents to float to the very top, BUT push 'Resolved' to the bottom
+    // Push closed incidents ('Resolved' & 'False Alarm') to the bottom; active emergencies float to the top
+    const keywordRegex = '(unconscious|bleeding|fire|trapped|armed|heart attack|stroke|not breathing|critical|severe|gun|knife|suicide|explosion)';
     if (req.user.role !== 'Resident') {
-      const keywordRegex = '(unconscious|bleeding|fire|trapped|armed|heart attack|stroke|not breathing|critical|severe|gun|knife|suicide|explosion)';
       query += ` ORDER BY 
-        CASE WHEN i.status = 'Resolved' THEN 2 ELSE 1 END ASC,
-        CASE WHEN i.description REGEXP '${keywordRegex}' THEN 1 ELSE 2 END ASC, 
+        CASE WHEN i.status IN ('Resolved', 'False Alarm') THEN 2 ELSE 1 END ASC,
+        CASE WHEN i.status NOT IN ('Resolved', 'False Alarm') AND i.description REGEXP '${keywordRegex}' THEN 1 ELSE 2 END ASC, 
         i.created_at DESC`;
     } else {
-      query += ' ORDER BY i.created_at DESC';
+      query += ` ORDER BY 
+        CASE WHEN i.status IN ('Resolved', 'False Alarm') THEN 2 ELSE 1 END ASC, 
+        i.created_at DESC`;
     }
 
     const [incidents] = await db.query(query, params);
@@ -291,8 +293,9 @@ router.get('/', authRequired, async (req, res) => {
     
     const processedIncidents = incidents.map(inc => {
       let priority = 'Normal';
-      // If the description contains any severe keyword, instantly flag as CRITICAL
-      if (inc.description && criticalKeywords.test(inc.description)) {
+      // Only ACTIVE incidents can be prioritized as CRITICAL (closed or false alarm incidents should never be critical)
+      const isClosed = inc.status === 'Resolved' || inc.status === 'False Alarm';
+      if (!isClosed && inc.description && criticalKeywords.test(inc.description)) {
         priority = 'CRITICAL';
       }
       return { ...inc, priority };
