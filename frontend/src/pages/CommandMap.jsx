@@ -565,43 +565,47 @@ const CommandMap = ({ isWidget = false }) => {
           {isMobile && (
             <div style={{
               display: 'flex',
+              width: '100%',
               background: 'rgba(15, 23, 42, 0.95)',
               borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-              padding: '8px 10px',
-              gap: '8px',
-              flexShrink: 0
+              padding: '6px 8px',
+              gap: '6px',
+              flexShrink: 0,
+              boxSizing: 'border-box'
             }}>
               <button
                 type="button"
                 onClick={() => setActiveMobileTab('emergencies')}
                 style={{
                   flex: 1,
+                  minWidth: 0,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '6px',
-                  padding: '8px 10px',
-                  borderRadius: '10px',
+                  gap: '5px',
+                  padding: '7px 8px',
+                  borderRadius: '8px',
                   border: activeMobileTab === 'emergencies' ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
                   background: activeMobileTab === 'emergencies' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.03)',
                   color: activeMobileTab === 'emergencies' ? '#f87171' : '#94a3b8',
-                  fontWeight: '800',
+                  fontWeight: '700',
                   fontSize: '11px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  boxSizing: 'border-box',
+                  whiteSpace: 'nowrap'
                 }}
               >
-                <ShieldAlert size={14} color={activeMobileTab === 'emergencies' ? '#ef4444' : '#94a3b8'} />
-                <span>Emergencies</span>
+                <ShieldAlert size={13} color={activeMobileTab === 'emergencies' ? '#ef4444' : '#94a3b8'} style={{ flexShrink: 0 }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Emergencies</span>
                 <span style={{
                   background: activeMobileTab === 'emergencies' ? '#ef4444' : 'rgba(255, 255, 255, 0.15)',
                   color: '#fff',
-                  padding: '1px 6px',
+                  padding: '1px 5px',
                   borderRadius: '10px',
                   fontSize: '10px',
-                  fontWeight: '800'
+                  fontWeight: '800',
+                  flexShrink: 0
                 }}>
                   {filteredIncidents.length}
                 </span>
@@ -612,32 +616,34 @@ const CommandMap = ({ isWidget = false }) => {
                 onClick={() => setActiveMobileTab('responders')}
                 style={{
                   flex: 1,
+                  minWidth: 0,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '6px',
-                  padding: '8px 10px',
-                  borderRadius: '10px',
+                  gap: '5px',
+                  padding: '7px 8px',
+                  borderRadius: '8px',
                   border: activeMobileTab === 'responders' ? '1px solid rgba(56, 189, 248, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
                   background: activeMobileTab === 'responders' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.03)',
                   color: activeMobileTab === 'responders' ? '#38bdf8' : '#94a3b8',
-                  fontWeight: '800',
+                  fontWeight: '700',
                   fontSize: '11px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  boxSizing: 'border-box',
+                  whiteSpace: 'nowrap'
                 }}
               >
-                <AlertCircle size={14} color={activeMobileTab === 'responders' ? '#38bdf8' : '#94a3b8'} />
-                <span>Responders</span>
+                <AlertCircle size={13} color={activeMobileTab === 'responders' ? '#38bdf8' : '#94a3b8'} style={{ flexShrink: 0 }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Responders</span>
                 <span style={{
                   background: activeMobileTab === 'responders' ? '#38bdf8' : 'rgba(255, 255, 255, 0.15)',
                   color: activeMobileTab === 'responders' ? '#0f172a' : '#fff',
-                  padding: '1px 6px',
+                  padding: '1px 5px',
                   borderRadius: '10px',
                   fontSize: '10px',
-                  fontWeight: '800'
+                  fontWeight: '800',
+                  flexShrink: 0
                 }}>
                   {filteredResponders.length}
                 </span>
@@ -688,7 +694,7 @@ const CommandMap = ({ isWidget = false }) => {
                   </select>
                 </div>
               
-                <div className="glass-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: isMobile ? '10px 12px' : '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className="glass-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: isMobile ? '8px 10px' : '16px', display: 'flex', flexDirection: 'column', gap: '8px', boxSizing: 'border-box' }}>
                   {filteredIncidents.length === 0 ? (
                     <div style={{ color: '#64748b', textAlign: 'center', padding: '30px 0', fontSize: '13px', fontWeight: '600' }}>
                       {agencyFilter === 'ALL' ? 'All clear. No active emergencies.' : `No active emergencies for ${agencyFilter}.`}
@@ -703,13 +709,14 @@ const CommandMap = ({ isWidget = false }) => {
                           style={{
                             background: 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%)',
                             borderRadius: '14px',
-                            padding: '12px 14px',
+                            padding: isMobile ? '10px 12px' : '12px 14px',
                             cursor: 'pointer',
                             border: '1px solid rgba(255,255,255,0.08)',
                             borderLeft: `4px solid ${badge.border || '#ef4444'}`,
                             boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
                             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                            flexShrink: 0
+                            flexShrink: 0,
+                            boxSizing: 'border-box'
                           }}
                           onMouseOver={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%)'; e.currentTarget.style.transform = 'translateY(-2px) scale(1.01)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(239,68,68,0.15)'; }}
                           onMouseOut={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%)'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)'; }}
@@ -759,7 +766,7 @@ const CommandMap = ({ isWidget = false }) => {
                   </div>
                 )}
                 
-                <div className="glass-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', padding: isMobile ? '10px 12px' : '12px 16px' }}>
+                <div className="glass-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', padding: isMobile ? '8px 10px' : '12px 16px', boxSizing: 'border-box' }}>
                   {filteredResponders.length === 0 ? (
                     <div style={{ color: '#64748b', fontSize: '13px', textAlign: 'center', padding: '30px 0', fontWeight: '600' }}>No responders currently active</div>
                   ) : (
@@ -775,13 +782,14 @@ const CommandMap = ({ isWidget = false }) => {
                           style={{
                             background: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
                             borderRadius: '12px',
-                            padding: '12px 14px',
+                            padding: isMobile ? '10px 12px' : '12px 14px',
                             cursor: 'pointer',
                             border: '1px solid rgba(255,255,255,0.08)',
                             borderLeft: `4px solid ${agencyColor}`,
                             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                            flexShrink: 0
+                            flexShrink: 0,
+                            boxSizing: 'border-box'
                           }}
                           onMouseOver={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%)'; e.currentTarget.style.transform = 'translateY(-1px) scale(1.01)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
                           onMouseOut={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
