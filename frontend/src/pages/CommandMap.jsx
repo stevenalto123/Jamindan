@@ -34,6 +34,7 @@ const CommandMap = ({ isWidget = false }) => {
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const tileLayerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [activeMobileTab, setActiveMobileTab] = useState('emergencies');
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -534,7 +535,7 @@ const CommandMap = ({ isWidget = false }) => {
         <div style={isMobile ? { 
           position: 'relative',
           width: '100%',
-          height: '45%',
+          height: '48%',
           background: 'rgba(10, 18, 35, 0.98)', 
           borderTop: '2px solid rgba(56,189,248,0.3)',
           display: 'flex',
@@ -560,138 +561,247 @@ const CommandMap = ({ isWidget = false }) => {
           overflow: 'hidden'
         }}>
           
-          {/* Incidents Section */}
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden', borderRight: isMobile ? '1px solid rgba(255,255,255,0.07)' : 'none', borderBottom: !isMobile ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-            <div style={{ padding: isMobile ? '10px 12px' : '16px 20px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <h3 style={{ color: '#fff', margin: 0, fontSize: isMobile ? '11px' : '13px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                  <ShieldAlert size={isMobile ? 14 : 16} color="#ef4444" />
-                  Emergencies <span style={{ background: '#ef4444', color: 'white', padding: '2px 6px', borderRadius: '12px', fontSize: '10px' }}>{filteredIncidents.length}</span>
-                </h3>
-              </div>
-              <select
-                value={agencyFilter}
-                onChange={e => setAgencyFilter(e.target.value)}
+          {/* Mobile Tab Switcher */}
+          {isMobile && (
+            <div style={{
+              display: 'flex',
+              background: 'rgba(15, 23, 42, 0.95)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: '8px 10px',
+              gap: '8px',
+              flexShrink: 0
+            }}>
+              <button
+                type="button"
+                onClick={() => setActiveMobileTab('emergencies')}
                 style={{
-                  width: '100%',
-                  background: 'rgba(15, 23, 42, 0.9)',
-                  color: '#e2e8f0',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '8px',
-                  padding: '6px 10px',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '8px 10px',
+                  borderRadius: '10px',
+                  border: activeMobileTab === 'emergencies' ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
+                  background: activeMobileTab === 'emergencies' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                  color: activeMobileTab === 'emergencies' ? '#f87171' : '#94a3b8',
+                  fontWeight: '800',
                   fontSize: '11px',
-                  fontWeight: '700',
-                  outline: 'none',
-                  cursor: 'pointer'
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <option value="ALL">🏢 All Agencies ({incidents.length})</option>
-                <option value="MDRRMO">🚨 MDRRMO Command</option>
-                <option value="BFP">🔥 BFP Fire Protection</option>
-                <option value="RHU">⚕️ RHU Medical & Health</option>
-              </select>
+                <ShieldAlert size={14} color={activeMobileTab === 'emergencies' ? '#ef4444' : '#94a3b8'} />
+                <span>Emergencies</span>
+                <span style={{
+                  background: activeMobileTab === 'emergencies' ? '#ef4444' : 'rgba(255, 255, 255, 0.15)',
+                  color: '#fff',
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                  fontSize: '10px',
+                  fontWeight: '800'
+                }}>
+                  {filteredIncidents.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveMobileTab('responders')}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '8px 10px',
+                  borderRadius: '10px',
+                  border: activeMobileTab === 'responders' ? '1px solid rgba(56, 189, 248, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
+                  background: activeMobileTab === 'responders' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                  color: activeMobileTab === 'responders' ? '#38bdf8' : '#94a3b8',
+                  fontWeight: '800',
+                  fontSize: '11px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <AlertCircle size={14} color={activeMobileTab === 'responders' ? '#38bdf8' : '#94a3b8'} />
+                <span>Responders</span>
+                <span style={{
+                  background: activeMobileTab === 'responders' ? '#38bdf8' : 'rgba(255, 255, 255, 0.15)',
+                  color: activeMobileTab === 'responders' ? '#0f172a' : '#fff',
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                  fontSize: '10px',
+                  fontWeight: '800'
+                }}>
+                  {filteredResponders.length}
+                </span>
+              </button>
             </div>
-          
-          <div className="glass-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: isMobile ? '10px 12px' : '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {filteredIncidents.length === 0 ? (
-              <div style={{ color: '#64748b', textAlign: 'center', padding: '40px 0', fontSize: '13px', fontWeight: '600' }}>
-                {agencyFilter === 'ALL' ? 'All clear. No active emergencies.' : `No active emergencies for ${agencyFilter}.`}
-              </div>
-            ) : (
-              filteredIncidents.map(inc => {
-                const badge = getAgencyBadge(inc.lead_agency);
-                return (
-                  <div 
-                    key={inc.id}
-                    onClick={() => panToIncident(inc.location_lat, inc.location_lng)}
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            {/* Incidents Section */}
+            {(!isMobile || activeMobileTab === 'emergencies') && (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+                minHeight: 0,
+                overflow: 'hidden',
+                borderBottom: !isMobile ? '1px solid rgba(255,255,255,0.05)' : 'none'
+              }}>
+                <div style={{ padding: isMobile ? '8px 12px' : '16px 20px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
+                  {!isMobile && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <h3 style={{ color: '#fff', margin: 0, fontSize: '13px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        <ShieldAlert size={16} color="#ef4444" />
+                        Emergencies <span style={{ background: '#ef4444', color: 'white', padding: '2px 6px', borderRadius: '12px', fontSize: '10px' }}>{filteredIncidents.length}</span>
+                      </h3>
+                    </div>
+                  )}
+                  <select
+                    value={agencyFilter}
+                    onChange={e => setAgencyFilter(e.target.value)}
                     style={{
-                      background: 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%)',
-                      borderRadius: '16px',
-                      padding: '14px',
-                      cursor: 'pointer',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      borderLeft: `4px solid ${badge.border || '#ef4444'}`,
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      flexShrink: 0
+                      width: '100%',
+                      background: 'rgba(15, 23, 42, 0.9)',
+                      color: '#e2e8f0',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '8px',
+                      padding: '7px 10px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      outline: 'none',
+                      cursor: 'pointer'
                     }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%)'; e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(239,68,68,0.15)'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%)'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)'; }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', alignItems: 'center' }}>
-                      <span style={{ color: '#ef4444', fontWeight: '800', fontSize: '14px' }}>{inc.type}</span>
-                      <span style={{ color: '#64748b', fontSize: '11px', fontFamily: 'monospace', background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>{inc.code}</span>
+                    <option value="ALL">🏢 All Agencies ({incidents.length})</option>
+                    <option value="MDRRMO">🚨 MDRRMO Command</option>
+                    <option value="BFP">🔥 BFP Fire Protection</option>
+                    <option value="RHU">⚕️ RHU Medical & Health</option>
+                  </select>
+                </div>
+              
+                <div className="glass-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: isMobile ? '10px 12px' : '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {filteredIncidents.length === 0 ? (
+                    <div style={{ color: '#64748b', textAlign: 'center', padding: '30px 0', fontSize: '13px', fontWeight: '600' }}>
+                      {agencyFilter === 'ALL' ? 'All clear. No active emergencies.' : `No active emergencies for ${agencyFilter}.`}
                     </div>
-                    <div style={{ marginBottom: '6px' }}>
-                      <span style={{ background: badge.bg, color: badge.text, border: `1px solid ${badge.border}`, fontSize: '10px', fontWeight: '800', padding: '1px 6px', borderRadius: '4px', display: 'inline-block' }}>
-                        {badge.label}
-                      </span>
-                    </div>
-                    <div style={{ color: '#cbd5e1', fontSize: '12px', marginBottom: '8px', fontWeight: '500', lineHeight: '1.4' }}>{inc.location_address || 'Coordinates Only'}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                      <span style={{ color: '#38bdf8', fontSize: '11px', fontWeight: '800' }}>{inc.status}</span>
-                      <span style={{ color: '#64748b', fontSize: '11px', fontWeight: '600' }}>{new Date(inc.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                    </div>
-                  </div>
-                );
-              })
+                  ) : (
+                    filteredIncidents.map(inc => {
+                      const badge = getAgencyBadge(inc.lead_agency);
+                      return (
+                        <div 
+                          key={inc.id}
+                          onClick={() => panToIncident(inc.location_lat, inc.location_lng)}
+                          style={{
+                            background: 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%)',
+                            borderRadius: '14px',
+                            padding: '12px 14px',
+                            cursor: 'pointer',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderLeft: `4px solid ${badge.border || '#ef4444'}`,
+                            boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            flexShrink: 0
+                          }}
+                          onMouseOver={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%)'; e.currentTarget.style.transform = 'translateY(-2px) scale(1.01)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(239,68,68,0.15)'; }}
+                          onMouseOut={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%)'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)'; }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ color: '#ef4444', fontWeight: '800', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inc.type}</span>
+                            <span style={{ color: '#94a3b8', fontSize: '11px', fontFamily: 'monospace', background: 'rgba(0,0,0,0.4)', padding: '2px 6px', borderRadius: '4px', whiteSpace: 'nowrap', flexShrink: 0 }}>{inc.code}</span>
+                          </div>
+                          <div style={{ marginBottom: '6px' }}>
+                            <span style={{ background: badge.bg, color: badge.text, border: `1px solid ${badge.border}`, fontSize: '10px', fontWeight: '800', padding: '1px 6px', borderRadius: '4px', display: 'inline-block', whiteSpace: 'nowrap' }}>
+                              {badge.label}
+                            </span>
+                          </div>
+                          <div style={{ color: '#cbd5e1', fontSize: '12px', marginBottom: '8px', fontWeight: '500', lineHeight: '1.4', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                            {inc.location_address || 'Coordinates Only'}
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', gap: '8px' }}>
+                            <span style={{ color: '#38bdf8', fontSize: '11px', fontWeight: '800', textTransform: 'capitalize', whiteSpace: 'nowrap' }}>{inc.status}</span>
+                            <span style={{ color: '#64748b', fontSize: '11px', fontWeight: '600', whiteSpace: 'nowrap', flexShrink: 0 }}>{new Date(inc.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
             )}
-          </div>
-          </div>
-          
-          {/* Responders Section */}
-          <div style={{ display: 'flex', flexDirection: 'column', flex: isMobile ? 1 : (filteredResponders.length > 2 ? 1 : '0 0 auto'), maxHeight: isMobile ? 'none' : '50%', minHeight: 0, overflow: 'hidden', background: 'rgba(0,0,0,0.3)', borderTop: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
-            <div style={{ padding: isMobile ? '10px 12px' : '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
-              <h3 style={{ color: '#fff', margin: 0, fontSize: isMobile ? '11px' : '13px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                <AlertCircle size={isMobile ? 14 : 16} color="#38bdf8" />
-                Responders <span style={{ background: '#38bdf8', color: '#0f172a', padding: '2px 6px', borderRadius: '12px', fontSize: '10px' }}>{filteredResponders.length}</span>
-              </h3>
-            </div>
             
-            <div className="glass-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', padding: isMobile ? '8px 12px' : '12px 16px' }}>
-              {filteredResponders.length === 0 ? (
-                <div style={{ color: '#64748b', fontSize: '13px', textAlign: 'center', padding: '20px 0', fontWeight: '600' }}>No responders currently active</div>
-              ) : (
-                filteredResponders.map(resp => {
-                  const isFire = resp.agency_type === 'BFP' || resp.agency_type === 'Fire';
-                  const isMedical = resp.agency_type === 'RHU' || resp.agency_type === 'Medical';
-                  const agencyColor = isFire ? '#f97316' : isMedical ? '#10b981' : '#38bdf8';
-                  
-                  return (
-                    <div 
-                      key={resp.id}
-                      onClick={() => panToIncident(resp.current_lat, resp.current_lng)}
-                      style={{
-                        background: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
-                        borderRadius: '12px',
-                        padding: '12px',
-                        cursor: 'pointer',
-                        borderLeft: `4px solid ${agencyColor}`,
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderLeftColor: agencyColor,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        flexShrink: 0
-                      }}
-                      onMouseOver={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%)'; e.currentTarget.style.transform = 'translateY(-1px) scale(1.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
-                      onMouseOut={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                          <div style={{ color: '#fff', fontSize: '14px', fontWeight: '800' }}>{resp.full_name}</div>
-                          <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px', fontWeight: '500' }}>{resp.phone || 'No phone'}</div>
+            {/* Responders Section */}
+            {(!isMobile || activeMobileTab === 'responders') && (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                flex: isMobile ? 1 : (filteredResponders.length > 2 ? 1 : '0 0 auto'),
+                maxHeight: isMobile ? 'none' : '50%',
+                minHeight: 0,
+                overflow: 'hidden',
+                background: 'rgba(0,0,0,0.3)',
+                borderTop: !isMobile ? '1px solid rgba(255,255,255,0.1)' : 'none'
+              }}>
+                {!isMobile && (
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
+                    <h3 style={{ color: '#fff', margin: 0, fontSize: '13px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                      <AlertCircle size={16} color="#38bdf8" />
+                      Responders <span style={{ background: '#38bdf8', color: '#0f172a', padding: '2px 6px', borderRadius: '12px', fontSize: '10px' }}>{filteredResponders.length}</span>
+                    </h3>
+                  </div>
+                )}
+                
+                <div className="glass-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', padding: isMobile ? '10px 12px' : '12px 16px' }}>
+                  {filteredResponders.length === 0 ? (
+                    <div style={{ color: '#64748b', fontSize: '13px', textAlign: 'center', padding: '30px 0', fontWeight: '600' }}>No responders currently active</div>
+                  ) : (
+                    filteredResponders.map(resp => {
+                      const isFire = resp.agency_type === 'BFP' || resp.agency_type === 'Fire';
+                      const isMedical = resp.agency_type === 'RHU' || resp.agency_type === 'Medical';
+                      const agencyColor = isFire ? '#f97316' : isMedical ? '#10b981' : '#38bdf8';
+                      
+                      return (
+                        <div 
+                          key={resp.id}
+                          onClick={() => panToIncident(resp.current_lat, resp.current_lng)}
+                          style={{
+                            background: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+                            borderRadius: '12px',
+                            padding: '12px 14px',
+                            cursor: 'pointer',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderLeft: `4px solid ${agencyColor}`,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            flexShrink: 0
+                          }}
+                          onMouseOver={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%)'; e.currentTarget.style.transform = 'translateY(-1px) scale(1.01)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+                          onMouseOut={(e) => { e.currentTarget.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ color: '#fff', fontSize: '13px', fontWeight: '800', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{resp.full_name}</div>
+                              <div style={{ color: '#94a3b8', fontSize: '11px', marginTop: '2px', fontWeight: '500' }}>{resp.phone || 'No phone'}</div>
+                            </div>
+                            <div style={{ color: agencyColor, fontSize: '10px', fontWeight: '800', background: `${agencyColor}20`, border: `1px solid ${agencyColor}40`, padding: '2px 8px', borderRadius: '4px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                              {resp.agency_type || 'Responder'}
+                            </div>
+                          </div>
                         </div>
-                        <div style={{ color: agencyColor, fontSize: '11px', fontWeight: '800', background: `${agencyColor}20`, padding: '2px 6px', borderRadius: '4px' }}>
-                          {resp.agency_type || 'Responder'}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
