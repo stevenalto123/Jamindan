@@ -28,6 +28,13 @@ const EvacuationCenters = () => {
   const { t } = useLanguage();
   const isAdmin = user?.role === 'Admin';
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [centers, setCenters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -415,7 +422,7 @@ const EvacuationCenters = () => {
   }
 
   return (
-    <div className="content-body" style={{ maxWidth: '1240px', paddingBottom: '48px' }}>
+    <div className="content-body" style={{ maxWidth: '1240px', padding: isMobile ? '12px 10px 80px' : '20px 20px 48px' }}>
 
       {success && <div className="alert alert-success" style={{ fontSize: '13px', padding: '12px 16px', marginBottom: '16px', borderRadius: '8px' }}>{success}</div>}
       {error && <div className="alert alert-danger" style={{ fontSize: '13px', padding: '12px 16px', marginBottom: '16px', borderRadius: '8px' }}>{error}</div>}
@@ -440,50 +447,82 @@ const EvacuationCenters = () => {
       <div
         className="glass-card"
         style={{
-          padding: '14px 16px',
+          padding: isMobile ? '12px' : '14px 16px',
           marginBottom: '18px',
           borderRadius: '12px',
           border: '1px solid var(--border-color)',
           display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'stretch' : 'center',
           justifyContent: 'space-between',
-          gap: '12px',
+          gap: isMobile ? '10px' : '12px',
           boxShadow: 'none'
         }}
       >
-        <div style={{ position: 'relative', flex: '1 1 240px', minWidth: '200px' }}>
-          <Search size={15} style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
-          <input
-            type="text"
-            placeholder="Search shelter name or barangay..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px 30px 8px 34px',
-              borderRadius: '8px',
-              border: '1px solid var(--border-color)',
-              fontSize: '13px',
-              backgroundColor: 'var(--card-alt)',
-              color: 'var(--text-main)',
-              boxSizing: 'border-box'
-            }}
-          />
-          {searchQuery && (
+        {/* Search Input Container (+ Add Shelter button on mobile) */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: isMobile ? '1' : '1 1 260px', minWidth: isMobile ? 'auto' : '200px' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search size={15} style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+            <input
+              type="text"
+              placeholder={isMobile ? "Search shelter or brgy..." : "Search shelter name or barangay..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 30px 8px 34px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                fontSize: '13px',
+                backgroundColor: 'var(--card-alt)',
+                color: 'var(--text-main)',
+                boxSizing: 'border-box'
+              }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                style={{ position: 'absolute', top: '50%', right: '8px', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', display: 'flex' }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {isMobile && isAdmin && (
             <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              style={{ position: 'absolute', top: '50%', right: '8px', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', display: 'flex' }}
+              onClick={handleOpenAdd}
+              className="btn btn-primary"
+              style={{ 
+                padding: '8px 12px', 
+                fontSize: '12px', 
+                borderRadius: '8px', 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '4px', 
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+                fontWeight: '700'
+              }}
             >
-              <X size={14} />
+              <Plus size={15} /> Add
             </button>
           )}
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
+        {/* Status Filter Tabs (Equal 4-column segmented on mobile, inline on desktop) */}
+        <div 
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: isMobile ? '4px' : '6px',
+            width: isMobile ? '100%' : 'auto',
+            flexWrap: isMobile ? 'nowrap' : 'wrap'
+          }}
+        >
           {[
-            { id: 'All', label: 'All Shelters', count: totalCenters },
+            { id: 'All', label: isMobile ? 'All' : 'All Shelters', count: totalCenters },
             { id: 'Open', label: t('statusOpen') || 'Open', count: openCenters },
             { id: 'Full', label: t('statusFull') || 'Full', count: fullCenters },
             { id: 'Closed', label: t('statusClosed') || 'Closed', count: closedCenters }
@@ -495,9 +534,10 @@ const EvacuationCenters = () => {
                 type="button"
                 onClick={() => setStatusFilter(tab.id)}
                 style={{
-                  padding: '7px 12px',
+                  flex: isMobile ? 1 : 'initial',
+                  padding: isMobile ? '7px 2px' : '7px 12px',
                   borderRadius: '8px',
-                  fontSize: '12px',
+                  fontSize: isMobile ? '11px' : '12px',
                   fontWeight: active ? '700' : '600',
                   border: active ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
                   backgroundColor: active ? 'var(--primary-color)' : 'var(--card-alt)',
@@ -505,14 +545,17 @@ const EvacuationCenters = () => {
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px'
+                  justifyContent: 'center',
+                  gap: isMobile ? '3px' : '6px',
+                  boxSizing: 'border-box',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 {tab.label}
                 <span style={{
-                  fontSize: '10px',
+                  fontSize: isMobile ? '9.5px' : '10px',
                   fontWeight: '700',
-                  padding: '1px 6px',
+                  padding: '1px 5px',
                   borderRadius: '10px',
                   backgroundColor: active ? 'rgba(255,255,255,0.22)' : 'var(--card-bg)',
                   color: active ? '#fff' : 'var(--text-muted)'
@@ -523,7 +566,7 @@ const EvacuationCenters = () => {
             );
           })}
 
-          {isAdmin && (
+          {!isMobile && isAdmin && (
             <button
               onClick={handleOpenAdd}
               className="btn btn-primary"
@@ -551,7 +594,7 @@ const EvacuationCenters = () => {
               borderRadius: 0,
               border: 'none',
             } : {
-              height: '460px',
+              height: isMobile ? '270px' : '460px',
               border: '1px solid var(--border-color)',
               borderRadius: '12px',
             }),
@@ -629,7 +672,7 @@ const EvacuationCenters = () => {
                   <input type="text" name="location" className="form-input" value={formData.location} onChange={handleFormChange} required placeholder="e.g. Brgy. Poblacion" />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label className="form-label">{t('maxCapacity')}</label>
                     <input type="number" name="capacity" className="form-input" value={formData.capacity} onChange={handleFormChange} required min="1" />
@@ -652,7 +695,7 @@ const EvacuationCenters = () => {
                   </div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '12px', backgroundColor: 'var(--card-alt)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', padding: '12px', backgroundColor: 'var(--card-alt)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label className="form-label" style={{ fontSize: '11px' }}>{t('latitude')} (Tap Map)</label>
                     <input type="text" name="latitude" className="form-input" value={formData.latitude} onChange={handleFormChange} placeholder="e.g. 11.4294" />
@@ -726,12 +769,46 @@ const EvacuationCenters = () => {
                             </span>
 
                             {isAdmin && (
-                              <div style={{ display: 'flex', gap: '2px' }} onClick={e => e.stopPropagation()}>
-                                <button onClick={() => handleOpenEdit(center)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}>
-                                  <Edit2 size={14} />
+                              <div style={{ display: 'flex', gap: '4px' }} onClick={e => e.stopPropagation()}>
+                                <button 
+                                  type="button"
+                                  onClick={() => handleOpenEdit(center)} 
+                                  style={{ 
+                                    background: 'var(--card-alt)', 
+                                    border: '1px solid var(--border-color)', 
+                                    color: 'var(--text-main)', 
+                                    cursor: 'pointer', 
+                                    padding: '6px', 
+                                    borderRadius: '6px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minWidth: '30px',
+                                    minHeight: '30px'
+                                  }}
+                                  title="Edit Shelter"
+                                >
+                                  <Edit2 size={13} />
                                 </button>
-                                <button onClick={() => handleDelete(center.id)} style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', padding: '4px' }}>
-                                  <Trash2 size={14} />
+                                <button 
+                                  type="button"
+                                  onClick={() => handleDelete(center.id)} 
+                                  style={{ 
+                                    background: 'rgba(239, 68, 68, 0.1)', 
+                                    border: '1px solid rgba(239, 68, 68, 0.25)', 
+                                    color: 'var(--danger-color)', 
+                                    cursor: 'pointer', 
+                                    padding: '6px', 
+                                    borderRadius: '6px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minWidth: '30px',
+                                    minHeight: '30px'
+                                  }}
+                                  title="Delete Shelter"
+                                >
+                                  <Trash2 size={13} />
                                 </button>
                               </div>
                             )}
