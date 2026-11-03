@@ -36,6 +36,13 @@ const AdminAnalytics = () => {
   const [selectedBarangay, setSelectedBarangay] = useState('All');
   const [selectedAgency, setSelectedAgency] = useState('All');
   const [searchLog, setSearchLog] = useState('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Data states
   const [summary, setSummary] = useState({ total: 0, resolved: 0, active: 0, avgResponseMinutes: 0 });
@@ -262,7 +269,7 @@ const AdminAnalytics = () => {
   const filteredLogs = getFilteredLogs();
 
   return (
-    <div className="content-body" style={{ maxWidth: '1350px', margin: '0 auto', padding: '20px' }}>
+    <div className="content-body" style={{ maxWidth: '1350px', margin: '0 auto', padding: isMobile ? '12px 10px 80px' : '20px' }}>
       <style>{`
         @keyframes analyticsSpin {
           from { transform: rotate(0deg); }
@@ -271,7 +278,14 @@ const AdminAnalytics = () => {
       `}</style>
       
       {/* Top Action Bar (Screen Only) */}
-      <div className="no-print" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+      <div className="no-print" style={{ 
+        marginBottom: '20px', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: isMobile ? 'stretch' : 'center', 
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: '12px' 
+      }}>
         <button 
           onClick={() => navigate('/admin')} 
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800', fontSize: '15px' }}
@@ -279,41 +293,87 @@ const AdminAnalytics = () => {
           <ArrowLeft size={18} /> Back to Command Center
         </button>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <button onClick={handleExportCSV} className="btn" style={{ backgroundColor: '#10b981', color: 'white', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '700', padding: '10px 18px', borderRadius: '10px', border: 'none', cursor: 'pointer' }}>
-            <Download size={16} /> Export CSV
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', width: isMobile ? '100%' : 'auto' }}>
+          <button 
+            onClick={handleExportCSV} 
+            className="btn" 
+            style={{ 
+              flex: isMobile ? 1 : 'none',
+              backgroundColor: '#10b981', 
+              color: 'white', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              gap: '6px', 
+              fontWeight: '700', 
+              padding: isMobile ? '9px 12px' : '10px 18px', 
+              borderRadius: '10px', 
+              border: 'none', 
+              cursor: 'pointer',
+              fontSize: isMobile ? '12px' : '14px',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <Download size={15} /> Export CSV
           </button>
-          <button onClick={handlePrint} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '700', padding: '10px 18px', borderRadius: '10px' }}>
-            <Printer size={16} /> Print Official Report
+          <button 
+            onClick={handlePrint} 
+            className="btn btn-primary" 
+            style={{ 
+              flex: isMobile ? 1 : 'none',
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              gap: '6px', 
+              fontWeight: '700', 
+              padding: isMobile ? '9px 12px' : '10px 18px', 
+              borderRadius: '10px',
+              fontSize: isMobile ? '12px' : '14px',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <Printer size={15} /> Print Report
           </button>
         </div>
       </div>
 
       {/* Official Government Header (Visible on PRINT & Screen) */}
-      <div className="print-header" style={{ textAlign: 'center', marginBottom: '24px', borderBottom: '2px solid var(--border-color)', paddingBottom: '16px' }}>
-        <div style={{ textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1.5px', color: 'var(--text-muted)' }}>
+      <div className="print-header" style={{ textAlign: 'center', marginBottom: '20px', borderBottom: '2px solid var(--border-color)', paddingBottom: '16px' }}>
+        <div style={{ textTransform: 'uppercase', fontSize: '10px', letterSpacing: '1.2px', color: 'var(--text-muted)' }}>
           Republic of the Philippines • Province of Capiz
         </div>
-        <h1 style={{ margin: '4px 0', fontSize: '24px', fontWeight: '900', color: 'var(--text-main)', letterSpacing: '0.5px' }}>
+        <h1 style={{ margin: '4px 0', fontSize: isMobile ? '18px' : '24px', fontWeight: '900', color: 'var(--text-main)', letterSpacing: '0.5px' }}>
           MUNICIPALITY OF JAMINDAN
         </h1>
-        <div style={{ fontSize: '14px', fontWeight: '700', color: '#dc2626', textTransform: 'uppercase', letterSpacing: '1px' }}>
+        <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '700', color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
           Municipal Disaster Risk Reduction & Management Office (MDRRMO)
         </div>
-        <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px' }}>
+        <div style={{ fontSize: '11px', color: 'var(--text-light)', marginTop: '4px', lineHeight: '1.4' }}>
           Official Emergency Monitoring & Disaster Documentation Report • Generated on {lastUpdated.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} at {lastUpdated.toLocaleTimeString()}
         </div>
       </div>
 
       {/* Filter Toolbar (No-Print) */}
-      <div className="card no-print" style={{ padding: '18px', marginBottom: '24px', backgroundColor: 'var(--card-bg)', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', fontWeight: '800', color: 'var(--text-main)', fontSize: '14px' }}>
+      <div className="card no-print" style={{ padding: isMobile ? '14px' : '18px', marginBottom: '20px', backgroundColor: 'var(--card-bg)', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontWeight: '800', color: 'var(--text-main)', fontSize: '14px' }}>
           <Filter size={16} color="var(--primary-color)" /> Filter Report Period & Scope
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {/* Preset Buttons */}
-          <div style={{ display: 'flex', backgroundColor: 'var(--bg-color)', padding: '4px', borderRadius: '10px', gap: '4px' }}>
+          <div style={{ 
+            display: 'flex', 
+            width: '100%', 
+            maxWidth: '100%', 
+            overflowX: 'auto', 
+            WebkitOverflowScrolling: 'touch', 
+            scrollbarWidth: 'none', 
+            backgroundColor: 'var(--bg-color)', 
+            padding: '4px', 
+            borderRadius: '10px', 
+            gap: '4px', 
+            boxSizing: 'border-box' 
+          }}>
             {[
               { id: 'today', label: 'Today' },
               { id: 'week', label: '7 Days' },
@@ -325,15 +385,19 @@ const AdminAnalytics = () => {
                 key={p.id}
                 onClick={() => setPeriod(p.id)}
                 style={{
-                  padding: '6px 14px',
+                  flex: 1,
+                  minWidth: isMobile ? '55px' : '65px',
+                  padding: isMobile ? '6px 6px' : '6px 14px',
                   borderRadius: '8px',
                   border: 'none',
-                  fontSize: '13px',
+                  fontSize: isMobile ? '11px' : '13px',
                   fontWeight: period === p.id ? '800' : '600',
                   backgroundColor: period === p.id ? 'var(--primary-color)' : 'transparent',
                   color: period === p.id ? 'white' : 'var(--text-muted)',
                   cursor: 'pointer',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap',
+                  textAlign: 'center'
                 }}
               >
                 {p.label}
@@ -343,85 +407,103 @@ const AdminAnalytics = () => {
 
           {/* Custom Date Pickers */}
           {period === 'custom' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
               <input 
                 type="date" 
                 value={startDate} 
                 onChange={e => setStartDate(e.target.value)}
-                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)' }} 
+                style={{ flex: 1, minWidth: '120px', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '12px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)', boxSizing: 'border-box' }} 
               />
               <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>to</span>
               <input 
                 type="date" 
                 value={endDate} 
                 onChange={e => setEndDate(e.target.value)}
-                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)' }} 
+                style={{ flex: 1, minWidth: '120px', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '12px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)', boxSizing: 'border-box' }} 
               />
             </div>
           )}
 
-          {/* Barangay Dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)' }}>Barangay:</span>
-            <select 
-              value={selectedBarangay} 
-              onChange={e => setSelectedBarangay(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)' }}
-            >
-              {JAMINDAN_BARANGAYS.map(b => (
-                <option key={b} value={b}>{b === 'All' ? 'All Barangays' : `Brgy. ${b}`}</option>
-              ))}
-            </select>
-          </div>
+          {/* Dropdowns Row & Refresh */}
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '10px', alignItems: isMobile ? 'stretch' : 'center', flexWrap: 'wrap' }}>
+            {/* Barangay Dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: isMobile ? 'none' : '1 1 200px' }}>
+              <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', whiteSpace: 'nowrap', minWidth: '65px' }}>Barangay:</span>
+              <select 
+                value={selectedBarangay} 
+                onChange={e => setSelectedBarangay(e.target.value)}
+                style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '12px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)', boxSizing: 'border-box' }}
+              >
+                {JAMINDAN_BARANGAYS.map(b => (
+                  <option key={b} value={b}>{b === 'All' ? 'All Barangays' : `Brgy. ${b}`}</option>
+                ))}
+              </select>
+            </div>
 
-          {/* Agency Dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)' }}>Agency:</span>
-            <select 
-              value={selectedAgency} 
-              onChange={e => setSelectedAgency(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)' }}
-            >
-              {AGENCIES.map(a => (
-                <option key={a} value={a}>{a === 'All' ? 'All Concerned Agencies' : a}</option>
-              ))}
-            </select>
-          </div>
+            {/* Agency Dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: isMobile ? 'none' : '1 1 200px' }}>
+              <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', whiteSpace: 'nowrap', minWidth: '65px' }}>Agency:</span>
+              <select 
+                value={selectedAgency} 
+                onChange={e => setSelectedAgency(e.target.value)}
+                style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '12px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)', boxSizing: 'border-box' }}
+              >
+                {AGENCIES.map(a => (
+                  <option key={a} value={a}>{a === 'All' ? 'All Concerned Agencies' : a}</option>
+                ))}
+              </select>
+            </div>
 
-          <button 
-            type="button"
-            onClick={() => fetchAllData(true)}
-            disabled={loading || refreshing}
-            title="Refresh Data"
-            style={{
-              padding: '8px 14px',
-              borderRadius: '8px',
-              border: '1px solid var(--border-color)',
-              backgroundColor: refreshing ? 'var(--bg-color)' : 'transparent',
-              cursor: (loading || refreshing) ? 'wait' : 'pointer',
-              color: 'var(--text-main)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '13px',
-              fontWeight: '700',
-              opacity: (loading || refreshing) ? 0.75 : 1,
-              transition: 'all 0.2s'
-            }}
-          >
-            <RefreshCw
-              size={14}
+            <button 
+              type="button"
+              onClick={() => fetchAllData(true)}
+              disabled={loading || refreshing}
+              title="Refresh Data"
               style={{
-                animation: (loading || refreshing) ? 'analyticsSpin 0.8s linear infinite' : 'none'
+                width: isMobile ? '100%' : 'auto',
+                justifyContent: 'center',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: refreshing ? 'var(--bg-color)' : 'transparent',
+                cursor: (loading || refreshing) ? 'wait' : 'pointer',
+                color: 'var(--text-main)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '12px',
+                fontWeight: '700',
+                opacity: (loading || refreshing) ? 0.75 : 1,
+                transition: 'all 0.2s',
+                boxSizing: 'border-box'
               }}
-            />
-            {refreshing ? 'Refreshing...' : 'Refresh'}
-          </button>
+            >
+              <RefreshCw
+                size={14}
+                style={{
+                  animation: (loading || refreshing) ? 'analyticsSpin 0.8s linear infinite' : 'none'
+                }}
+              />
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Report Navigation Tabs (No-Print) */}
-      <div className="no-print" style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--border-color)', marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px' }}>
+      <div 
+        className="no-print" 
+        style={{ 
+          display: 'flex', 
+          gap: '8px', 
+          borderBottom: '2px solid var(--border-color)', 
+          marginBottom: '20px', 
+          overflowX: 'auto', 
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          paddingBottom: '2px' 
+        }}
+      >
         {[
           { id: 'overview', label: 'Overview & Visual Analytics', icon: BarChart3 },
           { id: 'master-log', label: 'Incident Master Log', icon: FileText, count: masterLogs.length },
@@ -438,24 +520,25 @@ const AdminAnalytics = () => {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '12px 18px',
+                gap: '6px',
+                padding: isMobile ? '10px 12px' : '12px 18px',
                 border: 'none',
                 background: 'none',
                 cursor: 'pointer',
                 fontWeight: isActive ? '800' : '600',
-                fontSize: '14px',
+                fontSize: isMobile ? '13px' : '14px',
                 color: isActive ? 'var(--primary-color)' : 'var(--text-muted)',
                 borderBottom: isActive ? '3px solid var(--primary-color)' : '3px solid transparent',
-                marginBottom: '-6px',
+                marginBottom: '-4px',
                 whiteSpace: 'nowrap',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                flexShrink: 0
               }}
             >
-              <Icon size={16} />
+              <Icon size={15} />
               {tab.label}
               {tab.count !== undefined && (
-                <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '10px', backgroundColor: isActive ? 'var(--primary-color)' : '#e2e8f0', color: isActive ? 'white' : '#475569' }}>
+                <span style={{ fontSize: '11px', padding: '1px 6px', borderRadius: '10px', backgroundColor: isActive ? 'var(--primary-color)' : '#e2e8f0', color: isActive ? 'white' : '#475569' }}>
                   {tab.count}
                 </span>
               )}
@@ -465,59 +548,72 @@ const AdminAnalytics = () => {
       </div>
 
       {/* KPI Cards (Print and Screen) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <div className="card" style={{ padding: '18px', borderLeft: '4px solid #3b82f6', borderRadius: '12px' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(220px, 1fr))', 
+        gap: isMobile ? '10px' : '16px', 
+        marginBottom: '20px' 
+      }}>
+        <div className="card" style={{ padding: isMobile ? '12px 14px' : '18px', borderLeft: '4px solid #3b82f6', borderRadius: '12px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Total Incidents</span>
-            <TrendingUp size={22} color="#3b82f6" />
+            <span style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Total</span>
+            <TrendingUp size={isMobile ? 16 : 22} color="#3b82f6" />
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '900', color: 'var(--text-main)', marginTop: '8px' }}>{summary.total}</div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Recorded in selected scope</div>
+          <div style={{ fontSize: isMobile ? '22px' : '28px', fontWeight: '900', color: 'var(--text-main)', marginTop: '4px' }}>{summary.total}</div>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>In selected scope</div>
         </div>
 
-        <div className="card" style={{ padding: '18px', borderLeft: '4px solid #ef4444', borderRadius: '12px' }}>
+        <div className="card" style={{ padding: isMobile ? '12px 14px' : '18px', borderLeft: '4px solid #ef4444', borderRadius: '12px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Active Emergencies</span>
-            <AlertTriangle size={22} color="#ef4444" />
+            <span style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Active</span>
+            <AlertTriangle size={isMobile ? 16 : 22} color="#ef4444" />
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '900', color: '#ef4444', marginTop: '8px' }}>{summary.active}</div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Pending / In Progress</div>
+          <div style={{ fontSize: isMobile ? '22px' : '28px', fontWeight: '900', color: '#ef4444', marginTop: '4px' }}>{summary.active}</div>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Pending / Responding</div>
         </div>
 
-        <div className="card" style={{ padding: '18px', borderLeft: '4px solid #10b981', borderRadius: '12px' }}>
+        <div className="card" style={{ padding: isMobile ? '12px 14px' : '18px', borderLeft: '4px solid #10b981', borderRadius: '12px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Resolved Incidents</span>
-            <CheckCircle size={22} color="#10b981" />
+            <span style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Resolved</span>
+            <CheckCircle size={isMobile ? 16 : 22} color="#10b981" />
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '900', color: '#10b981', marginTop: '8px' }}>{summary.resolved}</div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Successfully handled</div>
+          <div style={{ fontSize: isMobile ? '22px' : '28px', fontWeight: '900', color: '#10b981', marginTop: '4px' }}>{summary.resolved}</div>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Closed incidents</div>
         </div>
 
-        <div className="card" style={{ padding: '18px', borderLeft: '4px solid #f59e0b', borderRadius: '12px' }}>
+        <div className="card" style={{ padding: isMobile ? '12px 14px' : '18px', borderLeft: '4px solid #f59e0b', borderRadius: '12px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Avg Response Time</span>
-            <Clock size={22} color="#f59e0b" />
+            <span style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Avg Time</span>
+            <Clock size={isMobile ? 16 : 22} color="#f59e0b" />
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '900', color: 'var(--text-main)', marginTop: '8px' }}>{summary.avgResponseMinutes} min</div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Time to active dispatch</div>
+          <div style={{ fontSize: isMobile ? '22px' : '28px', fontWeight: '900', color: 'var(--text-main)', marginTop: '4px' }}>{summary.avgResponseMinutes} min</div>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>To active dispatch</div>
         </div>
       </div>
 
       {/* TAB 1: OVERVIEW & VISUAL ANALYTICS */}
       {activeTab === 'overview' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Chart */}
-          <div className="card" style={{ padding: '20px', borderRadius: '16px' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="card" style={{ padding: isMobile ? '14px' : '20px', borderRadius: '16px' }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: isMobile ? '14px' : '16px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <BarChart3 size={18} color="var(--primary-color)" /> Emergency Incidents by Category
             </h3>
-            <div style={{ width: '100%', height: '280px' }}>
+            <div style={{ width: '100%', height: isMobile ? '250px' : '280px' }}>
               {typeData.length > 0 ? (
                 <ResponsiveContainer width="99%" height="100%">
-                  <BarChart data={typeData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
+                  <BarChart data={typeData} margin={{ top: 15, right: 10, left: isMobile ? -25 : 0, bottom: isMobile ? 30 : 20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: 'var(--text-muted)', fontSize: isMobile ? 10 : 12 }}
+                      interval={0}
+                      angle={isMobile ? -25 : 0}
+                      textAnchor={isMobile ? 'end' : 'middle'}
+                    />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
                     <Tooltip cursor={{ fill: 'rgba(0,0,0,0.03)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                     <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                       {typeData.map((entry, index) => (
@@ -536,15 +632,15 @@ const AdminAnalytics = () => {
 
           {/* Heatmap */}
           <div className="card" style={{ padding: 0, overflow: 'hidden', borderRadius: '16px' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ padding: isMobile ? '12px 14px' : '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
+              <h3 style={{ margin: 0, fontSize: isMobile ? '14px' : '16px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <MapIcon size={18} color="#ef4444" /> Disaster Hotspot Density Heatmap
               </h3>
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-light)' }}>
+              <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'var(--text-light)', lineHeight: '1.4' }}>
                 Geospatial concentration of emergency reports in the Municipality of Jamindan to guide resource prepositioning.
               </p>
             </div>
-            <div style={{ width: '100%', height: '380px', position: 'relative' }}>
+            <div style={{ width: '100%', height: isMobile ? '280px' : '380px', position: 'relative' }}>
               <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }}></div>
             </div>
           </div>
@@ -553,36 +649,36 @@ const AdminAnalytics = () => {
 
       {/* TAB 2: INCIDENT MASTER LOG */}
       {activeTab === 'master-log' && (
-        <div className="card" style={{ padding: '20px', borderRadius: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+        <div className="card" style={{ padding: isMobile ? '14px' : '20px', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', marginBottom: '16px', flexDirection: isMobile ? 'column' : 'row', gap: '10px' }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Official Incident Master Log</h3>
+              <h3 style={{ margin: 0, fontSize: isMobile ? '16px' : '18px', fontWeight: '800', color: 'var(--text-main)' }}>Official Incident Master Log</h3>
               <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-light)' }}>Complete chronological registry of all reported incidents and response timelines.</p>
             </div>
-            <div className="no-print">
+            <div className="no-print" style={{ width: isMobile ? '100%' : 'auto' }}>
               <input 
                 type="text" 
                 placeholder="Search log records..." 
                 value={searchLog} 
                 onChange={e => setSearchLog(e.target.value)}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px', width: '220px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)' }}
+                style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px', width: isMobile ? '100%' : '220px', backgroundColor: 'var(--card-bg)', color: 'var(--text-main)', boxSizing: 'border-box' }}
               />
             </div>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)' }}>
-                  <th style={{ padding: '10px 12px', fontWeight: '800' }}>Code</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800' }}>Date & Time</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800' }}>Type</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800' }}>Lead Agency</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800' }}>Barangay</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800' }}>Reporter</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800' }}>Assigned Unit</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800' }}>Response Time</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800' }}>Status</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Code</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Date & Time</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Type</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Lead Agency</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Barangay</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Reporter</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Assigned Unit</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Response Time</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -631,31 +727,31 @@ const AdminAnalytics = () => {
 
       {/* TAB 3: BARANGAY RISK SUMMARY */}
       {activeTab === 'barangay' && (
-        <div className="card" style={{ padding: '20px', borderRadius: '16px' }}>
+        <div className="card" style={{ padding: isMobile ? '14px' : '20px', borderRadius: '16px' }}>
           <div style={{ marginBottom: '16px' }}>
-            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Barangay Disaster Risk & Incidence Summary</h3>
+            <h3 style={{ margin: 0, fontSize: isMobile ? '16px' : '18px', fontWeight: '800', color: 'var(--text-main)' }}>Barangay Disaster Risk & Incidence Summary</h3>
             <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-light)' }}>Aggregated breakdown of incidents across all 30+ Jamindan barangays for hazard assessment.</p>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)' }}>
-                  <th style={{ padding: '10px 12px', fontWeight: '800' }}>Barangay</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>Total Reported</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>Active</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>Resolved</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>🔥 Fire</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>🚑 Medical</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>🌊 Flood</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>🚗 Accident</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>🛡️ Crime</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Barangay</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Total Reported</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Active</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Resolved</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🔥 Fire</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🚑 Medical</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🌊 Flood</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🚗 Accident</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🛡️ Crime</th>
                 </tr>
               </thead>
               <tbody>
                 {barangayReports.length > 0 ? barangayReports.map((b, idx) => (
                   <tr key={b.barangay || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '10px 12px', fontWeight: '800', color: 'var(--text-main)' }}>Brgy. {b.barangay}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: '800', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>Brgy. {b.barangay}</td>
                     <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '900', color: 'var(--primary-color)' }}>{b.total_incidents}</td>
                     <td style={{ padding: '10px 12px', textAlign: 'center', color: '#ef4444', fontWeight: '800' }}>{b.active_count}</td>
                     <td style={{ padding: '10px 12px', textAlign: 'center', color: '#10b981', fontWeight: '800' }}>{b.resolved_count}</td>
@@ -680,28 +776,28 @@ const AdminAnalytics = () => {
 
       {/* TAB 4: CONCERNED AGENCY PERFORMANCE */}
       {activeTab === 'agency' && (
-        <div className="card" style={{ padding: '20px', borderRadius: '16px' }}>
+        <div className="card" style={{ padding: isMobile ? '14px' : '20px', borderRadius: '16px' }}>
           <div style={{ marginBottom: '16px' }}>
-            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Concerned Entity & Agency Dispatch Report</h3>
+            <h3 style={{ margin: 0, fontSize: isMobile ? '16px' : '18px', fontWeight: '800', color: 'var(--text-main)' }}>Concerned Entity & Agency Dispatch Report</h3>
             <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-light)' }}>Inter-agency monitoring for MDRRMO, BFP, and RHU response performance.</p>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)' }}>
-                  <th style={{ padding: '10px 12px', fontWeight: '800' }}>Concerned Entity / Agency</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>Dispatched Incidents</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>Resolved</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>Active Response</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>Pending</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>Avg Response Time</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Concerned Entity / Agency</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Dispatched Incidents</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Resolved</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Active Response</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Pending</th>
+                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Avg Response Time</th>
                 </tr>
               </thead>
               <tbody>
                 {agencyReports.length > 0 ? agencyReports.map((a, idx) => (
                   <tr key={a.agency || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '12px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <td style={{ padding: '12px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
                       <Shield size={16} color="var(--primary-color)" />
                       {a.agency === 'BFP' ? 'Bureau of Fire Protection (BFP)' : 
                        a.agency === 'RHU' ? 'Rural Health Unit / Paramedics (RHU)' : 
@@ -730,39 +826,39 @@ const AdminAnalytics = () => {
       {activeTab === 'casualty' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Summary KPIs */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #ef4444', borderRadius: '12px' }}>
-              <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Reported Victims / Injured</div>
-              <div style={{ fontSize: '26px', fontWeight: '900', color: '#ef4444', marginTop: '6px' }}>{casualtyReport.summary?.totalVictims || 0}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(200px, 1fr))', gap: isMobile ? '10px' : '16px' }}>
+            <div className="card" style={{ padding: isMobile ? '12px 14px' : '16px', borderLeft: '4px solid #ef4444', borderRadius: '12px', boxSizing: 'border-box' }}>
+              <div style={{ fontSize: isMobile ? '10px' : '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Reported Victims / Injured</div>
+              <div style={{ fontSize: isMobile ? '20px' : '26px', fontWeight: '900', color: '#ef4444', marginTop: '4px' }}>{casualtyReport.summary?.totalVictims || 0}</div>
             </div>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #3b82f6', borderRadius: '12px' }}>
-              <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Affected Households</div>
-              <div style={{ fontSize: '26px', fontWeight: '900', color: '#3b82f6', marginTop: '6px' }}>{casualtyReport.summary?.totalHouseholds || 0}</div>
+            <div className="card" style={{ padding: isMobile ? '12px 14px' : '16px', borderLeft: '4px solid #3b82f6', borderRadius: '12px', boxSizing: 'border-box' }}>
+              <div style={{ fontSize: isMobile ? '10px' : '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Affected Households</div>
+              <div style={{ fontSize: isMobile ? '20px' : '26px', fontWeight: '900', color: '#3b82f6', marginTop: '4px' }}>{casualtyReport.summary?.totalHouseholds || 0}</div>
             </div>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #f59e0b', borderRadius: '12px' }}>
-              <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Rescues Required</div>
-              <div style={{ fontSize: '26px', fontWeight: '900', color: '#f59e0b', marginTop: '6px' }}>{casualtyReport.summary?.totalRescuesNeeded || 0}</div>
+            <div className="card" style={{ padding: isMobile ? '12px 14px' : '16px', borderLeft: '4px solid #f59e0b', borderRadius: '12px', boxSizing: 'border-box' }}>
+              <div style={{ fontSize: isMobile ? '10px' : '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Rescues Required</div>
+              <div style={{ fontSize: isMobile ? '20px' : '26px', fontWeight: '900', color: '#f59e0b', marginTop: '4px' }}>{casualtyReport.summary?.totalRescuesNeeded || 0}</div>
             </div>
-            <div className="card" style={{ padding: '16px', borderLeft: '4px solid #8b5cf6', borderRadius: '12px' }}>
-              <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Vehicles Involved</div>
-              <div style={{ fontSize: '26px', fontWeight: '900', color: '#8b5cf6', marginTop: '6px' }}>{casualtyReport.summary?.totalVehiclesInvolved || 0}</div>
+            <div className="card" style={{ padding: isMobile ? '12px 14px' : '16px', borderLeft: '4px solid #8b5cf6', borderRadius: '12px', boxSizing: 'border-box' }}>
+              <div style={{ fontSize: isMobile ? '10px' : '11px', fontWeight: '700', color: 'var(--text-light)', textTransform: 'uppercase' }}>Vehicles Involved</div>
+              <div style={{ fontSize: isMobile ? '20px' : '26px', fontWeight: '900', color: '#8b5cf6', marginTop: '4px' }}>{casualtyReport.summary?.totalVehiclesInvolved || 0}</div>
             </div>
           </div>
 
           {/* Detailed table */}
-          <div className="card" style={{ padding: '20px', borderRadius: '16px' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>Casualty & Property Damage Incident Registry</h3>
-            <div style={{ overflowX: 'auto' }}>
+          <div className="card" style={{ padding: isMobile ? '14px' : '20px', borderRadius: '16px' }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: isMobile ? '16px' : '18px', fontWeight: '800', color: 'var(--text-main)' }}>Casualty & Property Damage Incident Registry</h3>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ backgroundColor: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)' }}>
-                    <th style={{ padding: '10px 12px', fontWeight: '800' }}>Code</th>
-                    <th style={{ padding: '10px 12px', fontWeight: '800' }}>Type</th>
-                    <th style={{ padding: '10px 12px', fontWeight: '800' }}>Barangay</th>
-                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>Victims/Injured</th>
-                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center' }}>Affected Households</th>
-                    <th style={{ padding: '10px 12px', fontWeight: '800' }}>Injury / Condition Notes</th>
-                    <th style={{ padding: '10px 12px', fontWeight: '800' }}>Flood Depth</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Code</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Type</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Barangay</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Victims/Injured</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Affected Households</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Injury / Condition Notes</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Flood Depth</th>
                   </tr>
                 </thead>
                 <tbody>
