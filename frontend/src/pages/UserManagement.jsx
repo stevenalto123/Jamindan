@@ -29,8 +29,14 @@ const UserManagement = () => {
   
   // Filters
   const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Edit/Add Modal States
   const [showModal, setShowModal] = useState(false);
@@ -251,7 +257,7 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="content-body" style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '40px' }}>
+    <div className="content-body" style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: isMobile ? '90px' : '40px' }}>
       
       {/* Header Section */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
@@ -478,21 +484,21 @@ const UserManagement = () => {
           zIndex: 9000, 
           display: 'flex', justifyContent: 'center', alignItems: 'center',
           backdropFilter: 'blur(4px)',
-          padding: '20px'
+          padding: isMobile ? '12px' : '20px'
         }}>
           <div style={{ 
             background: 'var(--bg-color)', 
-            width: '90%', 
+            width: isMobile ? '100%' : '90%', 
             maxWidth: '600px', 
-            borderRadius: '24px', 
+            borderRadius: isMobile ? '18px' : '24px', 
             overflow: 'hidden', 
             boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
             display: 'flex',
             flexDirection: 'column',
-            maxHeight: '90vh'
+            maxHeight: isMobile ? '94vh' : '90vh'
           }}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', flexShrink: 0 }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>
+            <div style={{ padding: isMobile ? '16px 18px' : '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', flexShrink: 0 }}>
+              <h3 style={{ margin: 0, fontSize: isMobile ? '17px' : '18px', fontWeight: '800', color: 'var(--text-main)' }}>
                 {editingUser ? 'Edit User Details' : 'Add New User'}
               </h3>
               <button 
@@ -505,18 +511,18 @@ const UserManagement = () => {
               </button>
             </div>
             
-            <div style={{ padding: '24px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
-              <form onSubmit={handleSaveSubmit} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ padding: isMobile ? '16px 14px' : '24px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
+              <form onSubmit={handleSaveSubmit} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px' }}>
                 
                 {/* Images Preview Section (if any) */}
                 {editingUser && editingUser.role === 'Resident' && (editingUser.id_photo_path || editingUser.selfie_photo_path) && (
-                  <div style={{ background: 'white', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'flex', gap: '16px' }}>
+                  <div style={{ background: 'white', padding: isMobile ? '14px' : '16px', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '14px' }}>
                     {editingUser.id_photo_path && (
                       <div style={{ flex: 1 }}>
                         <p style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Valid ID</p>
                         <div 
                           onClick={() => openImageViewer(editingUser.id_photo_path.startsWith('http') ? editingUser.id_photo_path : `https://jamindan.onrender.com${editingUser.id_photo_path}`)}
-                          style={{ width: '100%', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '2px dashed #cbd5e1', cursor: 'zoom-in' }}
+                          style={{ width: '100%', height: isMobile ? '130px' : '100px', borderRadius: '8px', overflow: 'hidden', border: '2px dashed #cbd5e1', cursor: 'zoom-in' }}
                         >
                           <img src={editingUser.id_photo_path.startsWith('http') ? editingUser.id_photo_path : `https://jamindan.onrender.com${editingUser.id_photo_path}`} alt="ID Document" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
@@ -527,7 +533,7 @@ const UserManagement = () => {
                         <p style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Live Selfie</p>
                         <div 
                           onClick={() => openImageViewer(editingUser.selfie_photo_path.startsWith('http') ? editingUser.selfie_photo_path : `https://jamindan.onrender.com${editingUser.selfie_photo_path}`)}
-                          style={{ width: '100%', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '2px dashed #cbd5e1', cursor: 'zoom-in' }}
+                          style={{ width: '100%', height: isMobile ? '130px' : '100px', borderRadius: '8px', overflow: 'hidden', border: '2px dashed #cbd5e1', cursor: 'zoom-in' }}
                         >
                           <img src={editingUser.selfie_photo_path.startsWith('http') ? editingUser.selfie_photo_path : `https://jamindan.onrender.com${editingUser.selfie_photo_path}`} alt="Live Selfie" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
@@ -538,18 +544,18 @@ const UserManagement = () => {
 
                 {/* Photo Upload Section for New Residents */}
                 {!editingUser && role === 'Resident' && (
-                  <div style={{ background: 'white', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-                    <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ background: 'white', padding: isMobile ? '16px 14px' : '20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                    <h4 style={{ margin: '0 0 14px 0', fontSize: '14px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <UserIcon size={16} color="var(--text-muted)" /> Identity Verification (Optional)
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '12px' : '16px' }}>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">ID Photo</label>
-                        <input type="file" accept="image/*" className="form-input" onChange={(e) => setIdPhoto(e.target.files[0])} />
+                        <input type="file" accept="image/*" className="form-input" onChange={(e) => setIdPhoto(e.target.files[0])} style={{ width: '100%' }} />
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">Selfie Photo</label>
-                        <input type="file" accept="image/*" className="form-input" onChange={(e) => setSelfiePhoto(e.target.files[0])} />
+                        <input type="file" accept="image/*" className="form-input" onChange={(e) => setSelfiePhoto(e.target.files[0])} style={{ width: '100%' }} />
                       </div>
                     </div>
                     <p style={{ margin: '8px 0 0 0', fontSize: '11px', color: 'var(--text-light)' }}>
@@ -560,19 +566,19 @@ const UserManagement = () => {
 
                 {/* Account Security Group */}
                 {!editingUser && (
-                  <div style={{ background: 'white', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-                    <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ background: 'white', padding: isMobile ? '16px 14px' : '20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                    <h4 style={{ margin: '0 0 14px 0', fontSize: '14px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Lock size={16} color="var(--text-muted)" /> Account Security
                     </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '12px' : '16px' }}>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">Username</label>
-                        <input type="text" className="form-input" autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Choose username" required style={{ background: '#f8fafc' }} />
+                        <input type="text" className="form-input" autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Choose username" required style={{ background: '#f8fafc', width: '100%' }} />
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">Password</label>
                         <div style={{ position: 'relative' }}>
-                          <input type={showPassword ? "text" : "password"} className="form-input" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Choose password" required style={{ background: '#f8fafc', paddingRight: '40px' }} />
+                          <input type={showPassword ? "text" : "password"} className="form-input" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Choose password" required style={{ background: '#f8fafc', paddingRight: '40px', width: '100%' }} />
                           <button 
                             type="button" 
                             onClick={() => setShowPassword(!showPassword)}
@@ -587,18 +593,20 @@ const UserManagement = () => {
                 )}
 
                 {/* Personal Details Group */}
-                <div style={{ background: 'white', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-                  <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ background: 'white', padding: isMobile ? '16px 14px' : '20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <h4 style={{ margin: '0 0 14px 0', fontSize: '14px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <UserIcon size={16} color="var(--text-muted)" /> Personal Details
                   </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '14px' : '16px' }}>
+                    
+                    {/* Full Name & DOB row: stacked on mobile */}
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: isMobile ? '12px' : '16px' }}>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">Full Name</label>
                         <input type="text" className="form-input" value={fullName} onChange={(e) => {
                           let val = e.target.value.replace(/[^A-Za-z \-\'\.]/g, '');
                           setFullName(val);
-                        }} placeholder="User complete name" required style={{ background: '#f8fafc' }} />
+                        }} placeholder="User complete name" required style={{ background: '#f8fafc', width: '100%' }} />
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">Date of Birth</label>
@@ -620,23 +628,24 @@ const UserManagement = () => {
                               setAge(calculatedAge);
                             }
                           }}
-                          style={{ background: '#f8fafc', paddingLeft: '8px', paddingRight: '8px' }} 
+                          style={{ background: '#f8fafc', width: '100%', paddingLeft: '8px', paddingRight: '8px' }} 
                         />
                       </div>
                     </div>
                     
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    {/* Phone Number & Barangay row: stacked on mobile */}
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '12px' : '16px' }}>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">Phone Number</label>
                         <input type="text" className="form-input" value={phone} onChange={(e) => {
                           let val = e.target.value.replace(/[^0-9]/g, '');
                           if (val.length > 11) val = val.slice(0, 11);
                           setPhone(val);
-                        }} placeholder="e.g. 09171234567" required style={{ background: '#f8fafc' }} />
+                        }} placeholder="e.g. 09171234567" required style={{ background: '#f8fafc', width: '100%' }} />
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">Barangay</label>
-                        <select className="form-select" value={barangay} onChange={(e) => setBarangay(e.target.value)} required style={{ background: '#f8fafc' }}>
+                        <select className="form-select" value={barangay} onChange={(e) => setBarangay(e.target.value)} required style={{ background: '#f8fafc', width: '100%' }}>
                           {BARANGAYS.map((brg) => <option key={brg} value={brg}>{brg}</option>)}
                         </select>
                       </div>
@@ -644,7 +653,7 @@ const UserManagement = () => {
 
                     <div className="form-group" style={{ margin: 0 }}>
                       <label className="form-label">User Role</label>
-                      <select className="form-select" value={role} onChange={(e) => setRole(e.target.value)} required style={{ background: '#f8fafc', fontWeight: '600' }}>
+                      <select className="form-select" value={role} onChange={(e) => setRole(e.target.value)} required style={{ background: '#f8fafc', fontWeight: '600', width: '100%' }}>
                         <option value="Resident">Resident (Standard User)</option>
                         <option value="Responder">Responder (Emergency Staff)</option>
                         <option value="Admin">Admin (Full Access)</option>
@@ -654,7 +663,7 @@ const UserManagement = () => {
                     {role === 'Responder' && (
                       <div className="form-group" style={{ margin: 0 }}>
                         <label className="form-label">Agency / Department</label>
-                        <select className="form-select" value={agencyType} onChange={(e) => setAgencyType(e.target.value)} required style={{ background: '#f8fafc' }}>
+                        <select className="form-select" value={agencyType} onChange={(e) => setAgencyType(e.target.value)} required style={{ background: '#f8fafc', width: '100%' }}>
                           <option value="MDRRMO">MDRRMO (Disaster & Rescue)</option>
                           <option value="BFP">BFP (Bureau of Fire Protection)</option>
                           <option value="RHU">RHU (Rural Health Unit / Medical)</option>
@@ -664,11 +673,11 @@ const UserManagement = () => {
                   </div>
                 </div>
                 
-                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                  <button type="button" onClick={() => setShowModal(false)} disabled={submitting} style={{ flex: 1, padding: '14px', background: 'white', border: '1px solid var(--border-color)', borderRadius: '12px', fontWeight: '700', color: 'var(--text-main)', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
+                  <button type="button" onClick={() => setShowModal(false)} disabled={submitting} style={{ flex: 1, minHeight: '46px', padding: '12px', background: 'white', border: '1px solid var(--border-color)', borderRadius: '12px', fontWeight: '700', color: 'var(--text-main)', cursor: 'pointer' }}>
                     Cancel
                   </button>
-                  <button type="submit" disabled={submitting} style={{ flex: 1, padding: '14px', background: 'var(--primary-color)', border: 'none', borderRadius: '12px', fontWeight: '700', color: 'white', cursor: 'pointer', boxShadow: '0 4px 12px rgba(61,122,80,0.3)' }}>
+                  <button type="submit" disabled={submitting} style={{ flex: 1, minHeight: '46px', padding: '12px', background: 'var(--primary-color)', border: 'none', borderRadius: '12px', fontWeight: '700', color: 'white', cursor: 'pointer', boxShadow: '0 4px 12px rgba(61,122,80,0.3)' }}>
                     {submitting ? 'Saving...' : 'Save User'}
                   </button>
                 </div>
