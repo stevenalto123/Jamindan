@@ -68,6 +68,7 @@ const Hotlines = () => {
     const saved = localStorage.getItem('recentHotlines');
     return saved ? JSON.parse(saved) : [];
   });
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -110,6 +111,9 @@ const Hotlines = () => {
   useEffect(() => {
     fetchHotlines();
     if (isAdmin) fetchCallLogs();
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [isAdmin]);
 
   const handleOpenModal = (hotline = null) => {
@@ -203,23 +207,23 @@ const Hotlines = () => {
         key={hotline.id}
         className="glass-card"
         style={{
-          padding: '16px',
+          padding: isMobile ? '14px' : '16px',
           borderRadius: '12px',
           border: '1px solid var(--border-color)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          gap: '14px',
+          gap: '12px',
           backgroundColor: 'var(--card-bg)',
           boxShadow: 'none'
         }}
       >
         {/* Top Row: Icon + Agency Info + Admin Actions */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
             <div style={{
-              width: '40px',
-              height: '40px',
+              width: isMobile ? '38px' : '40px',
+              height: isMobile ? '38px' : '40px',
               borderRadius: '10px',
               backgroundColor: meta.bg,
               display: 'flex',
@@ -227,9 +231,9 @@ const Hotlines = () => {
               justifyContent: 'center',
               flexShrink: 0
             }}>
-              <Icon size={20} color={meta.color} />
+              <Icon size={isMobile ? 18 : 20} color={meta.color} />
             </div>
-            <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <span style={{
                 display: 'inline-block',
                 fontSize: '10px',
@@ -237,16 +241,16 @@ const Hotlines = () => {
                 color: meta.color,
                 textTransform: 'uppercase',
                 letterSpacing: '0.4px',
-                marginBottom: '2px'
+                marginBottom: '1px'
               }}>
                 {meta.label}
               </span>
               <h4 style={{
                 margin: 0,
-                fontSize: '14px',
+                fontSize: isMobile ? '13px' : '14px',
                 fontWeight: '700',
                 color: 'var(--text-main)',
-                lineHeight: '1.35'
+                lineHeight: '1.3'
               }}>
                 {hotline.agency_name}
               </h4>
@@ -258,14 +262,14 @@ const Hotlines = () => {
               <button
                 onClick={() => handleOpenModal(hotline)}
                 title="Edit Hotline"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '5px', borderRadius: '6px' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '6px', borderRadius: '6px' }}
               >
                 <Edit size={14} />
               </button>
               <button
                 onClick={() => handleDelete(hotline.id)}
                 title="Delete Hotline"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger-color)', padding: '5px', borderRadius: '6px' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger-color)', padding: '6px', borderRadius: '6px' }}
               >
                 <Trash2 size={14} />
               </button>
@@ -274,9 +278,12 @@ const Hotlines = () => {
         </div>
 
         {/* Contact Number Rows */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {numbers.map((num, i) => {
             const isCopied = copiedNum === num;
+            const isLandline = num.startsWith('(') || num.startsWith('03') || num.includes('-');
+            const typeLabel = isLandline ? 'Landline' : 'Mobile';
+
             return (
               <div
                 key={i}
@@ -285,21 +292,37 @@ const Hotlines = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: '8px',
-                  padding: '7px 10px',
+                  padding: isMobile ? '8px 10px' : '7px 10px',
                   borderRadius: '8px',
                   backgroundColor: 'var(--card-alt)',
                   border: '1px solid var(--border-color)'
                 }}
               >
-                <span style={{
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  color: 'var(--text-main)',
-                  fontVariantNumeric: 'tabular-nums',
-                  letterSpacing: '0.2px'
-                }}>
-                  {num}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                  <span style={{
+                    fontSize: '9px',
+                    fontWeight: '700',
+                    padding: '1px 5px',
+                    borderRadius: '4px',
+                    backgroundColor: isLandline ? 'rgba(79, 70, 229, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                    color: isLandline ? '#6366f1' : '#10b981',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.3px',
+                    flexShrink: 0
+                  }}>
+                    {typeLabel}
+                  </span>
+                  <span style={{
+                    fontSize: isMobile ? '13px' : '13px',
+                    fontWeight: '700',
+                    color: 'var(--text-main)',
+                    fontVariantNumeric: 'tabular-nums',
+                    letterSpacing: '0.2px',
+                    wordBreak: 'break-all'
+                  }}>
+                    {num}
+                  </span>
+                </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                   <button
@@ -310,33 +333,38 @@ const Hotlines = () => {
                       background: 'var(--card-bg)',
                       border: '1px solid var(--border-color)',
                       borderRadius: '6px',
-                      padding: '5px 7px',
+                      width: isMobile ? '36px' : '30px',
+                      height: isMobile ? '36px' : '28px',
                       cursor: 'pointer',
                       color: isCopied ? '#10b981' : 'var(--text-muted)',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      transition: 'all 0.15s'
                     }}
                   >
-                    {isCopied ? <Check size={13} /> : <Copy size={13} />}
+                    {isCopied ? <Check size={14} /> : <Copy size={14} />}
                   </button>
                   <a
                     href={`tel:${num.replace(/\s+/g, '').replace(/[()]/g, '')}`}
                     onClick={(e) => handleCall(e, hotline, num)}
                     style={{
-                      fontSize: '12px',
+                      fontSize: isMobile ? '13px' : '12px',
                       fontWeight: '700',
                       color: '#fff',
                       textDecoration: 'none',
                       backgroundColor: 'var(--primary-color)',
-                      padding: '5px 11px',
+                      height: isMobile ? '36px' : '28px',
+                      padding: isMobile ? '0 14px' : '0 11px',
                       borderRadius: '6px',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '5px'
+                      justifyContent: 'center',
+                      gap: '5px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                     }}
                   >
-                    <PhoneCall size={12} /> {t('call') || 'Call'}
+                    <PhoneCall size={isMobile ? 14 : 12} /> {t('call') || 'Call'}
                   </a>
                 </div>
               </div>
@@ -348,7 +376,7 @@ const Hotlines = () => {
   };
 
   return (
-    <div className="content-body" style={{ maxWidth: '1140px', paddingBottom: '48px' }}>
+    <div className="content-body" style={{ maxWidth: '1140px', paddingBottom: isMobile ? '96px' : '48px' }}>
 
       {error && (
         <div className="alert alert-danger" style={{ fontSize: '13px', padding: '12px 16px', marginBottom: '16px', borderRadius: '8px' }}>
@@ -356,24 +384,22 @@ const Hotlines = () => {
         </div>
       )}
 
-      {/* ─── Unified Top Toolbar: Search + Category Filter + Admin Add ─── */}
+      {/* ─── Unified Top Toolbar: Search + Category Filter + Admin Actions ─── */}
       <div
         className="glass-card"
         style={{
-          padding: '14px 16px',
+          padding: isMobile ? '12px' : '14px 16px',
           marginBottom: '20px',
           borderRadius: '12px',
           border: '1px solid var(--border-color)',
           display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          flexDirection: 'column',
           gap: '12px',
           boxShadow: 'none'
         }}
       >
         {/* Search Input */}
-        <div style={{ position: 'relative', flex: '1 1 260px', minWidth: '220px' }}>
+        <div style={{ position: 'relative', width: '100%' }}>
           <Search size={16} style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
           <input
             type="text"
@@ -382,7 +408,7 @@ const Hotlines = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               width: '100%',
-              padding: '9px 32px 9px 36px',
+              padding: '10px 34px 10px 36px',
               borderRadius: '8px',
               border: '1px solid var(--border-color)',
               fontSize: '13px',
@@ -395,15 +421,24 @@ const Hotlines = () => {
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              style={{ position: 'absolute', top: '50%', right: '8px', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', display: 'flex' }}
+              style={{ position: 'absolute', top: '50%', right: '8px', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', display: 'flex' }}
             >
-              <X size={14} />
+              <X size={15} />
             </button>
           )}
         </div>
 
-        {/* Category Filter Tabs */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
+        {/* Category Filter Tabs - Horizontal-scrolling chip bar on mobile */}
+        <div style={{
+          display: 'flex',
+          overflowX: 'auto',
+          whiteSpace: 'nowrap',
+          gap: '8px',
+          paddingBottom: isMobile ? '4px' : '0',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch'
+        }}>
           {[
             { id: 'all', label: 'All Directory', count: filteredHotlines.length },
             { id: 'emergency', label: 'Emergency Units', count: emergencyUnits.length },
@@ -417,8 +452,8 @@ const Hotlines = () => {
                 type="button"
                 onClick={() => setActiveCategory(tab.id)}
                 style={{
-                  padding: '7px 12px',
-                  borderRadius: '8px',
+                  padding: isMobile ? '8px 14px' : '7px 12px',
+                  borderRadius: '20px',
                   fontSize: '12px',
                   fontWeight: active ? '700' : '600',
                   border: active ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
@@ -428,6 +463,7 @@ const Hotlines = () => {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
+                  flexShrink: 0,
                   transition: 'all 0.15s ease'
                 }}
               >
@@ -437,7 +473,7 @@ const Hotlines = () => {
                   fontWeight: '700',
                   padding: '1px 6px',
                   borderRadius: '10px',
-                  backgroundColor: active ? 'rgba(255,255,255,0.22)' : 'var(--card-bg)',
+                  backgroundColor: active ? 'rgba(255,255,255,0.25)' : 'var(--card-bg)',
                   color: active ? '#fff' : 'var(--text-muted)'
                 }}>
                   {tab.count}
@@ -445,27 +481,52 @@ const Hotlines = () => {
               </button>
             );
           })}
-
-          {isAdmin && (
-            <>
-              <button
-                type="button"
-                onClick={() => { setShowCallLogsModal(true); fetchCallLogs(); }}
-                className="btn btn-secondary"
-                style={{ padding: '8px 12px', fontSize: '12px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}
-              >
-                <History size={15} /> Call Logs ({callLogs.length})
-              </button>
-              <button
-                onClick={() => handleOpenModal()}
-                className="btn btn-primary"
-                style={{ padding: '8px 14px', fontSize: '12px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}
-              >
-                <Plus size={15} /> Add Hotline
-              </button>
-            </>
-          )}
         </div>
+
+        {/* Admin Action Bar (clean dedicated row so it doesn't wrap messily with categories) */}
+        {isAdmin && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            paddingTop: '8px',
+            borderTop: '1px solid var(--border-color)'
+          }}>
+            <button
+              type="button"
+              onClick={() => { setShowCallLogsModal(true); fetchCallLogs(); }}
+              className="btn btn-secondary"
+              style={{
+                flex: isMobile ? 1 : 'none',
+                height: '38px',
+                fontSize: '12px',
+                borderRadius: '8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+            >
+              <History size={15} /> Call Logs ({callLogs.length})
+            </button>
+            <button
+              onClick={() => handleOpenModal()}
+              className="btn btn-primary"
+              style={{
+                flex: isMobile ? 1 : 'none',
+                height: '38px',
+                fontSize: '12px',
+                borderRadius: '8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+            >
+              <Plus size={15} /> Add Hotline
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ─── Recently Called Compact Strip ─────────────────────────── */}
@@ -483,7 +544,7 @@ const Hotlines = () => {
               Clear
             </button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
             {recentHotlines.map((hotline, idx) => {
               const meta = getAgencyMeta(hotline.agency_name, hotline.barangay);
               const Icon = meta.icon;
@@ -517,8 +578,9 @@ const Hotlines = () => {
                     href={`tel:${primaryNum.replace(/\s+/g, '').replace(/[()]/g, '')}`}
                     onClick={(e) => handleCall(e, hotline, primaryNum)}
                     style={{
-                      padding: '5px 10px',
-                      fontSize: '11px',
+                      padding: isMobile ? '7px 12px' : '5px 10px',
+                      height: isMobile ? '34px' : 'auto',
+                      fontSize: isMobile ? '12px' : '11px',
                       fontWeight: '700',
                       color: '#fff',
                       backgroundColor: 'var(--primary-color)',
@@ -530,7 +592,7 @@ const Hotlines = () => {
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    <PhoneCall size={11} /> {t('call') || 'Call'}
+                    <PhoneCall size={12} /> {t('call') || 'Call'}
                   </a>
                 </div>
               );
@@ -549,7 +611,7 @@ const Hotlines = () => {
             </h3>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>({emergencyUnits.length})</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
             {emergencyUnits.map(renderHotlineCard)}
           </div>
         </div>
@@ -565,7 +627,7 @@ const Hotlines = () => {
             </h3>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>({medicalUnits.length})</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
             {medicalUnits.map(renderHotlineCard)}
           </div>
         </div>
@@ -590,7 +652,7 @@ const Hotlines = () => {
               </p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
               {barangayHotlines.map(renderHotlineCard)}
             </div>
           )}
@@ -599,8 +661,27 @@ const Hotlines = () => {
 
       {/* ─── Admin Modal ──────────────────────────────────────────── */}
       {showModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '420px', padding: '24px', borderRadius: '14px' }}>
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: isMobile ? 'flex-end' : 'center',
+          justifyContent: 'center',
+          padding: isMobile ? '0' : '20px'
+        }}>
+          <div
+            className="glass-card"
+            style={{
+              width: '100%',
+              maxWidth: '440px',
+              padding: isMobile ? '20px 18px 30px' : '24px',
+              borderRadius: isMobile ? '16px 16px 0 0' : '14px',
+              maxHeight: isMobile ? '90vh' : 'auto',
+              overflowY: 'auto'
+            }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
               <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <PhoneCall size={18} color="var(--primary-color)" />
@@ -640,9 +721,9 @@ const Hotlines = () => {
             backgroundColor: 'rgba(15, 23, 42, 0.6)',
             zIndex: 3000,
             display: 'flex',
-            alignItems: 'center',
+            alignItems: isMobile ? 'flex-end' : 'center',
             justifyContent: 'center',
-            padding: '20px'
+            padding: isMobile ? '0' : '20px'
           }}
           onClick={() => setShowCallLogsModal(false)}
         >
@@ -651,9 +732,9 @@ const Hotlines = () => {
             style={{
               width: '100%',
               maxWidth: '680px',
-              maxHeight: '85vh',
-              borderRadius: '16px',
-              padding: '20px 22px',
+              maxHeight: isMobile ? '88vh' : '85vh',
+              borderRadius: isMobile ? '16px 16px 0 0' : '16px',
+              padding: isMobile ? '16px 14px 28px' : '20px 22px',
               display: 'flex',
               flexDirection: 'column',
               gap: '14px',
@@ -663,8 +744,8 @@ const Hotlines = () => {
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800', fontSize: '16px', color: 'var(--text-main)' }}>
-                <History size={20} color="var(--primary-color)" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800', fontSize: isMobile ? '14px' : '16px', color: 'var(--text-main)' }}>
+                <History size={18} color="var(--primary-color)" />
                 Hotline Call Activity Logs ({callLogs.length})
               </div>
               <button
@@ -681,12 +762,12 @@ const Hotlines = () => {
               <Search size={15} style={{ position: 'absolute', top: '50%', left: '12px', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
               <input
                 type="text"
-                placeholder="Search by caller name, agency, or number..."
+                placeholder="Search by caller, agency, or number..."
                 value={callLogSearch}
                 onChange={e => setCallLogSearch(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '8px 12px 8px 34px',
+                  padding: '9px 12px 9px 34px',
                   borderRadius: '8px',
                   border: '1px solid var(--border-color)',
                   backgroundColor: 'var(--card-alt)',
@@ -698,7 +779,7 @@ const Hotlines = () => {
             </div>
 
             {/* Call Logs List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '55vh', paddingRight: '4px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: isMobile ? '50vh' : '55vh', paddingRight: '4px' }}>
               {(() => {
                 const filteredLogs = callLogs.filter(log => {
                   const q = callLogSearch.toLowerCase();
@@ -721,9 +802,10 @@ const Hotlines = () => {
                     key={log.id}
                     style={{
                       display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '12px',
+                      flexDirection: isMobile ? 'column' : 'row',
+                      justifyContent: isMobile ? 'flex-start' : 'space-between',
+                      alignItems: isMobile ? 'flex-start' : 'center',
+                      gap: isMobile ? '6px' : '12px',
                       padding: '12px 14px',
                       borderRadius: '10px',
                       backgroundColor: 'var(--card-alt)',
@@ -731,7 +813,7 @@ const Hotlines = () => {
                     }}
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-main)' }}>
+                      <div style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: '800', color: 'var(--text-main)' }}>
                         {log.hotline_name}
                       </div>
                       <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '2px' }}>
@@ -739,10 +821,16 @@ const Hotlines = () => {
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
-                        <Clock size={12} /> {new Date(log.called_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </div>
+                    <div style={{
+                      fontSize: '11px',
+                      color: 'var(--text-muted)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontWeight: '600',
+                      alignSelf: isMobile ? 'flex-end' : 'auto'
+                    }}>
+                      <Clock size={12} /> {new Date(log.called_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                 ));
