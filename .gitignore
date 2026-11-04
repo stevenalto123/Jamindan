@@ -5,6 +5,8 @@ web_modules/
 
 # Build outputs
 dist/
+dev-dist/
+frontend/dev-dist/
 tmp/
 out/
 build/
