@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Shield, Flame, HeartPulse, ShieldCheck, AlertTriangle, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import SosPanicButton from '../components/SosPanicButton';
+import { hapticEmergency, hapticSuccess, hapticTap } from '../utils/haptics';
 
 const ResidentDashboard = () => {
   const { user } = useAuth();
@@ -20,6 +21,7 @@ const ResidentDashboard = () => {
 
   const handleQuickCall = async (e, agencyName, number, category) => {
     e.preventDefault();
+    hapticEmergency();
     const newRecent = { id: agencyName, agency_name: agencyName, contact_number: number, category: category };
     const saved = localStorage.getItem('recentHotlines');
     let prev = saved ? JSON.parse(saved) : [];
@@ -80,8 +82,10 @@ const ResidentDashboard = () => {
 
   const handleSafetyCheckIn = async (statusLabel) => {
     setCheckingIn(true);
+    hapticTap();
     try {
       await axios.post('/api/notifications/safety-checkin', { status: statusLabel });
+      hapticSuccess();
       await fetchCheckin();
     } catch (err) {
       alert('Failed to update safety status. Please try again.');

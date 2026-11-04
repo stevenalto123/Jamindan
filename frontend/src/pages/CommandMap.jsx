@@ -5,6 +5,7 @@ import L from 'leaflet';
 import { ShieldAlert, AlertCircle, ArrowLeft, RefreshCw, Layers, Maximize, Minimize, Map as MapIcon, Globe, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { hapticTap } from '../utils/haptics';
 
 const CommandMap = ({ isWidget = false }) => {
   const { user } = useAuth();
@@ -163,6 +164,7 @@ const CommandMap = ({ isWidget = false }) => {
 
   // Fullscreen Handler
   const toggleFullscreen = () => {
+    hapticTap();
     if (!document.fullscreenElement) {
       containerRef.current.requestFullscreen().catch(err => {
         console.error(`Error attempting to enable fullscreen: ${err.message}`);

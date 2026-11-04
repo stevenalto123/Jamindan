@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { hapticTap } from '../utils/haptics';
 
 const JAMINDAN_BARANGAYS = [
   'All', 'Agcalaga', 'Aglanot', 'Agloban', 'Agloloway', 'Bayuyan', 'Cabatangan', 'Caridad', 
@@ -516,7 +517,10 @@ const AdminAnalytics = () => {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                hapticTap();
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -666,62 +670,134 @@ const AdminAnalytics = () => {
             </div>
           </div>
 
-          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ backgroundColor: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)' }}>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Code</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Date & Time</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Type</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Lead Agency</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Barangay</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Reporter</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Assigned Unit</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Response Time</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLogs.length > 0 ? filteredLogs.map((log, idx) => (
-                  <tr key={log.id || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '10px 12px', fontWeight: '800', color: 'var(--primary-color)' }}>{log.code}</td>
-                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>{new Date(log.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
-                    <td style={{ padding: '10px 12px', fontWeight: '700' }}>{log.type}</td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800', backgroundColor: log.lead_agency === 'BFP' ? '#fee2e2' : log.lead_agency === 'RHU' ? '#ecfdf5' : '#eff6ff', color: log.lead_agency === 'BFP' ? '#dc2626' : log.lead_agency === 'RHU' ? '#059669' : '#2563eb' }}>
-                        {log.lead_agency || 'MDRRMO'}
+          {isMobile ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {filteredLogs.length > 0 ? filteredLogs.map((log, idx) => {
+                const isResolved = log.status === 'Resolved';
+                const isPending = log.status === 'Pending';
+                return (
+                  <div
+                    key={log.id || idx}
+                    style={{
+                      padding: '14px',
+                      borderRadius: '12px',
+                      backgroundColor: 'var(--card-alt)',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--primary-color)' }}>
+                        {log.code}
                       </span>
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>{log.reporter_barangay || 'Poblacion'}</td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <div style={{ fontWeight: '700' }}>{log.reporter_name}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-light)' }}>{log.reporter_phone}</div>
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>{log.responder_name || <span style={{ color: 'var(--text-muted)' }}>Unassigned</span>}</td>
-                    <td style={{ padding: '10px 12px' }}>{log.response_time_minutes !== null ? `${log.response_time_minutes} min` : '—'}</td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <span style={{ 
-                        padding: '4px 10px', 
-                        borderRadius: '20px', 
-                        fontSize: '11px', 
+                      <span style={{
+                        padding: '3px 8px',
+                        borderRadius: '20px',
+                        fontSize: '11px',
                         fontWeight: '800',
-                        backgroundColor: log.status === 'Resolved' ? '#dcfce7' : ['In Progress', 'Acknowledged', 'Responding', 'On Scene'].includes(log.status) ? '#fef3c7' : '#fee2e2',
-                        color: log.status === 'Resolved' ? '#15803d' : ['In Progress', 'Acknowledged', 'Responding', 'On Scene'].includes(log.status) ? '#b45309' : '#b91c1c'
+                        backgroundColor: isResolved ? '#dcfce7' : isPending ? '#fee2e2' : '#fef3c7',
+                        color: isResolved ? '#15803d' : isPending ? '#b91c1c' : '#b45309'
                       }}>
                         {log.status}
                       </span>
-                    </td>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-main)' }}>
+                        {log.type}
+                      </span>
+                      <span style={{
+                        padding: '2px 7px',
+                        borderRadius: '6px',
+                        fontSize: '10px',
+                        fontWeight: '800',
+                        backgroundColor: log.lead_agency === 'BFP' ? '#fee2e2' : log.lead_agency === 'RHU' ? '#ecfdf5' : '#eff6ff',
+                        color: log.lead_agency === 'BFP' ? '#dc2626' : log.lead_agency === 'RHU' ? '#059669' : '#2563eb'
+                      }}>
+                        {log.lead_agency || 'MDRRMO'}
+                      </span>
+                      <span style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {new Date(log.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: '12px', color: 'var(--text-light)', borderTop: '1px solid var(--border-color)', paddingTop: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>📍 Brgy. {log.reporter_barangay || 'Poblacion'}</span>
+                      <span>👤 {log.reporter_name}</span>
+                    </div>
+
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Unit: <strong style={{ color: 'var(--text-main)' }}>{log.responder_name || 'Unassigned'}</strong></span>
+                      <span>Resp: <strong style={{ color: 'var(--text-main)' }}>{log.response_time_minutes !== null ? `${log.response_time_minutes} min` : '—'}</strong></span>
+                    </div>
+                  </div>
+                );
+              }) : (
+                <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)', fontSize: '13px' }}>
+                  No incident master logs match the active filter criteria.
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)' }}>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Code</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Date & Time</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Type</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Lead Agency</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Barangay</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Reporter</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Assigned Unit</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Response Time</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Status</th>
                   </tr>
-                )) : (
-                  <tr>
-                    <td colSpan="9" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)' }}>
-                      No incident master logs match the active filter criteria.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredLogs.length > 0 ? filteredLogs.map((log, idx) => (
+                    <tr key={log.id || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '10px 12px', fontWeight: '800', color: 'var(--primary-color)' }}>{log.code}</td>
+                      <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>{new Date(log.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
+                      <td style={{ padding: '10px 12px', fontWeight: '700' }}>{log.type}</td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800', backgroundColor: log.lead_agency === 'BFP' ? '#fee2e2' : log.lead_agency === 'RHU' ? '#ecfdf5' : '#eff6ff', color: log.lead_agency === 'BFP' ? '#dc2626' : log.lead_agency === 'RHU' ? '#059669' : '#2563eb' }}>
+                          {log.lead_agency || 'MDRRMO'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>{log.reporter_barangay || 'Poblacion'}</td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <div style={{ fontWeight: '700' }}>{log.reporter_name}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-light)' }}>{log.reporter_phone}</div>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>{log.responder_name || <span style={{ color: 'var(--text-muted)' }}>Unassigned</span>}</td>
+                      <td style={{ padding: '10px 12px' }}>{log.response_time_minutes !== null ? `${log.response_time_minutes} min` : '—'}</td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <span style={{ 
+                          padding: '4px 10px', 
+                          borderRadius: '20px', 
+                          fontSize: '11px', 
+                          fontWeight: '800',
+                          backgroundColor: log.status === 'Resolved' ? '#dcfce7' : ['In Progress', 'Acknowledged', 'Responding', 'On Scene'].includes(log.status) ? '#fef3c7' : '#fee2e2',
+                          color: log.status === 'Resolved' ? '#15803d' : ['In Progress', 'Acknowledged', 'Responding', 'On Scene'].includes(log.status) ? '#b45309' : '#b91c1c'
+                        }}>
+                          {log.status}
+                        </span>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="9" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)' }}>
+                        No incident master logs match the active filter criteria.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -733,44 +809,92 @@ const AdminAnalytics = () => {
             <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-light)' }}>Aggregated breakdown of incidents across all 30+ Jamindan barangays for hazard assessment.</p>
           </div>
 
-          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ backgroundColor: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)' }}>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Barangay</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Total Reported</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Active</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Resolved</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🔥 Fire</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🚑 Medical</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🌊 Flood</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🚗 Accident</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🛡️ Crime</th>
-                </tr>
-              </thead>
-              <tbody>
-                {barangayReports.length > 0 ? barangayReports.map((b, idx) => (
-                  <tr key={b.barangay || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '10px 12px', fontWeight: '800', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>Brgy. {b.barangay}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '900', color: 'var(--primary-color)' }}>{b.total_incidents}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center', color: '#ef4444', fontWeight: '800' }}>{b.active_count}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center', color: '#10b981', fontWeight: '800' }}>{b.resolved_count}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{b.fire_count}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{b.medical_count}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{b.flood_count}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{b.accident_count}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'center' }}>{b.crime_count}</td>
+          {isMobile ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {barangayReports.length > 0 ? barangayReports.map((b, idx) => (
+                <div
+                  key={b.barangay || idx}
+                  style={{
+                    padding: '14px',
+                    borderRadius: '12px',
+                    backgroundColor: 'var(--card-alt)',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-main)' }}>
+                      📍 Brgy. {b.barangay}
+                    </span>
+                    <span style={{ fontSize: '12px', fontWeight: '900', color: 'var(--primary-color)', backgroundColor: 'var(--card-bg)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                      {b.total_incidents} Total
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', fontSize: '11px', fontWeight: '700' }}>
+                    <span style={{ color: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '6px' }}>
+                      {b.active_count} Active
+                    </span>
+                    <span style={{ color: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: '6px' }}>
+                      {b.resolved_count} Resolved
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px', borderTop: '1px solid var(--border-color)', paddingTop: '8px', color: 'var(--text-light)' }}>
+                    {b.fire_count > 0 && <span>🔥 {b.fire_count}</span>}
+                    {b.medical_count > 0 && <span>🚑 {b.medical_count}</span>}
+                    {b.flood_count > 0 && <span>🌊 {b.flood_count}</span>}
+                    {b.accident_count > 0 && <span>🚗 {b.accident_count}</span>}
+                    {b.crime_count > 0 && <span>🛡️ {b.crime_count}</span>}
+                    {b.total_incidents === 0 && <span style={{ color: 'var(--text-muted)' }}>No recorded incidents</span>}
+                  </div>
+                </div>
+              )) : (
+                <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)' }}>
+                  No barangay summary records available for this period.
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)' }}>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Barangay</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Total Reported</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Active</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Resolved</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🔥 Fire</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🚑 Medical</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🌊 Flood</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🚗 Accident</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>🛡️ Crime</th>
                   </tr>
-                )) : (
-                  <tr>
-                    <td colSpan="9" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)' }}>
-                      No barangay summary records available for this period.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {barangayReports.length > 0 ? barangayReports.map((b, idx) => (
+                    <tr key={b.barangay || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '10px 12px', fontWeight: '800', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>Brgy. {b.barangay}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '900', color: 'var(--primary-color)' }}>{b.total_incidents}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'center', color: '#ef4444', fontWeight: '800' }}>{b.active_count}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'center', color: '#10b981', fontWeight: '800' }}>{b.resolved_count}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>{b.fire_count}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>{b.medical_count}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>{b.flood_count}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>{b.accident_count}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>{b.crime_count}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="9" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)' }}>
+                        No barangay summary records available for this period.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -782,43 +906,92 @@ const AdminAnalytics = () => {
             <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-light)' }}>Inter-agency monitoring for MDRRMO, BFP, and RHU response performance.</p>
           </div>
 
-          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ backgroundColor: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)' }}>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Concerned Entity / Agency</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Dispatched Incidents</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Resolved</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Active Response</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Pending</th>
-                  <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Avg Response Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {agencyReports.length > 0 ? agencyReports.map((a, idx) => (
-                  <tr key={a.agency || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '12px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+          {isMobile ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {agencyReports.length > 0 ? agencyReports.map((a, idx) => (
+                <div
+                  key={a.agency || idx}
+                  style={{
+                    padding: '14px',
+                    borderRadius: '12px',
+                    backgroundColor: 'var(--card-alt)',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Shield size={16} color="var(--primary-color)" />
-                      {a.agency === 'BFP' ? 'Bureau of Fire Protection (BFP)' : 
-                       a.agency === 'RHU' ? 'Rural Health Unit / Paramedics (RHU)' : 
-                       'Jamindan Response Unit (MDRRMO)'}
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center', fontWeight: '900', color: 'var(--primary-color)' }}>{a.total_incidents}</td>
-                    <td style={{ padding: '12px', textAlign: 'center', color: '#10b981', fontWeight: '800' }}>{a.resolved_count}</td>
-                    <td style={{ padding: '12px', textAlign: 'center', color: '#f59e0b', fontWeight: '800' }}>{a.dispatched_count}</td>
-                    <td style={{ padding: '12px', textAlign: 'center', color: '#ef4444', fontWeight: '800' }}>{a.pending_count}</td>
-                    <td style={{ padding: '12px', textAlign: 'center', fontWeight: '700' }}>{a.avg_response_mins ? `${a.avg_response_mins} mins` : '—'}</td>
+                      {a.agency === 'BFP' ? 'BFP Fire Protection' : 
+                       a.agency === 'RHU' ? 'RHU / Paramedics' : 
+                       'Jamindan Response (MDRRMO)'}
+                    </span>
+                    <span style={{ fontSize: '13px', fontWeight: '900', color: 'var(--primary-color)' }}>
+                      {a.total_incidents}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', fontSize: '11px', fontWeight: '700' }}>
+                    <span style={{ color: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: '6px' }}>
+                      {a.resolved_count} Resolved
+                    </span>
+                    <span style={{ color: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: '6px' }}>
+                      {a.dispatched_count} Active
+                    </span>
+                    <span style={{ color: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '6px' }}>
+                      {a.pending_count} Pending
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '6px' }}>
+                    Avg Response Time: <strong style={{ color: 'var(--text-main)' }}>{a.avg_response_mins ? `${a.avg_response_mins} mins` : '—'}</strong>
+                  </div>
+                </div>
+              )) : (
+                <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)' }}>
+                  No agency dispatch data recorded for this period.
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)' }}>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Concerned Entity / Agency</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Dispatched Incidents</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Resolved</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Active Response</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Pending</th>
+                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Avg Response Time</th>
                   </tr>
-                )) : (
-                  <tr>
-                    <td colSpan="6" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)' }}>
-                      No agency dispatch data recorded for this period.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {agencyReports.length > 0 ? agencyReports.map((a, idx) => (
+                    <tr key={a.agency || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '12px', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                        <Shield size={16} color="var(--primary-color)" />
+                        {a.agency === 'BFP' ? 'Bureau of Fire Protection (BFP)' : 
+                         a.agency === 'RHU' ? 'Rural Health Unit / Paramedics (RHU)' : 
+                         'Jamindan Response Unit (MDRRMO)'}
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'center', fontWeight: '900', color: 'var(--primary-color)' }}>{a.total_incidents}</td>
+                      <td style={{ padding: '12px', textAlign: 'center', color: '#10b981', fontWeight: '800' }}>{a.resolved_count}</td>
+                      <td style={{ padding: '12px', textAlign: 'center', color: '#f59e0b', fontWeight: '800' }}>{a.dispatched_count}</td>
+                      <td style={{ padding: '12px', textAlign: 'center', color: '#ef4444', fontWeight: '800' }}>{a.pending_count}</td>
+                      <td style={{ padding: '12px', textAlign: 'center', fontWeight: '700' }}>{a.avg_response_mins ? `${a.avg_response_mins} mins` : '—'}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="6" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)' }}>
+                        No agency dispatch data recorded for this period.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -848,40 +1021,81 @@ const AdminAnalytics = () => {
           {/* Detailed table */}
           <div className="card" style={{ padding: isMobile ? '14px' : '20px', borderRadius: '16px' }}>
             <h3 style={{ margin: '0 0 16px', fontSize: isMobile ? '16px' : '18px', fontWeight: '800', color: 'var(--text-main)' }}>Casualty & Property Damage Incident Registry</h3>
-            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ backgroundColor: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)' }}>
-                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Code</th>
-                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Type</th>
-                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Barangay</th>
-                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Victims/Injured</th>
-                    <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Affected Households</th>
-                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Injury / Condition Notes</th>
-                    <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Flood Depth</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {casualtyReport.impactList && casualtyReport.impactList.length > 0 ? casualtyReport.impactList.map((c, idx) => (
-                    <tr key={c.code || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '10px 12px', fontWeight: '800', color: 'var(--primary-color)' }}>{c.code}</td>
-                      <td style={{ padding: '10px 12px', fontWeight: '700' }}>{c.type}</td>
-                      <td style={{ padding: '10px 12px' }}>Brgy. {c.barangay}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '800', color: c.victims > 0 ? '#ef4444' : 'inherit' }}>{c.victims}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '800' }}>{c.households}</td>
-                      <td style={{ padding: '10px 12px' }}>{c.injuries}</td>
-                      <td style={{ padding: '10px 12px' }}>{c.water_level}</td>
+            {isMobile ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {casualtyReport.impactList && casualtyReport.impactList.length > 0 ? casualtyReport.impactList.map((c, idx) => (
+                  <div
+                    key={c.code || idx}
+                    style={{
+                      padding: '14px',
+                      borderRadius: '12px',
+                      backgroundColor: 'var(--card-alt)',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--primary-color)' }}>{c.code}</span>
+                      <span style={{ fontSize: '12px', fontWeight: '800', color: 'var(--text-main)' }}>{c.type}</span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-light)' }}>
+                      📍 Brgy. {c.barangay}
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px', fontWeight: '700' }}>
+                      {c.victims > 0 && <span style={{ color: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '6px' }}>{c.victims} Injured</span>}
+                      {c.households > 0 && <span style={{ color: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', padding: '2px 8px', borderRadius: '6px' }}>{c.households} Households</span>}
+                      {c.water_level && <span style={{ color: '#0284c7', backgroundColor: 'rgba(2,132,199,0.1)', padding: '2px 8px', borderRadius: '6px' }}>🌊 {c.water_level}</span>}
+                    </div>
+                    {c.injuries && (
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '6px' }}>
+                        Notes: {c.injuries}
+                      </div>
+                    )}
+                  </div>
+                )) : (
+                  <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)' }}>
+                    No specific casualty or severe damage records filed in this period.
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: 'var(--bg-color)', borderBottom: '2px solid var(--border-color)' }}>
+                      <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Code</th>
+                      <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Type</th>
+                      <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Barangay</th>
+                      <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Victims/Injured</th>
+                      <th style={{ padding: '10px 12px', fontWeight: '800', textAlign: 'center', whiteSpace: 'nowrap' }}>Affected Households</th>
+                      <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Injury / Condition Notes</th>
+                      <th style={{ padding: '10px 12px', fontWeight: '800', whiteSpace: 'nowrap' }}>Flood Depth</th>
                     </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan="7" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)' }}>
-                        No specific casualty or severe damage records filed in this period.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {casualtyReport.impactList && casualtyReport.impactList.length > 0 ? casualtyReport.impactList.map((c, idx) => (
+                      <tr key={c.code || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={{ padding: '10px 12px', fontWeight: '800', color: 'var(--primary-color)' }}>{c.code}</td>
+                        <td style={{ padding: '10px 12px', fontWeight: '700' }}>{c.type}</td>
+                        <td style={{ padding: '10px 12px' }}>Brgy. {c.barangay}</td>
+                        <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '800', color: c.victims > 0 ? '#ef4444' : 'inherit' }}>{c.victims}</td>
+                        <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '800' }}>{c.households}</td>
+                        <td style={{ padding: '10px 12px' }}>{c.injuries}</td>
+                        <td style={{ padding: '10px 12px' }}>{c.water_level}</td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan="7" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-light)' }}>
+                          No specific casualty or severe damage records filed in this period.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

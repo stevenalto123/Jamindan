@@ -9,9 +9,10 @@ import 'leaflet.fullscreen';
 import 'leaflet.fullscreen/dist/Control.FullScreen.css';
 import {
   MapPin, ShieldAlert, Plus, Edit2, Trash2, X, Info,
-  Maximize, Minimize, Navigation, Tent, Users, AlertTriangle, Search
+  Maximize, Minimize, Navigation, Tent, Users, AlertTriangle, Search, Hand
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { hapticTap } from '../utils/haptics';
 
 // Fix Leaflet icons in Vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -51,6 +52,21 @@ const EvacuationCenters = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState('');
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [mapInteractive, setMapInteractive] = useState(false);
+
+  // Gesture handling: on mobile, disable dragging unless unlocked or fullscreen
+  useEffect(() => {
+    if (!mapInstance.current) return;
+    if (isMobile && !isFullScreen && !mapInteractive) {
+      mapInstance.current.dragging?.disable();
+      mapInstance.current.touchZoom?.disable();
+      mapInstance.current.scrollWheelZoom?.disable();
+    } else {
+      mapInstance.current.dragging?.enable();
+      mapInstance.current.touchZoom?.enable();
+      mapInstance.current.scrollWheelZoom?.enable();
+    }
+  }, [isMobile, isFullScreen, mapInteractive]);
 
   // Form / Management state
   const [showForm, setShowForm] = useState(false);
@@ -605,7 +621,10 @@ const EvacuationCenters = () => {
             backgroundColor: 'var(--card-bg)'
           }}>
             <button
-              onClick={() => setIsFullScreen(!isFullScreen)}
+              onClick={() => {
+                setIsFullScreen(!isFullScreen);
+                hapticTap();
+              }}
               style={{
                 position: 'absolute',
                 top: isFullScreen ? 'calc(env(safe-area-inset-top, 0px) + 20px)' : '10px',
@@ -628,6 +647,75 @@ const EvacuationCenters = () => {
             >
               {isFullScreen ? <Minimize size={16} /> : <Maximize size={16} />}
             </button>
+
+            {/* Mobile Interaction Re-lock Button */}
+            {isMobile && !isFullScreen && mapInteractive && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMapInteractive(false);
+                  hapticTap();
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '10px',
+                  left: '10px',
+                  zIndex: 1000,
+                  backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '20px',
+                  padding: '6px 12px',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+                  backdropFilter: 'blur(4px)'
+                }}
+              >
+                <span>🔒</span> Lock scroll
+              </button>
+            )}
+
+            {/* Mobile "Tap to interact" overlay when locked */}
+            {isMobile && !isFullScreen && !mapInteractive && (
+              <div
+                onClick={() => {
+                  setMapInteractive(true);
+                  hapticTap();
+                }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 995,
+                  backgroundColor: 'rgba(15, 23, 42, 0.04)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{
+                  backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                  color: '#fff',
+                  padding: '8px 16px',
+                  borderRadius: '24px',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  backdropFilter: 'blur(6px)',
+                  border: '1px solid rgba(255,255,255,0.15)'
+                }}>
+                  <Hand size={14} /> Tap to interact with map
+                </div>
+              </div>
+            )}
 
             <div ref={mapRef} style={{ width: '100%', flex: 1, zIndex: 10 }} />
             {showForm && isAdmin && (

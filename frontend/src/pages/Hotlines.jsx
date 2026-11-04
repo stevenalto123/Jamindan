@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { hapticEmergency, hapticSuccess, hapticTap } from '../utils/haptics';
 
 // ─── Agency Type & Category Detection ──────────────────────────────────────
 const getAgencyMeta = (name = '', barangay = '') => {
@@ -158,11 +159,13 @@ const Hotlines = () => {
   const handleCopy = (num) => {
     navigator.clipboard.writeText(num);
     setCopiedNum(num);
+    hapticSuccess();
     setTimeout(() => setCopiedNum(''), 1800);
   };
 
   const handleCall = async (e, hotline, number) => {
     e.preventDefault();
+    hapticEmergency();
     const newRecent = { ...hotline, contact_number: number };
     setRecentHotlines(prev => {
       const filtered = prev.filter(h => h.id !== hotline.id);
