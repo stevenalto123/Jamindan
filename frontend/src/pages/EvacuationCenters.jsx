@@ -49,6 +49,8 @@ const EvacuationCenters = () => {
   const userMarkerRef = useRef(null);
   const draftMarkerRef = useRef(null);
   const routeLayerRef = useRef(null);
+  const [activeRoute, setActiveRoute] = useState(null);
+  const [showDirections, setShowDirections] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState('');
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -264,6 +266,23 @@ const EvacuationCenters = () => {
     }
   }, [showForm, formData.latitude, formData.longitude]);
 
+  const handleClearRoute = () => {
+    if (routeLayerRef.current && mapInstance.current) {
+      try {
+        mapInstance.current.removeControl(routeLayerRef.current);
+      } catch (e) {
+        console.warn('Error removing route control', e);
+      }
+      routeLayerRef.current = null;
+    }
+    setActiveRoute(null);
+    setShowDirections(false);
+    hapticTap();
+    if (mapInstance.current) {
+      mapInstance.current.setView(JamindanCenter, 13);
+    }
+  };
+
   const handleCenterSelect = async (center) => {
     if (center.status === 'Closed') {
       alert('This evacuation center is currently closed.');
@@ -274,11 +293,11 @@ const EvacuationCenters = () => {
       const destLat = parseFloat(center.latitude);
       const destLng = parseFloat(center.longitude);
 
-      mapInstance.current.setView([destLat, destLng], 14);
       const marker = markersRef.current[center.id];
       if (marker) marker.openPopup();
 
       if (!userLocation) {
+        mapInstance.current.setView([destLat, destLng], 14);
         alert(t('noRoute') || 'Cannot draw route: Your location is unavailable. Please check your GPS settings.');
         return;
       }
@@ -286,11 +305,20 @@ const EvacuationCenters = () => {
       const [userLat, userLng] = userLocation;
 
       if (routeLayerRef.current) {
-        mapInstance.current.removeControl(routeLayerRef.current);
+        try {
+          mapInstance.current.removeControl(routeLayerRef.current);
+        } catch (e) {
+          console.warn('Error removing route control', e);
+        }
+        routeLayerRef.current = null;
       }
 
+      // Automatically unlock map interaction so user can view route freely
+      setMapInteractive(true);
+      hapticTap();
+
       try {
-        routeLayerRef.current = L.Routing.control({
+        const control = L.Routing.control({
           position: 'bottomleft',
           waypoints: [
             L.latLng(userLat, userLng),
@@ -302,13 +330,37 @@ const EvacuationCenters = () => {
           lineOptions: {
             styles: [{ color: '#2563eb', weight: 6, opacity: 0.9 }]
           },
-          show: true,
+          show: false, // Prevents bulky native turn-by-turn panel from obscuring mobile map
           collapsible: true,
           addWaypoints: false,
           routeWhileDragging: false,
           fitSelectedRoutes: true,
           createMarker: () => null
         }).addTo(mapInstance.current);
+
+        routeLayerRef.current = control;
+
+        control.on('routesfound', (e) => {
+          const route = e.routes && e.routes[0];
+          if (route) {
+            const distKm = (route.summary.totalDistance / 1000).toFixed(1);
+            const timeMin = Math.round(route.summary.totalTime / 60);
+            setActiveRoute({
+              center,
+              distanceKm: distKm,
+              timeMin: timeMin,
+              instructions: route.instructions || []
+            });
+          }
+        });
+
+        control.on('routingerror', (err) => {
+          console.error('Routing error:', err);
+        });
+
+        if (isMobile) {
+          mapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       } catch (err) {
         console.error('Failed to fetch route:', err);
       }
@@ -599,7 +651,9 @@ const EvacuationCenters = () => {
 
         {/* Left Column: Map + Advisory */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div style={{
+          <div 
+            className="evac-map-container"
+            style={{
             ...(isFullScreen ? {
               position: 'fixed',
               top: 0,
@@ -610,7 +664,7 @@ const EvacuationCenters = () => {
               borderRadius: 0,
               border: 'none',
             } : {
-              height: isMobile ? '270px' : '460px',
+              height: isMobile ? '280px' : '460px',
               border: '1px solid var(--border-color)',
               borderRadius: '12px',
             }),
@@ -718,6 +772,94 @@ const EvacuationCenters = () => {
             )}
 
             <div ref={mapRef} style={{ width: '100%', flex: 1, zIndex: 10 }} />
+
+            {/* Active Route Floating Control Bar on Map */}
+            {activeRoute && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '10px',
+                  left: '10px',
+                  right: '10px',
+                  zIndex: 1000,
+                  backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                  color: '#ffffff',
+                  padding: '8px 12px',
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255,255,255,0.18)'
+                }}
+              >
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{ fontSize: '13px' }}>⛺</span>
+                    <span style={{ fontSize: '12.5px', fontWeight: '800', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {activeRoute.center.name}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ color: '#38bdf8', fontWeight: '700' }}>{activeRoute.distanceKm} km</span>
+                    <span>•</span>
+                    <span style={{ color: '#4ade80', fontWeight: '700' }}>~{activeRoute.timeMin} mins</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                  {activeRoute.instructions?.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowDirections(true);
+                        hapticTap();
+                      }}
+                      style={{
+                        backgroundColor: 'rgba(255,255,255,0.15)',
+                        color: '#ffffff',
+                        border: '1px solid rgba(255,255,255,0.25)',
+                        borderRadius: '8px',
+                        padding: '6px 10px',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                      title="View Turn-by-Turn Directions"
+                    >
+                      <Navigation size={13} />
+                      <span>Steps</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleClearRoute}
+                    title="Clear Route & Close"
+                    style={{
+                      backgroundColor: '#ef4444',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 6px rgba(239, 68, 68, 0.4)'
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
             {showForm && isAdmin && (
               <div style={{ backgroundColor: 'var(--card-alt)', borderTop: '1px solid var(--border-color)', padding: '10px 14px', fontSize: '12px', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Info size={15} style={{ color: 'var(--primary-color)', flexShrink: 0 }} />
@@ -815,6 +957,8 @@ const EvacuationCenters = () => {
                     const meta = getStatusMeta(center.status, occupancyRate);
                     const isClosed = center.status === 'Closed';
 
+                    const isActiveRoute = activeRoute?.center?.id === center.id;
+
                     return (
                       <div
                         key={center.id}
@@ -823,13 +967,14 @@ const EvacuationCenters = () => {
                         style={{
                           padding: '15px 16px',
                           borderRadius: '12px',
-                          border: '1px solid var(--border-color)',
+                          border: isActiveRoute ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
                           cursor: isClosed ? 'not-allowed' : 'pointer',
                           opacity: meta.opacity,
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '12px',
-                          boxShadow: 'none'
+                          boxShadow: isActiveRoute ? '0 4px 14px rgba(37,99,235,0.18)' : 'none',
+                          transition: 'all 0.2s ease'
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
@@ -916,10 +1061,27 @@ const EvacuationCenters = () => {
                         )}
 
                         {!isClosed && (
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', fontWeight: '600', color: 'var(--primary-color)' }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                              <Navigation size={12} /> Click to view route on map
-                            </span>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', fontWeight: '600' }}>
+                            {isActiveRoute ? (
+                              <>
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#16a34a', fontWeight: '700' }}>
+                                  <Navigation size={12} /> Active Route: {activeRoute.distanceKm} km (~{activeRoute.timeMin}m)
+                                </span>
+                                <span
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleClearRoute();
+                                  }}
+                                  style={{ color: '#ef4444', textDecoration: 'underline', cursor: 'pointer', fontWeight: '700' }}
+                                >
+                                  Clear Route
+                                </span>
+                              </>
+                            ) : (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--primary-color)' }}>
+                                <Navigation size={12} /> Click to view route on map
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
@@ -932,6 +1094,165 @@ const EvacuationCenters = () => {
         </div>
       </div>
 
+      {/* Turn-by-Turn Directions Bottom Sheet / Modal */}
+      {showDirections && activeRoute && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: isMobile ? 'flex-end' : 'center',
+            justifyContent: 'center',
+            padding: isMobile ? 0 : '20px',
+            backdropFilter: 'blur(4px)'
+          }}
+          onClick={() => setShowDirections(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              borderRadius: isMobile ? '16px 16px 0 0' : '16px',
+              width: isMobile ? '100%' : '480px',
+              maxHeight: isMobile ? '80vh' : '70vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              border: '1px solid var(--border-color)',
+              boxShadow: '0 -4px 25px rgba(0,0,0,0.3)'
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{
+              padding: '16px',
+              borderBottom: '1px solid var(--border-color)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: 'var(--card-alt)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Navigation size={18} color="var(--primary-color)" />
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: 'var(--text-main)' }}>
+                    Directions to Shelter
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-light)' }}>
+                    {activeRoute.center.name} ({activeRoute.distanceKm} km • ~{activeRoute.timeMin} mins)
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDirections(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  borderRadius: '6px',
+                  display: 'flex'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Step list */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
+              {activeRoute.instructions?.length === 0 ? (
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>
+                  Follow the highlighted blue route on the map.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {activeRoute.instructions.map((step, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '12px',
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        backgroundColor: 'var(--card-alt)',
+                        border: '1px solid var(--border-color)',
+                        fontSize: '13px'
+                      }}
+                    >
+                      <div style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--primary-color)',
+                        color: '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        fontWeight: '800',
+                        flexShrink: 0,
+                        marginTop: '2px'
+                      }}>
+                        {idx + 1}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ color: 'var(--text-main)', fontWeight: '600', lineHeight: '1.4' }}>
+                          {step.text}
+                        </div>
+                        {step.distance > 0 && (
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                            {step.distance >= 1000 ? `${(step.distance / 1000).toFixed(1)} km` : `${Math.round(step.distance)} m`}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '12px 16px',
+              borderTop: '1px solid var(--border-color)',
+              display: 'flex',
+              gap: '10px',
+              backgroundColor: 'var(--card-alt)'
+            }}>
+              <button
+                type="button"
+                onClick={() => setShowDirections(false)}
+                className="btn btn-secondary"
+                style={{ flex: 1, height: '42px', fontSize: '13px', fontWeight: '700' }}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={handleClearRoute}
+                className="btn"
+                style={{
+                  flex: 1,
+                  height: '42px',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  backgroundColor: '#ef4444',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px'
+                }}
+              >
+                Clear Route
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .evac-split-grid {
           display: grid;
@@ -943,6 +1264,10 @@ const EvacuationCenters = () => {
           .evac-split-grid {
             grid-template-columns: 1fr;
           }
+        }
+        /* Completely suppress bulky native turn-by-turn panel from obscuring map */
+        .evac-map-container .leaflet-routing-container {
+          display: none !important;
         }
       `}</style>
     </div>
