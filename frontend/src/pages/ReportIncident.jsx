@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import MapPicker from '../components/MapPicker';
@@ -76,6 +76,8 @@ const clearIndexedDB = () => {
 };
 
 const ReportIncident = () => {
+  const dynamicDetailsRef = useRef(null);
+  const errorTopRef = useRef(null);
   const [type, setType] = useState('');
   const [details, setDetails] = useState({});
   const [locationText, setLocationText] = useState('');
@@ -216,34 +218,44 @@ const ReportIncident = () => {
     return '';
   };
 
+  const scrollToTopContainer = () => {
+    const rootEl = document.getElementById('root');
+    if (rootEl) rootEl.scrollTo({ top: 0, behavior: 'smooth' });
+    const mainEl = document.querySelector('.main-content');
+    if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleNextStep = () => {
     if (!type) {
       hapticError();
       setError('Please select an emergency type before continuing.');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollToTopContainer();
       return;
     }
     const detailsError = validateDynamicDetails();
     if (detailsError) {
       hapticError();
       setError(detailsError);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        if (dynamicDetailsRef.current) {
+          dynamicDetailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          scrollToTopContainer();
+        }
+      }, 50);
       return;
     }
     setError('');
     hapticTap();
     setMobileStep(2);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTopContainer();
   };
 
   const handlePrevStep = () => {
     hapticTap();
     setMobileStep(1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTopContainer();
   };
 
   const handleSubmit = async (e) => {
@@ -252,6 +264,7 @@ const ReportIncident = () => {
       hapticError();
       setError('Please select an emergency type.');
       if (isMobile) setMobileStep(1);
+      scrollToTopContainer();
       return;
     }
     const detailsError = validateDynamicDetails();
@@ -259,14 +272,20 @@ const ReportIncident = () => {
       hapticError();
       setError(detailsError);
       if (isMobile) setMobileStep(1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        if (dynamicDetailsRef.current) {
+          dynamicDetailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          scrollToTopContainer();
+        }
+      }, 50);
       return;
     }
     if (!description.trim() || !locationText.trim()) {
       hapticError();
       setError('Please provide incident location and description.');
       if (isMobile) setMobileStep(2);
+      scrollToTopContainer();
       return;
     }
     hapticEmergency();
@@ -424,12 +443,33 @@ const ReportIncident = () => {
 
   const renderDynamicFields = () => {
     switch (type) {
-      case 'Fire':
+      case 'Fire': {
+        const isFireError = error && error.includes('Fire Details');
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', backgroundColor: 'rgba(231,76,60,0.06)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(231,76,60,0.2)' }}>
-            <h4 style={{ margin: 0, fontSize: '14px', color: '#e74c3c', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
-              <Flame size={16} /> Fire Details
-            </h4>
+          <div 
+            ref={dynamicDetailsRef} 
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '15px', 
+              backgroundColor: isFireError ? 'rgba(231,76,60,0.09)' : 'rgba(231,76,60,0.06)', 
+              padding: '16px', 
+              borderRadius: '12px', 
+              border: isFireError ? '2px solid #e74c3c' : '1px solid rgba(231,76,60,0.2)',
+              boxShadow: isFireError ? '0 0 0 3px rgba(231,76,60,0.2)' : 'none',
+              transition: 'all 0.25s ease'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+              <h4 style={{ margin: 0, fontSize: '14px', color: '#e74c3c', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
+                <Flame size={16} /> Fire Details
+              </h4>
+              {isFireError && (
+                <span style={{ fontSize: '11px', color: '#e74c3c', fontWeight: '700' }}>
+                  * Required fields missing
+                </span>
+              )}
+            </div>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Structures Affected <span style={{ color: '#e74c3c' }}>*</span></label>
               <input 
@@ -471,13 +511,35 @@ const ReportIncident = () => {
             </div>
           </div>
         );
+      }
       case 'Accident':
-      case 'Medical':
+      case 'Medical': {
+        const isMedAccError = error && (error.includes('Accident Details') || error.includes('Medical Details'));
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', backgroundColor: 'rgba(39,174,96,0.06)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(39,174,96,0.2)' }}>
-            <h4 style={{ margin: 0, fontSize: '14px', color: '#27ae60', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
-              <HeartPulse size={16} /> {type === 'Accident' ? 'Accident Details' : 'Medical Details'}
-            </h4>
+          <div 
+            ref={dynamicDetailsRef} 
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '15px', 
+              backgroundColor: isMedAccError ? 'rgba(231,76,60,0.08)' : 'rgba(39,174,96,0.06)', 
+              padding: '16px', 
+              borderRadius: '12px', 
+              border: isMedAccError ? '2px solid #e74c3c' : '1px solid rgba(39,174,96,0.2)',
+              boxShadow: isMedAccError ? '0 0 0 3px rgba(231,76,60,0.2)' : 'none',
+              transition: 'all 0.25s ease'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+              <h4 style={{ margin: 0, fontSize: '14px', color: isMedAccError ? '#e74c3c' : '#27ae60', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
+                <HeartPulse size={16} /> {type === 'Accident' ? 'Accident Details' : 'Medical Details'}
+              </h4>
+              {isMedAccError && (
+                <span style={{ fontSize: '11px', color: '#e74c3c', fontWeight: '700' }}>
+                  * Required fields missing
+                </span>
+              )}
+            </div>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Number of Victims / Patients <span style={{ color: '#e74c3c' }}>*</span></label>
               <input 
@@ -532,12 +594,34 @@ const ReportIncident = () => {
             )}
           </div>
         );
-      case 'Flood':
+      }
+      case 'Flood': {
+        const isFloodError = error && error.includes('Flood Details');
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', backgroundColor: 'rgba(41,128,185,0.06)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(41,128,185,0.2)' }}>
-            <h4 style={{ margin: 0, fontSize: '14px', color: '#2980b9', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
-              <Droplets size={16} /> Flood Details
-            </h4>
+          <div 
+            ref={dynamicDetailsRef} 
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '15px', 
+              backgroundColor: isFloodError ? 'rgba(231,76,60,0.08)' : 'rgba(41,128,185,0.06)', 
+              padding: '16px', 
+              borderRadius: '12px', 
+              border: isFloodError ? '2px solid #e74c3c' : '1px solid rgba(41,128,185,0.2)',
+              boxShadow: isFloodError ? '0 0 0 3px rgba(231,76,60,0.2)' : 'none',
+              transition: 'all 0.25s ease'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+              <h4 style={{ margin: 0, fontSize: '14px', color: isFloodError ? '#e74c3c' : '#2980b9', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
+                <Droplets size={16} /> Flood Details
+              </h4>
+              {isFloodError && (
+                <span style={{ fontSize: '11px', color: '#e74c3c', fontWeight: '700' }}>
+                  * Required fields missing
+                </span>
+              )}
+            </div>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Approximate Water Level <span style={{ color: '#e74c3c' }}>*</span></label>
               <select 
@@ -579,6 +663,7 @@ const ReportIncident = () => {
             </div>
           </div>
         );
+      }
       default:
         return null;
     }
@@ -591,8 +676,8 @@ const ReportIncident = () => {
 
       <div className="glass-card" style={{ padding: '24px' }}>
         {error && (
-          <div className="alert alert-danger" style={{ fontSize: '13px', padding: '10px 14px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertTriangle size={15} /> {error}
+          <div ref={errorTopRef} className="alert alert-danger" style={{ fontSize: '13px', padding: '10px 14px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertTriangle size={15} style={{ flexShrink: 0 }} /> {error}
           </div>
         )}
         {success === 'offline' && (
@@ -757,6 +842,26 @@ const ReportIncident = () => {
           {/* Mobile Step 1 Navigation Button */}
           {isMobile && mobileStep === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
+              {error && (
+                <div 
+                  className="alert alert-danger" 
+                  style={{ 
+                    fontSize: '13px', 
+                    padding: '10px 14px', 
+                    margin: 0, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px',
+                    borderRadius: '10px',
+                    backgroundColor: '#fff1f0',
+                    border: '1px solid rgba(231,76,60,0.35)',
+                    color: '#c0392b'
+                  }}
+                >
+                  <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+                  <span style={{ fontWeight: '600', lineHeight: '1.4' }}>{error}</span>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={handleNextStep}
@@ -879,6 +984,26 @@ const ReportIncident = () => {
           {/* STEP 2 (or Desktop): Submit & Navigation Actions */}
           {(!isMobile || mobileStep === 2) && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
+              {error && isMobile && (
+                <div 
+                  className="alert alert-danger" 
+                  style={{ 
+                    fontSize: '13px', 
+                    padding: '10px 14px', 
+                    margin: 0, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px',
+                    borderRadius: '10px',
+                    backgroundColor: '#fff1f0',
+                    border: '1px solid rgba(231,76,60,0.35)',
+                    color: '#c0392b'
+                  }}
+                >
+                  <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+                  <span style={{ fontWeight: '600', lineHeight: '1.4' }}>{error}</span>
+                </div>
+              )}
               <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
                 {isMobile && (
                   <button
