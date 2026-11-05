@@ -77,71 +77,70 @@ def add_inline_runs(paragraph, text, base_font_size=12, base_bold=False, base_co
             run.text = tok
             run.bold = base_bold
 
-# Mapping of figure prefixes to actual existing screenshot files
+NEW_IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'new_screenshots')
+
+# Mapping of figure prefixes to freshly captured live system screenshot files
 FIGURE_IMAGES = {
     "Figure 1.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image001.png",
-        r"C:\Users\huawei\.gemini\antigravity\brain\48bcde98-2820-4a0c-931a-4df4c0f3cf5c\.user_uploaded\media_1793876027103.png"
+        os.path.join(NEW_IMG_DIR, 'fig1a_resident_desktop.png'),
+        os.path.join(NEW_IMG_DIR, 'fig1c_safety_checkin_mobile_closeup.png')
     ],
     "Figure 2.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image003.png",
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image005.png"
+        os.path.join(NEW_IMG_DIR, 'fig2_offline_sos_mobile.png')
     ],
     "Figure 3a.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image007.png"
+        os.path.join(NEW_IMG_DIR, 'fig3a_wizard_step1.png')
     ],
     "Figure 3b.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image007.png"
+        os.path.join(NEW_IMG_DIR, 'fig3b_wizard_step2.png')
     ],
     "Figure 4.": [
-        r"C:\Users\huawei\.gemini\antigravity\brain\48bcde98-2820-4a0c-931a-4df4c0f3cf5c\.user_uploaded\media_1793590797645.png"
+        os.path.join(NEW_IMG_DIR, 'fig4_track_status.png')
     ],
     "Figure 5.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image009.png",
-        r"C:\Users\huawei\.gemini\antigravity\brain\48bcde98-2820-4a0c-931a-4df4c0f3cf5c\.user_uploaded\media_1793544154576.png"
+        os.path.join(NEW_IMG_DIR, 'fig5_news_advisories.png')
     ],
     "Figure 6.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image011.png"
+        os.path.join(NEW_IMG_DIR, 'fig6_safety_tips.png')
     ],
     "Figure 7.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image013.png"
+        os.path.join(NEW_IMG_DIR, 'fig7_hotlines_mobile.png')
     ],
     "Figure 8.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image015.png"
+        os.path.join(NEW_IMG_DIR, 'fig8_login.png')
     ],
     "Figure 9.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image017.png"
+        os.path.join(NEW_IMG_DIR, 'fig9_admin_dashboard.png')
     ],
     "Figure 10.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image019.png"
+        os.path.join(NEW_IMG_DIR, 'fig10_command_map.png')
     ],
     "Figure 11.": [
-        r"C:\Users\huawei\.gemini\antigravity\brain\48bcde98-2820-4a0c-931a-4df4c0f3cf5c\.user_uploaded\media_1793590797645.png"
+        os.path.join(NEW_IMG_DIR, 'fig11_incident_inbox.png')
     ],
     "Figure 12a.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image022.png"
+        os.path.join(NEW_IMG_DIR, 'fig12a_evacuation_mobile.png')
     ],
     "Figure 12b.": [
-        r"C:\Users\huawei\.gemini\antigravity\brain\48bcde98-2820-4a0c-931a-4df4c0f3cf5c\.user_uploaded\media_1793873982395.png"
+        os.path.join(NEW_IMG_DIR, 'fig12b_evacuation_route_bar.png')
     ],
     "Figure 13.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image024.png"
+        os.path.join(NEW_IMG_DIR, 'fig13_household.png')
     ],
     "Figure 14.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image026.png"
+        os.path.join(NEW_IMG_DIR, 'fig14_fleet_vehicles.png')
     ],
     "Figure 15.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image028.png",
-        r"C:\Users\huawei\.gemini\antigravity\brain\48bcde98-2820-4a0c-931a-4df4c0f3cf5c\.user_uploaded\media_1793806731363.png"
+        os.path.join(NEW_IMG_DIR, 'fig15_user_management.png')
     ],
     "Figure 16.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image030.png"
+        os.path.join(NEW_IMG_DIR, 'fig16_system_logs.png')
     ],
     "Figure 17a.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image032.png"
+        os.path.join(NEW_IMG_DIR, 'fig17a_analytics_desktop.png')
     ],
     "Figure 17b.": [
-        r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_SYSTEM_files\image032.png"
+        os.path.join(NEW_IMG_DIR, 'fig17b_analytics_mobile_cards.png')
     ]
 }
 
