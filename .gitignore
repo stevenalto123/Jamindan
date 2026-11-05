@@ -46,3 +46,7 @@ desktop.ini
 *.log
 *.zip
 *.exe
+~$*
+scratch/node_modules/
+scratch/__pycache__/
+
