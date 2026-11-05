@@ -179,10 +179,57 @@ const ReportIncident = () => {
     }
   };
 
+  const validateDynamicDetails = () => {
+    if (type === 'Fire') {
+      if (
+        details.structures_affected === undefined || String(details.structures_affected).trim() === '' ||
+        !details.visible_fire ||
+        !details.trapped_persons
+      ) {
+        return 'Please complete all required Fire Details (Structures Affected, Visible Fire/Smoke, and Possible Trapped Persons).';
+      }
+    } else if (type === 'Medical') {
+      if (
+        details.victims === undefined || String(details.victims).trim() === '' ||
+        !details.injuries || !details.injuries.trim()
+      ) {
+        return 'Please complete all required Medical Details (Number of Victims/Patients and Condition/Injuries).';
+      }
+    } else if (type === 'Accident') {
+      if (
+        details.victims === undefined || String(details.victims).trim() === '' ||
+        details.vehicles_involved === undefined || String(details.vehicles_involved).trim() === '' ||
+        !details.injuries || !details.injuries.trim() ||
+        !details.road_obstruction
+      ) {
+        return 'Please complete all required Accident Details (Victims, Vehicles Involved, Condition/Injuries, and Road Obstruction).';
+      }
+    } else if (type === 'Flood') {
+      if (
+        !details.water_level ||
+        details.households_affected === undefined || String(details.households_affected).trim() === '' ||
+        details.people_needing_rescue === undefined || String(details.people_needing_rescue).trim() === ''
+      ) {
+        return 'Please complete all required Flood Details (Approximate Water Level, Affected Households, and People Needing Rescue).';
+      }
+    }
+    return '';
+  };
+
   const handleNextStep = () => {
     if (!type) {
       hapticError();
       setError('Please select an emergency type before continuing.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const detailsError = validateDynamicDetails();
+    if (detailsError) {
+      hapticError();
+      setError(detailsError);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     setError('');
@@ -205,6 +252,15 @@ const ReportIncident = () => {
       hapticError();
       setError('Please select an emergency type.');
       if (isMobile) setMobileStep(1);
+      return;
+    }
+    const detailsError = validateDynamicDetails();
+    if (detailsError) {
+      hapticError();
+      setError(detailsError);
+      if (isMobile) setMobileStep(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     if (!description.trim() || !locationText.trim()) {
@@ -375,22 +431,24 @@ const ReportIncident = () => {
               <Flame size={16} /> Fire Details
             </h4>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Structures Affected</label>
+              <label className="form-label">Structures Affected <span style={{ color: '#e74c3c' }}>*</span></label>
               <input 
                 type="number" 
                 className="form-input" 
                 placeholder="e.g. 2" 
                 min="0" 
+                required
                 value={details.structures_affected || ''} 
-                onChange={(e) => handleDetailChange('structures_affected', e.target.value)} 
+                onChange={(e) => { handleDetailChange('structures_affected', e.target.value); if (error) setError(''); }} 
               />
             </div>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Visible Fire / Smoke?</label>
+              <label className="form-label">Visible Fire / Smoke? <span style={{ color: '#e74c3c' }}>*</span></label>
               <select 
                 className="form-select" 
+                required
                 value={details.visible_fire || ''} 
-                onChange={(e) => handleDetailChange('visible_fire', e.target.value)}
+                onChange={(e) => { handleDetailChange('visible_fire', e.target.value); if (error) setError(''); }}
               >
                 <option value="">Select...</option>
                 <option value="Yes">Yes</option>
@@ -398,11 +456,12 @@ const ReportIncident = () => {
               </select>
             </div>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Possible Trapped Persons?</label>
+              <label className="form-label">Possible Trapped Persons? <span style={{ color: '#e74c3c' }}>*</span></label>
               <select 
                 className="form-select" 
+                required
                 value={details.trapped_persons || ''} 
-                onChange={(e) => handleDetailChange('trapped_persons', e.target.value)}
+                onChange={(e) => { handleDetailChange('trapped_persons', e.target.value); if (error) setError(''); }}
               >
                 <option value="">Select...</option>
                 <option value="Yes">Yes</option>
@@ -417,49 +476,53 @@ const ReportIncident = () => {
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', backgroundColor: 'rgba(39,174,96,0.06)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(39,174,96,0.2)' }}>
             <h4 style={{ margin: 0, fontSize: '14px', color: '#27ae60', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
-              <HeartPulse size={16} /> Medical / Accident Details
+              <HeartPulse size={16} /> {type === 'Accident' ? 'Accident Details' : 'Medical Details'}
             </h4>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Number of Victims / Patients</label>
+              <label className="form-label">Number of Victims / Patients <span style={{ color: '#e74c3c' }}>*</span></label>
               <input 
                 type="number" 
                 className="form-input" 
                 placeholder="e.g. 2" 
                 min="0" 
+                required
                 value={details.victims || ''} 
-                onChange={(e) => handleDetailChange('victims', e.target.value)} 
+                onChange={(e) => { handleDetailChange('victims', e.target.value); if (error) setError(''); }} 
               />
             </div>
             {type === 'Accident' && (
               <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">Vehicles Involved</label>
+                <label className="form-label">Vehicles Involved <span style={{ color: '#e74c3c' }}>*</span></label>
                 <input 
                   type="number" 
                   className="form-input" 
                   placeholder="e.g. 2" 
                   min="0" 
+                  required
                   value={details.vehicles_involved || ''} 
-                  onChange={(e) => handleDetailChange('vehicles_involved', e.target.value)} 
+                  onChange={(e) => { handleDetailChange('vehicles_involved', e.target.value); if (error) setError(''); }} 
                 />
               </div>
             )}
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Condition / Injuries</label>
+              <label className="form-label">Condition / Injuries <span style={{ color: '#e74c3c' }}>*</span></label>
               <input 
                 type="text" 
                 className="form-input" 
                 placeholder="e.g. Unconscious, bleeding" 
+                required
                 value={details.injuries || ''} 
-                onChange={(e) => handleDetailChange('injuries', e.target.value)} 
+                onChange={(e) => { handleDetailChange('injuries', e.target.value); if (error) setError(''); }} 
               />
             </div>
             {type === 'Accident' && (
               <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">Road Obstruction?</label>
+                <label className="form-label">Road Obstruction? <span style={{ color: '#e74c3c' }}>*</span></label>
                 <select 
                   className="form-select" 
+                  required
                   value={details.road_obstruction || ''} 
-                  onChange={(e) => handleDetailChange('road_obstruction', e.target.value)}
+                  onChange={(e) => { handleDetailChange('road_obstruction', e.target.value); if (error) setError(''); }}
                 >
                   <option value="">Select...</option>
                   <option value="Yes">Yes</option>
@@ -476,11 +539,12 @@ const ReportIncident = () => {
               <Droplets size={16} /> Flood Details
             </h4>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Approximate Water Level</label>
+              <label className="form-label">Approximate Water Level <span style={{ color: '#e74c3c' }}>*</span></label>
               <select 
                 className="form-select" 
+                required
                 value={details.water_level || ''} 
-                onChange={(e) => handleDetailChange('water_level', e.target.value)}
+                onChange={(e) => { handleDetailChange('water_level', e.target.value); if (error) setError(''); }}
               >
                 <option value="">Select...</option>
                 <option value="Ankle Deep">Ankle Deep</option>
@@ -490,25 +554,27 @@ const ReportIncident = () => {
               </select>
             </div>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Affected Households</label>
+              <label className="form-label">Affected Households <span style={{ color: '#e74c3c' }}>*</span></label>
               <input 
                 type="number" 
                 className="form-input" 
                 placeholder="e.g. 5" 
                 min="0" 
+                required
                 value={details.households_affected || ''} 
-                onChange={(e) => handleDetailChange('households_affected', e.target.value)} 
+                onChange={(e) => { handleDetailChange('households_affected', e.target.value); if (error) setError(''); }} 
               />
             </div>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">People Needing Rescue</label>
+              <label className="form-label">People Needing Rescue <span style={{ color: '#e74c3c' }}>*</span></label>
               <input 
                 type="number" 
                 className="form-input" 
                 placeholder="e.g. 3" 
                 min="0" 
+                required
                 value={details.people_needing_rescue || ''} 
-                onChange={(e) => handleDetailChange('people_needing_rescue', e.target.value)} 
+                onChange={(e) => { handleDetailChange('people_needing_rescue', e.target.value); if (error) setError(''); }} 
               />
             </div>
           </div>
