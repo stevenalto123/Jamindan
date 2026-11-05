@@ -156,20 +156,17 @@ const ResidentDashboard = () => {
           <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-light)', lineHeight: 1.4 }}>
             {t('safetyCheckinDesc')}
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: '8px' }}>
+          <div className="resident-safety-grid">
             <button
               type="button"
               disabled={checkingIn}
               onClick={() => handleSafetyCheckIn('Safe')}
+              className="resident-safety-btn"
               style={{
-                padding: '10px 12px',
-                borderRadius: '10px',
                 border: myCheckin?.status === 'Safe' ? '2px solid #059669' : '1px solid #a7f3d0',
                 backgroundColor: myCheckin?.status === 'Safe' ? '#059669' : '#ecfdf5',
                 color: myCheckin?.status === 'Safe' ? '#fff' : '#065f46',
-                fontWeight: '700',
-                fontSize: '12px',
-                cursor: 'pointer'
+                boxShadow: myCheckin?.status === 'Safe' ? '0 4px 12px rgba(5, 150, 105, 0.25)' : 'none'
               }}
             >
               {t('statusSafe')}
@@ -178,15 +175,12 @@ const ResidentDashboard = () => {
               type="button"
               disabled={checkingIn}
               onClick={() => handleSafetyCheckIn('At Evacuation Center')}
+              className="resident-safety-btn"
               style={{
-                padding: '10px 12px',
-                borderRadius: '10px',
                 border: myCheckin?.status === 'At Evacuation Center' ? '2px solid #2563eb' : '1px solid #bfdbfe',
                 backgroundColor: myCheckin?.status === 'At Evacuation Center' ? '#2563eb' : '#eff6ff',
                 color: myCheckin?.status === 'At Evacuation Center' ? '#fff' : '#1e40af',
-                fontWeight: '700',
-                fontSize: '12px',
-                cursor: 'pointer'
+                boxShadow: myCheckin?.status === 'At Evacuation Center' ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
               }}
             >
               {t('statusEvacuated')}
@@ -195,15 +189,12 @@ const ResidentDashboard = () => {
               type="button"
               disabled={checkingIn}
               onClick={() => setShowAssistanceConfirm(true)}
+              className="resident-safety-btn"
               style={{
-                padding: '10px 12px',
-                borderRadius: '10px',
                 border: myCheckin?.status === 'Needs Assistance' ? '2px solid #dc2626' : '1px solid #fecaca',
                 backgroundColor: myCheckin?.status === 'Needs Assistance' ? '#dc2626' : '#fef2f2',
                 color: myCheckin?.status === 'Needs Assistance' ? '#fff' : '#991b1b',
-                fontWeight: '700',
-                fontSize: '12px',
-                cursor: 'pointer'
+                boxShadow: myCheckin?.status === 'Needs Assistance' ? '0 4px 12px rgba(220, 38, 38, 0.25)' : 'none'
               }}
             >
               {t('statusNeedsHelp')}
