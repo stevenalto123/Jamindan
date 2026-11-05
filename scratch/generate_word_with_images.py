@@ -78,8 +78,9 @@ def add_inline_runs(paragraph, text, base_font_size=12, base_bold=False, base_co
             run.bold = base_bold
 
 NEW_IMG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'new_screenshots')
+DIAGRAM_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'diagram_images')
 
-# Mapping of figure prefixes to freshly captured live system screenshot files
+# Mapping of figure prefixes to freshly captured live system screenshot files & rendered diagrams
 FIGURE_IMAGES = {
     "Figure 1.": [
         os.path.join(NEW_IMG_DIR, 'fig1a_resident_desktop.png'),
@@ -141,6 +142,30 @@ FIGURE_IMAGES = {
     ],
     "Figure 17b.": [
         os.path.join(NEW_IMG_DIR, 'fig17b_analytics_mobile_cards.png')
+    ],
+    "Figure 18.": [
+        os.path.join(DIAGRAM_DIR, 'fig18_admin_use_case.png')
+    ],
+    "Figure 19.": [
+        os.path.join(DIAGRAM_DIR, 'fig19_responder_use_case.png')
+    ],
+    "Figure 20.": [
+        os.path.join(DIAGRAM_DIR, 'fig20_resident_use_case.png')
+    ],
+    "Figure 21.": [
+        os.path.join(DIAGRAM_DIR, 'fig21_admin_sequence.png')
+    ],
+    "Figure 22.": [
+        os.path.join(DIAGRAM_DIR, 'fig22_sos_sequence.png')
+    ],
+    "Figure 23.": [
+        os.path.join(DIAGRAM_DIR, 'fig23_report_activity.png')
+    ],
+    "Figure 24.": [
+        os.path.join(DIAGRAM_DIR, 'fig24_admin_activity.png')
+    ],
+    "Figure 25.": [
+        os.path.join(DIAGRAM_DIR, 'fig25_network_layout.png')
     ]
 }
 
@@ -152,11 +177,18 @@ def add_figure_images(doc, heading_text):
                     w, h = get_image_size(img_path)
                     p_img = doc.add_paragraph()
                     p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    p_img.paragraph_format.space_before = Pt(6)
-                    p_img.paragraph_format.space_after = Pt(8)
+                    p_img.paragraph_format.space_before = Pt(8)
+                    p_img.paragraph_format.space_after = Pt(10)
                     
-                    # Choose width based on portrait vs landscape
-                    if w > 0 and h > 0 and (h / w) > 1.2:
+                    # Choose width based on portrait vs landscape and whether diagram
+                    if 'diagram_images' in img_path:
+                        if w > 0 and h > 0 and (h / w) > 1.3:
+                            target_width = Inches(3.6)
+                        elif w > 0 and h > 0 and (h / w) > 0.9:
+                            target_width = Inches(4.8)
+                        else:
+                            target_width = Inches(6.0)
+                    elif w > 0 and h > 0 and (h / w) > 1.2:
                         target_width = Inches(2.8) # portrait phone
                     elif w > 0 and h > 0 and (h / w) > 0.85:
                         target_width = Inches(3.8) # square-ish / card
@@ -235,42 +267,7 @@ def build_docx_with_images(md_path, docx_path):
 
     def flush_mermaid():
         nonlocal in_mermaid, mermaid_lines
-        if not mermaid_lines:
-            return
-        
-        tbl = doc.add_table(rows=1, cols=1)
-        tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
-        tbl.autofit = True
-        cell = tbl.rows[0].cells[0]
-        set_cell_shading(cell, 'F1F5F9')
-        set_cell_margins(cell, top=140, bottom=140, left=180, right=180)
-        
-        p = cell.paragraphs[0]
-        p.paragraph_format.space_before = Pt(2)
-        p.paragraph_format.space_after = Pt(2)
-        p.paragraph_format.line_spacing = 1.1
-        
-        run_title = p.add_run("[Mermaid Architecture Flowchart / Diagram Source]\n")
-        run_title.font.name = 'Consolas'
-        run_title.font.size = Pt(9.5)
-        run_title.font.color.rgb = RGBColor(30, 58, 138)
-        run_title.bold = True
-        
-        run_code = p.add_run('\n'.join(mermaid_lines))
-        run_code.font.name = 'Consolas'
-        run_code.font.size = Pt(8.5)
-        run_code.font.color.rgb = RGBColor(51, 65, 85)
-        
-        p_note = doc.add_paragraph()
-        p_note.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_note.paragraph_format.space_before = Pt(4)
-        p_note.paragraph_format.space_after = Pt(12)
-        r_note = p_note.add_run("*(Note: High-resolution visual diagrams and UI screenshots are embedded above/below in the document.)*")
-        r_note.font.name = 'Times New Roman'
-        r_note.font.size = Pt(9.5)
-        r_note.font.italic = True
-        r_note.font.color.rgb = RGBColor(100, 116, 139)
-        
+        # Do not output raw text code block because crisp rendered UML diagram pictures are embedded directly!
         mermaid_lines = []
         in_mermaid = False
 
@@ -347,11 +344,14 @@ def build_docx_with_images(md_path, docx_path):
             continue
 
         if line.startswith('#### '):
+            heading_text = line[5:].strip()
             p = doc.add_paragraph()
             p.paragraph_format.space_before = Pt(12)
             p.paragraph_format.space_after = Pt(4)
             p.paragraph_format.keep_with_next = True
-            add_inline_runs(p, line[5:].strip(), base_font_size=12.5, base_bold=True, base_color=RGBColor(15, 23, 42))
+            add_inline_runs(p, heading_text, base_font_size=12.5, base_bold=True, base_color=RGBColor(15, 23, 42))
+            if heading_text.startswith('Figure '):
+                add_figure_images(doc, heading_text)
             i += 1
             continue
 
