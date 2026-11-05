@@ -1,0 +1,593 @@
+# CHAPTER IV
+
+## JAMINDAN EMERGENCY RESPONSE COMMUNITY PLATFORM: A WEB AND MOBILE-BASED DISASTER MANAGEMENT AND REAL-TIME INCIDENT REPORTING SYSTEM
+
+---
+
+### System Overview
+
+The **Jamindan Emergency Response Community Platform** was conceptualized, architected, and engineered as an innovative, real-time incident reporting and dynamic disaster management system tailored specifically to the geographical, logistical, and operational realities of the **Municipality of Jamindan, Capiz**. Bearing the formal research title *"Jamindan Emergency Response Community Platform: A Web and Mobile-Based Disaster Management and Real-Time Incident Reporting System,"* the project takes a proactive and technological step toward modernizing municipal disaster risk reduction, communication resilience, and inter-agency coordination across all of Jamindan's 30 rural and urban barangays.
+
+The primary objective of the platform is to establish an immediate, bidirectional dispatch and communication bridge between residents, barangay disaster committees, and municipal emergency response units—principally headed by the **Municipal Disaster Risk Reduction and Management Office (MDRRMO)**, the **Bureau of Fire Protection (BFP)**, the **Philippine National Police (PNP)**, and the **Rural Health Unit (RHU)**.
+
+Geographically, the Municipality of Jamindan is characterized by extensive mountainous ranges, interior river systems vulnerable to rapid flash flooding (notably the Panay River tributaries), and remote agricultural barangays where commercial cellular connectivity is notoriously intermittent or entirely absent (such as in Agtambi, Jaena Norte, San Jose, and Lucero). Recognizing these critical environmental constraints, the platform introduces an **offline-first resilience architecture**. When an emergency occurs in an area without mobile internet, residents can still lock hardware satellite GPS coordinates directly through their device's built-in GNSS receiver. The distress alarm is secured in an offline IndexedDB queue, triggers tactile physical haptic feedback, provides an immediate pre-formatted SMS emergency fallback to the Jamindan MDRRMO Operations Center (`09485224345`), and auto-synchronizes to the cloud command server the moment signal is restored.
+
+For municipal dispatchers and local executives, the system delivers an interactive, real-time **Command Center** featuring live responder fleet GPS tracking, color-coded incident triage, touch-optimized evacuation shelter capacity monitoring with floating smart route navigation and turn-by-turn bottom-sheet itineraries, household vulnerability profiling (tracking senior citizens, persons with disabilities, infants, and pregnant mothers), and automated generation of official monthly and annual disaster summary reports compliant with National Disaster Risk Reduction and Management Council (NDRRMC) standards.
+
+---
+
+### System Objectives
+
+1. **Instant SOS Panic Button and Offline-First Emergency Queue Module:** To provide citizens with a 3-second continuous hold emergency panic trigger that directly locks hardware satellite GPS coordinates even in network dead zones, utilizes IndexedDB persistent storage and Workbox background synchronization, incorporates client and server-side anti-spam deduplication, and provides an instant one-tap SMS emergency fallback to the Jamindan MDRRMO Hotline (`09485224345`) as well as zero-load direct dialing to `911`.
+2. **Citizen Safety Check-In & Municipal Evacuation Status Module:** To establish a rapid, bidirectional welfare check-in framework enabling residents to broadcast their condition (`Safe`, `At Evacuation Center`, `Needs Assistance`) during municipal alerts with balanced, mobile-ergonomic full-width touch targets, confirmation modal guards to prevent accidental dispatches, and real-time WebSocket synchronization with the MDRRMO Command Center.
+3. **Multimedia Incident Reporting and Verification Module:** To enable citizens and eyewitnesses to submit detailed reports for fires, medical crises, flash floods, vehicular accidents, and crimes through a mobile-optimized 2-step reporting wizard with dynamic context-aware questions, camera photo attachments, and interactive GPS map pinpointing, coupled with a citizen government ID verification framework to eliminate nuisance and prank submissions.
+4. **Interactive Command Map and Real-Time Fleet Tracking Module:** To equip MDRRMO dispatchers with a central geographic information system (GIS) displaying active incident pins, severity clusters, real-time responder vehicle locations, and dynamic shortest-path navigation routes to optimize deployment efficiency and minimize responder transit time.
+5. **Disaster Preparedness and Smart Shelter Navigation Module:** To monitor designated evacuation centers across all 30 barangays with live occupancy percentage meters, anti-scroll-trap touch gesture locks for mobile viewports, and a floating route navigation bar providing driving distance, travel duration, turn-by-turn bottom-sheet directions, and an instant clear route button without obscuring spatial map awareness.
+6. **Vulnerable Household Profiling Module:** To record household demographic profiles that explicitly flag vulnerable family members—specifically senior citizens, persons with disabilities (PWD), infants, and pregnant women—enabling rescue teams to prioritize high-risk residences during pre-emptive and forced flood or typhoon evacuations.
+7. **Multi-Agency Incident Management, Triage, and False Alarm Handling Module:** To establish a transparent operational lifecycle workflow (`Pending` $\rightarrow$ `Dispatched` $\rightarrow$ `In Progress` $\rightarrow$ `Resolved` / `False Alarm`), enabling dispatchers to assign specialized response fleets, communicate via in-app chat with reporting citizens, and record immutable investigative audit trails.
+8. **Emergency Broadcasts, News, and Safety Education Module:** To enable municipal authorities to distribute simultaneous high-priority emergency siren broadcasts, public weather advisories, dam discharge warnings, and first-aid survival guides to all registered community members.
+9. **Automated Analytics and Government Report Generation Module:** To aggregate incident counts, response durations, casualty counts, and barangay risk metrics, providing dispatchers with both desktop analytical data tables and mobile-responsive card feeds, alongside one-click export of official MDRRMO compliance reports in printable PDF and spreadsheet CSV formats.
+
+---
+
+### System Functions
+
+- **Progressive Web Application (PWA):** A cross-platform web and mobile application accessible through smartphones, tablets, laptops, and desktop workstations, installable as a standalone app with offline caching and background service worker support.
+- **Citizen Registration and Government ID Verification:** Allows residents to register using their full name, mobile number, barangay address, and credentials, with an optional government ID upload (PhilSys National ID, Driver's License, Voter's ID) to earn a "Verified Citizen" badge and deter false reporting.
+- **Role-Based Access Control (RBAC):** Authenticates users via JSON Web Tokens (JWT) and directs them to specialized views based on their assigned role: `Resident`, `Responder`, or `Admin / Dispatcher`.
+- **Resident Dashboard & Emergency Action Center:** Features the central 3-second SOS panic trigger with circular progress charging indicator, quick-dial hotlines for MDRRMO, BFP, and RHU, the redesigned balanced Safety Check-In card, active incident status trackers, and fixed bottom navigation clearance.
+- **Balanced Resident Safety Check-In Card:** Automatically adapts across screen sizes—presenting a clean 3-equal-column layout on desktops and a 1-column full-width vertical stack on mobile viewports (`min-height: 46px`) to ensure equal height, zero awkward text wrapping, centered symmetry, and a confirmation modal dialog before requesting emergency assistance.
+- **3-Second SOS Panic Trigger with Universal Haptic Feedback:** Requires a continuous 3-second hold accompanied by tactile haptic pulses (`hapticEmergency`) to prevent accidental pocket activation, immediately capturing satellite GPS coordinates.
+- **Offline Incident Queue & SMS Fallback Engine:** Stages emergency reports in local browser storage (IndexedDB) when network is unavailable, displaying an offline beacon with live coordinates, tap counters, and a pre-formatted SMS button addressed to MDRRMO Jamindan.
+- **2-Step Mobile Incident Reporting Wizard:** Breaks down emergency reporting into two focused mobile steps (Step 1: Emergency Type, dynamic subfields, and photo evidence; Step 2: Location landmark, GPS MapPicker, description, and submit), eliminating excessive scrolling on small screens.
+- **Track Status & Real-Time Incident Timeline:** Displays an interactive operational timeline of filed incident reports showing tracking codes, current status progression (`Pending` $\rightarrow$ `Dispatched` $\rightarrow$ `In Progress` $\rightarrow$ `Resolved`), assigned emergency vehicles, and in-app responder chat.
+- **Overhauled Emergency Hotlines Directory:** A mobile-ergonomic directory featuring 38px tap targets, a horizontal scrolling category pill bar (`All`, `Emergency`, `Police`, `Medical`, `Utilities`), distinct `[Mobile]` and `[Landline]` badges, instant copied feedback, and an administrative bottom-sheet modal for inspecting recent hotline call activity logs.
+- **Emergency Broadcast Sirens & Public Advisories:** Dispatches municipal-wide audio-visual alarms with custom sound sirens that override silent browser tabs upon administrative authorization.
+- **Community News & Survival Knowledge Library:** Publishes weather updates, typhoon warnings, flood advisories, and disaster survival checklists for typhoons, earthquakes, and fires.
+- **Administrative Command Map (GIS Tracking):** A full-screen interactive map displaying live incident markers, real-time responder vehicle movements, and evacuation center markers with mobile touch scroll locks.
+- **Incident Dispatch & False Alarm Handling:** A centralized queue where dispatchers review incident details, examine uploaded photo evidence, inspect citizen verification badges, dispatch emergency vehicles, or flag nuisance calls as `False Alarm` with mandatory audit explanations.
+- **Evacuation Centers & Smart Route Navigation:** Monitors shelter capacity thresholds with color-coded occupancy meters, anti-scroll-trap touch gesture locks for mobile viewports, and an integrated floating route bar with travel time, turn-by-turn directions modal, and an instant red `[ ✕ Clear Route ]` button.
+- **Household Vulnerability Profiling:** Catalogs registered households and their vulnerable family members (elderly, PWD, infants, pregnant mothers) for priority evacuation during disasters.
+- **Emergency Response Fleet & Personnel Management:** Manages municipal emergency vehicles (ambulances, fire engines, rescue patrol boats) and tracks on-duty responder crews.
+- **Citizen ID Verification Module:** Allows administrators to inspect uploaded government ID proofs, verify citizen credentials, and grant verification badges.
+- **Reports & Analytics Engine:** Generates visual charts, barangay risk breakdowns, and agency performance statistics, accessible via desktop data tables and mobile-responsive card feeds, with PDF and CSV export capabilities.
+- **System Audit Logs:** Maintains an immutable historical log of all user logins, status transitions, dispatch assignments, and administrative actions for strict municipal transparency.
+
+---
+
+### The System
+
+The **Jamindan Emergency Response Community Platform** directly resolves the long-standing communication bottlenecks and spatial tracking deficiencies experienced during disasters in the Municipality of Jamindan:
+
+For **community residents**, the platform provides an intuitive, high-stress visual layout that removes hesitation during crises. Whether reporting an urgent medical crisis in Poblacion or a flash flood in an upland barangay without internet, citizens can signal for help within 3 seconds. The system ensures that panic-driven multiple button presses do not create duplicate tickets, provides physical haptic confirmation, and keeps families informed of responder arrival times and shelter availability.
+
+For **municipal authorities and emergency agencies (MDRRMO, BFP, PNP, RHU)**, the platform replaces fragmented phone calls, radio dispatches, and handwritten logbooks with an automated, synchronized digital command center. Dispatchers receive verified satellite coordinates, eyewitness photo evidence, citizen verification badges, and household vulnerability profiles, enabling optimal resource dispatch and instant compilation of official monthly and annual reports compliant with national government standards.
+
+---
+
+#### User Interface Walkthrough & Figure Descriptions
+
+*(Note: Insert the corresponding system screenshot inside each designated figure placeholder below.)*
+
+##### Figure 1. Resident Homepage, 3-Second SOS Panic Trigger & Balanced Safety Check-In
+This interface serves as the primary landing dashboard for community residents. Designed with an ergonomic mobile-first layout, it features:
+- The prominent **3-Second Emergency SOS Panic Button** with animated circular charging rings and haptic pulses (`hapticEmergency`).
+- The **Quick-Dial Action Bar** providing 3 equal-width direct-call buttons for Jamindan MDRRMO Operations (`09485224345`), Jamindan Fire Station BFP (`09106964585`), and Jamindan RHU / EMS (`09304562011`).
+- The redesigned **MDRRMO Resident Safety Check-In Card**, featuring a responsive full-width mobile layout (`min-height: 46px`) with 3 uniform, thumb-friendly status buttons: `[ ✅ I Am Safe ]`, `[ 🏛️ At Evacuation Center ]`, and `[ 🆘 Needs Assistance ]`. The design eliminates empty column gaps and awkward text wrapping, provides active status badges, synchronizes in real time with the command center via WebSockets, and incorporates a safety confirmation modal dialog before submitting `Needs Assistance` to prevent accidental dispatches.
+- Active announcement cards, quick reporting shortcuts, and fixed bottom navigation clearance.
+
+##### Figure 2. Offline-First SOS Emergency Queue & Satellite GPS Locking Beacon
+This interface activates when a resident triggers an emergency alarm in an area with zero cellular data or Wi-Fi reception. The system interfaces directly with device hardware satellite GPS receivers to lock exact geographical coordinates, stages the alert inside an offline IndexedDB queue, increments an anti-spam tap counter, provides zero-load direct dialing to `911`, and offers a pre-populated SMS dispatch button addressed directly to the Jamindan MDRRMO hotline (`09485224345`).
+
+##### Figure 3a. Mobile Incident Reporting Wizard (Step 1: Emergency Categorization & Evidence)
+This screen represents the first step of the mobile incident reporting wizard. Users select from visually distinct emergency categories (Fire, Medical, Flood, Accident, Crime, Other) with custom color themes, answer dynamic context-specific fields (e.g., number of victims, structures burning, or flood water depth), and upload photographic evidence with thumbnail previews and file size indicators before proceeding.
+
+##### Figure 3b. Mobile Incident Reporting Wizard (Step 2: Location Pinpoint, Description & SMS Generator)
+This screen represents the second step of the reporting wizard. It displays an emergency type summary chip, auto-populates address landmarks, provides an interactive Leaflet GPS MapPicker for precise coordinate pinning, and includes an emergency description field. For offline citizens, it integrates an Offline SMS Generator Panel with one-tap copy and open-in-SMS functions.
+
+##### Figure 4. Track Incident Status & Operational Timeline
+This interface provides citizens with real-time transparency regarding their submitted emergency reports. It displays the unique incident tracking code (e.g., `#2026-11-8F2A`), current operational status (`Pending` $\rightarrow$ `Dispatched` $\rightarrow$ `In Progress` $\rightarrow$ `Resolved`), assigned emergency response vehicle details, estimated responder arrival times, and in-app communication channels.
+
+##### Figure 5. News & Municipal Disaster Advisories Page
+This module presents official weather bulletins, flood warnings, dam release advisories, and road closure announcements published directly by the Jamindan MDRRMO. It keeps the community informed with verified local advisories during impending weather disturbances.
+
+##### Figure 6. Emergency Safety Tips & First-Aid Knowledge Base
+This section serves as a community preparedness and survival knowledge library. It provides organized action checklists and survival guidelines before, during, and after typhoons, flash floods, earthquakes, landslides, and structural fires, alongside practical first-aid instructions.
+
+##### Figure 7. Emergency Hotlines Directory (Overhauled Mobile View)
+This interface provides ergonomic one-tap telephone access to all municipal emergency services. It features 38px tap targets, a horizontal-scrolling category pill bar (`All`, `Emergency`, `Police`, `Medical`, `Utilities`), distinctive `[Mobile]` and `[Landline]` badges, instant visual check feedback, and an administrative toolbar with a responsive bottom-sheet modal for inspecting recent hotline call activity logs.
+
+##### Figure 8. Administrative Authentication & "Go On Duty" Audio Siren Unlock
+This secure login portal authenticates MDRRMO dispatchers, field responders, and municipal administrators using encrypted JSON Web Tokens (JWT). Upon successful login, dispatchers are presented with a "Go On Duty" audio protocol that initializes the browser's `AudioContext`, ensuring that incoming emergency sirens ring out audibly without being silenced by browser autoplay restrictions.
+
+##### Figure 9. Administrative Command Dashboard
+The central command dashboard provides dispatchers with an instantaneous operational overview of municipal activities. It visualizes key metrics: total incidents, active pending emergencies, on-duty response personnel, active emergency vehicles, shelter occupancy percentages, weather widgets, and real-time activity streams.
+
+##### Figure 10. Command Map & Real-Time GIS Fleet Tracking
+This full-screen interactive GIS map provides complete spatial awareness across Jamindan's 30 barangays. It displays color-coded incident markers, live emergency response vehicles (ambulances, fire engines, police cruisers) tracked via GPS, evacuation shelter locations, and automated driving routes, accompanied by a floating full-screen toggle and mobile touch gesture locks.
+
+##### Figure 11. Incident Management Inbox & False Alarm Triage
+This module serves as the primary triage console where incoming citizen reports and SOS alarms are processed. Dispatchers can inspect photographic evidence, verify citizen identification badges, assign response vehicles, monitor response progress, or flag duplicate and prank reports as `False Alarm` with required audit justifications.
+
+##### Figure 12a. Evacuation Centers Directory & Capacity Management
+This screen displays all designated disaster evacuation shelters in Jamindan. It features a responsive layout (2-column desktop split; single-column mobile view), segmented status filter tabs (`All`, `Open`, `Full`, `Closed`), real-time occupancy progress bars showing headcount versus capacity, and a mobile touch gesture lock overlay (`[ 👆 Tap to interact with map ]`) that prevents page scrolling from getting trapped on phone viewports.
+
+##### Figure 12b. Evacuation Center Smart Route Navigation & Floating Control Bar
+When a user selects an evacuation center, the system draws the fastest driving route from their GPS coordinates and displays a sleek floating glass control bar directly on the map showing:
+- ⛺ Shelter Name
+- 📍 Road distance in kilometers and estimated travel time in minutes
+- A `[ 🧭 Steps ]` button that triggers a mobile bottom-sheet modal presenting numbered, turn-by-turn driving instructions
+- An instant red **`[ ✕ Clear Route ]`** button that removes the itinerary, clears route overlays, and resets the map viewport without requiring the user to toggle into full-screen mode.
+
+##### Figure 13. Household Vulnerability Profiling Module
+This module catalogs registered community households, highlighting vulnerable family members—specifically senior citizens (60+), persons with disabilities (PWD), infants/children, and pregnant women. During impending floods or typhoons, dispatchers can filter households by vulnerability status to prioritize high-risk families during forced rescue operations.
+
+##### Figure 14. Emergency Fleet & Responder Management
+This interface allows dispatchers to manage municipal rescue vehicles and personnel. Administrators can register emergency vehicles (ambulances, fire trucks, rescue patrol boats, utility vehicles), monitor maintenance states, update on-duty readiness, and assign responder personnel to active fleet units.
+
+##### Figure 15. User Management & Citizen ID Verification
+This module allows administrators to manage registered platform accounts. Administrators can review submitted government ID cards (PhilSys, Driver's License, Voter's ID) using a modal preview, approve or reject verification applications, and grant verified citizen badges to safeguard dispatch operations against nuisance reporting.
+
+##### Figure 16. Emergency Broadcast Siren Dispatcher
+This emergency tool allows authorized MDRRMO personnel to compose and transmit urgent emergency broadcast alerts accompanied by high-priority audio sirens, push notifications, and high-visibility visual banners across all active resident devices during municipal crises.
+
+##### Figure 17a. Generate Reports & Analytics (Desktop Data Tables & PDF/CSV Export)
+This analytics interface compiles municipal incident distributions, barangay heatmaps, agency response performance (MDRRMO, BFP, PNP, RHU), and casualty/damage assessments over custom date ranges. It features one-click export engines that generate printable, official MDRRMO compliance reports in formatted PDF and spreadsheet CSV formats.
+
+##### Figure 17b. Admin Analytics Responsive Mobile Card Feeds
+On mobile viewports (360px–412px), this interface dynamically transforms complex, wide data tables into compact, structured mobile card feeds for Master Incident Logs, Barangay Risk Summaries, Agency Performance, and Casualty Assessments, ensuring on-the-go municipal officials can inspect critical metrics without horizontal table scrolling.
+
+---
+
+### Physical Environment
+
+#### Hardware Specification
+
+The system was developed, staged, and evaluated using standard commercial computing environments for both server and client endpoints, ensuring operational feasibility without requiring expensive proprietary hardware.
+
+##### Table 2. Server Hardware Specification (Deployment & Staging)
+| Component | Minimum Specification | Recommended Specification |
+| :--- | :--- | :--- |
+| **CPU / Processor** | Intel Core i5 / AMD Ryzen 5 (4 Cores, 2.5 GHz) | Intel Core i7 / AMD Ryzen 7 (8 Cores, 3.6 GHz) or Cloud vCPU |
+| **Memory (RAM)** | 8 GB DDR4 | 16 GB DDR4 / DDR5 |
+| **Storage** | 256 GB Solid State Drive (SSD) | 512 GB NVMe SSD |
+| **Network Interface** | 100 Mbps Ethernet / Wi-Fi | 1 Gbps Fiber Connection |
+| **Input Devices** | Standard Keyboard and Mouse | Standard Keyboard and Mouse |
+| **Output Devices** | Full HD Monitor (1920 x 1080) | Dual Full HD / 2K Monitors (for Dispatch Command Center) |
+
+##### Table 3. Client Hardware Specification (Residents & Field Responders)
+| Component | Desktop / Laptop Client | Mobile Device (Resident & Responder) |
+| :--- | :--- | :--- |
+| **Processor** | Intel Core i3 / AMD Athlon (Dual Core, 2.0 GHz) | Octa-Core ARM Processor (1.8 GHz or higher) |
+| **Memory (RAM)** | 4 GB RAM | 3 GB RAM or higher |
+| **Storage** | 500 MB free browser cache storage | 100 MB free internal device storage |
+| **Display** | 1366 x 768 Resolution or higher | 5.5" Touchscreen Display (720 x 1280 or higher) |
+| **Sensors / Hardware** | Keyboard, Mouse, Audio Speakers | Built-in Satellite GPS Receiver, Haptic Vibration Motor |
+| **Connectivity** | Wi-Fi / Broadband (for online mode) | 3G/4G/5G Cellular Data, Wi-Fi, or Standard GSM SMS |
+
+---
+
+#### Software Specification
+
+##### Table 4. Software Specification
+| Layer / Environment | Technology / Tool Used | Description |
+| :--- | :--- | :--- |
+| **Operating System (Server)** | Ubuntu Linux 22.04 LTS / Windows 11 | Host environment for Node.js API runtime and database engine |
+| **Operating System (Client)** | Android 8.0+, iOS 14+, Windows 10/11 | Client endpoints for mobile PWA and administrative web portal |
+| **Frontend Framework** | React.js 18 with Vite Bundler | Modern reactive component-based web and mobile user interface |
+| **Mobile Runtime / PWA** | Capacitor 8 & Progressive Web App (PWA) | Cross-platform hardware bridge for native Geolocation and Haptics |
+| **Offline Storage Engine** | IndexedDB (`OfflineSyncDB`) & Workbox | Client-side persistent offline database and background synchronization |
+| **Haptic Feedback Utility** | `@capacitor/haptics` & `navigator.vibrate` | Universal tactile feedback for emergency triggers and form confirmations |
+| **Mapping & GIS Engine** | Leaflet.js, OpenStreetMap, Leaflet Routing | Interactive GIS maps, vehicle tracking, and road route calculation |
+| **Backend Runtime** | Node.js (v18.x / v20.x) with Express.js | Asynchronous, non-blocking REST API server handling dispatch endpoints |
+| **Real-Time Communication** | Socket.IO (WebSockets) | Bi-directional event pipeline for live sirens, status updates, and chat |
+| **Database Management** | MySQL 8.0 Relational Database | Managed cloud database storing users, incidents, shelters, and logs |
+| **Media Cloud Storage** | Cloudinary Media API | Secure cloud storage and CDN delivery for incident photos and ID cards |
+| **Push Notification Service** | Web-Push Protocol & VAPID Key Encryption | Browser-level background push notifications for emergency broadcasts |
+| **Export Engines** | html2pdf.js & react-to-print | Client-side generation of official MDRRMO incident PDF documents |
+| **Development IDE & Tools** | Visual Studio Code, Git, Postman | Source code editing, version control, and REST API endpoint testing |
+
+##### Operating System Details
+- **Windows 11:** Served as the primary development and staging workstation environment. It provides multi-monitor management for dispatch testing and Node.js execution.
+- **Ubuntu Linux (Server):** Deployed on cloud production container environments (Render Cloud Platform) to deliver high-uptime, non-blocking execution of microservices with automated memory management and SSL encryption.
+
+##### Frontend Technologies (React, HTML5, CSS3, JavaScript ES6+)
+- **HTML5 & CSS3:** Powers semantic markup, custom responsive design grids, and bottom-sheet drawers that adapt cleanly across 360px mobile viewports and large desktop monitors.
+- **React.js 18 & Vite:** Serves as the core reactive UI framework, delivering sub-second hot reloading, efficient virtual DOM diffing, and modular component reusability.
+- **Capacitor & Haptics Utility:** Interfaces directly with mobile hardware, enabling hardware satellite GPS coordinate acquisition and physical vibration feedback patterns (`hapticTap`, `hapticSuccess`, `hapticEmergency`, `hapticError`).
+
+##### Backend & Database Technologies (Node.js, Express, MySQL)
+- **Node.js & Express.js:** Handles high-concurrency client requests through event-driven non-blocking I/O, orchestrating authentication, ticket dispatch, and administrative workflows.
+- **MySQL Database:** Enforces relational ACID compliance and foreign-key constraints across users, incidents, vehicles, evacuation shelters, and system audit logs.
+
+---
+
+#### Cost of Development
+
+##### Table 5. Hardware Cost
+| Item Description | Quantity | Unit Cost (PHP) | Total Cost (PHP) |
+| :--- | :---: | :---: | :---: |
+| Admin / Dispatcher Workstation Unit (Intel i5, 16GB RAM, 512GB SSD) | 1 | ₱20,000.00 | ₱20,000.00 |
+| Dual Monitor Display (24" Full HD LED IPS) | 2 | ₱5,000.00 | ₱10,000.00 |
+| Keyboard and Optical Mouse Set | 1 | ₱1,000.00 | ₱1,000.00 |
+| Heavy-Duty All-in-One Inkjet Document Printer (for official reports) | 1 | ₱5,000.00 | ₱5,000.00 |
+| Uninterruptible Power Supply (UPS 1000VA / 600W with Surge Protection) | 1 | ₱5,000.00 | ₱5,000.00 |
+| **Total Hardware Cost** | | | **₱41,000.00** |
+
+##### Table 6. System Development Cost
+| Personnel / Role | Responsibilities | Assigned Cost (PHP) |
+| :--- | :--- | :---: |
+| **System Analyst** | Requirements elicitation, system workflow, DFD/ERD modeling, and LGU consultation | ₱10,000.00 |
+| **Lead Programmer / Full-Stack Developer** | Architecture design, database schema, API creation, offline queue, and WebSocket integration | ₱10,000.00 |
+| **UI/UX Designer** | Responsive mobile/web interface wireframing, color psychology, and SVG design | ₱5,000.00 |
+| **Technical Researcher & QA Tester** | Field data collection in Jamindan, usability testing, and documentation writing | ₱5,000.00 |
+| **Total Development Cost** | | **₱30,000.00** |
+
+---
+
+#### System Depreciation
+
+Depreciation calculations estimate the reduction in asset value over its expected functional life cycle. The **Straight-Line Depreciation Method** was utilized with an estimated useful life of **five (5) years** and zero salvage value:
+
+$$\text{Annual Depreciation} = \frac{\text{Initial Cost}}{\text{Useful Life (Years)}}$$
+
+##### Hardware Depreciation Calculation:
+$$\text{Annual Hardware Depreciation} = \frac{₱41,000.00}{5 \text{ years}} = ₱8,200.00 \text{ per year}$$
+
+##### Table 7. Hardware Depreciation Schedule
+| Year | Depreciation Expense (PHP) | Accumulated Depreciation (PHP) | Total Balance / Book Value (PHP) |
+| :---: | :---: | :---: | :---: |
+| **0** | — | — | ₱41,000.00 |
+| **1** | ₱8,200.00 | ₱8,200.00 | ₱32,800.00 |
+| **2** | ₱8,200.00 | ₱16,400.00 | ₱24,600.00 |
+| **3** | ₱8,200.00 | ₱24,600.00 | ₱16,400.00 |
+| **4** | ₱8,200.00 | ₱32,800.00 | ₱8,200.00 |
+| **5** | ₱8,200.00 | ₱41,000.00 | ₱0.00 |
+
+##### Software Depreciation Calculation:
+$$\text{Annual Software Depreciation} = \frac{₱30,000.00}{5 \text{ years}} = ₱6,000.00 \text{ per year}$$
+
+##### Table 8. Software Depreciation Schedule
+| Year | Depreciation Expense (PHP) | Accumulated Depreciation (PHP) | Total Balance / Book Value (PHP) |
+| :---: | :---: | :---: | :---: |
+| **0** | — | — | ₱30,000.00 |
+| **1** | ₱6,000.00 | ₱6,000.00 | ₱24,000.00 |
+| **2** | ₱6,000.00 | ₱12,000.00 | ₱18,000.00 |
+| **3** | ₱6,000.00 | ₱18,000.00 | ₱12,000.00 |
+| **4** | ₱6,000.00 | ₱24,000.00 | ₱6,000.00 |
+| **5** | ₱6,000.00 | ₱30,000.00 | ₱0.00 |
+
+---
+
+#### Tangible and Intangible Benefits
+
+##### Tangible Benefits
+1. **Accelerated Incident Response Time:** Reduces emergency report-to-dispatch latency from an average of 15–25 minutes (via manual calls and radio relays) to under 2 minutes through instant satellite GPS coordinates and real-time WebSocket alerts.
+2. **Paperless LGU Administrative Workflow:** Eliminates recurring manual paperwork, logbook purchases, and filing cabinets by transitioning MDRRMO records to centralized digital databases with instant automated PDF/CSV export.
+3. **Resource & Fuel Optimization:** Eliminates redundant vehicle dispatches through duplicate detection and provides optimized routing paths to emergency vehicles, reducing municipal fuel expenditures.
+4. **Offline Emergency Continuity:** Ensures residents in upland barangays (e.g., Agtambi, Jaena Norte) can initiate distress calls and record GPS locations without purchasing mobile data or relying on commercial network uptime.
+
+##### Intangible Benefits
+1. **Enhanced Citizen Trust in LGU Governance:** Real-time status notifications (`Dispatched`, `In Progress`, `Resolved`) provide transparent accountability, reinforcing community faith in local disaster services.
+2. **Community Safety and Disaster Resilience:** Pre-disaster awareness materials, public weather advisories, emergency broadcast sirens, and rapid welfare check-ins foster proactive disaster preparedness across all demographics.
+3. **Protection of Vulnerable Sectors:** Household profiling ensures that senior citizens, pregnant women, infants, and persons with disabilities are flagged and rescued first during evacuations.
+4. **Improved Multi-Agency Cohesion:** Fosters seamless operational synergy between MDRRMO, PNP, BFP, and RHU personnel through a unified situational command picture.
+
+---
+
+### Architectural Design
+
+#### Use Case Diagrams
+
+##### Figure 18. Admin / Dispatcher Use Case Diagram
+The Administrator / Dispatcher Use Case illustrates the broad operational authority held by MDRRMO personnel. Dispatchers manage incoming incidents, review citizen verification ID proofs, assign emergency vehicles, publish emergency broadcasts, manage evacuation centers, inspect system audit logs, and export official reports.
+
+```mermaid
+flowchart LR
+    Admin((MDRRMO Admin / Dispatcher))
+
+    subgraph System Boundary
+        UC1(Login & Audio Siren Unlock)
+        UC2(View Dashboard Metrics)
+        UC3(Manage Incidents & Dispatch Units)
+        UC4(Flag False Alarm / Prank Report)
+        UC5(Monitor Command Map & Vehicles)
+        UC6(Publish Emergency Broadcasts)
+        UC7(Manage Evacuation Centers & Shelters)
+        UC8(Manage Household Vulnerability)
+        UC9(Verify Citizen IDs)
+        UC10(Generate PDF & CSV Reports)
+        UC11(View System Audit Logs)
+    end
+
+    Admin --> UC1
+    Admin --> UC2
+    Admin --> UC3
+    Admin --> UC4
+    Admin --> UC5
+    Admin --> UC6
+    Admin --> UC7
+    Admin --> UC8
+    Admin --> UC9
+    Admin --> UC10
+    Admin --> UC11
+```
+
+##### Figure 19. Field Responder Use Case Diagram
+The Responder Use Case depicts the interaction of mobile emergency teams (BFP Firefighters, PNP Officers, RHU Paramedics). Responders log into their specialized portal to view assigned emergencies, navigate to incident coordinates, update on-site operational statuses, and communicate with dispatchers.
+
+```mermaid
+flowchart LR
+    Responder((Field Responder / BFP / PNP / RHU))
+
+    subgraph Responder System Boundary
+        R1(Login to Responder Account)
+        R2(View Assigned Emergency Tasks)
+        R3(View Incident Location & Landmark)
+        R4(Update Incident Status to In Progress)
+        R5(Broadcast Live Vehicle GPS Location)
+        R6(Submit Incident Resolution Notes)
+    end
+
+    Responder --> R1
+    Responder --> R2
+    Responder --> R3
+    Responder --> R4
+    Responder --> R5
+    Responder --> R6
+```
+
+##### Figure 20. Resident / Citizen Use Case Diagram
+The Resident Use Case models civilian interactions with the platform. Residents can trigger the 3-second SOS alarm (online or offline), submit safety check-in welfare statuses, submit multimedia incident reports via the 2-step wizard, track report lifecycles, view evacuation center capacities and smart driving routes, access survival tips, and submit citizen verification documents.
+
+```mermaid
+flowchart LR
+    Resident((Resident / Citizen))
+
+    subgraph Resident System Boundary
+        U1(Register & Submit ID Verification)
+        U2(Login to Resident Account)
+        U3(Trigger 3-Second Emergency SOS)
+        U4(Broadcast Safety Check-In Status)
+        U5(Queue Offline SOS with Satellite GPS)
+        U6(Send Direct Emergency SMS Fallback)
+        U7(Submit Incident via 2-Step Wizard)
+        U8(Track Live Report Status & Chat)
+        U9(View Shelters & Smart Navigation Routes)
+        U10(View News & Emergency Tips)
+        U11(Access Hotlines Directory & Quick Calls)
+    end
+
+    Resident --> U1
+    Resident --> U2
+    Resident --> U3
+    Resident --> U4
+    Resident --> U5
+    Resident --> U6
+    Resident --> U7
+    Resident --> U8
+    Resident --> U9
+    Resident --> U10
+    Resident --> U11
+```
+
+---
+
+#### Sequence Diagrams
+
+##### Figure 21. Admin Dispatcher Incident Management Sequence Diagram
+This diagram illustrates the message exchange sequence between an Admin, the Web Client, the Node.js Server, MySQL Database, and Socket.IO Event Bus during incident triage.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as MDRRMO Dispatcher
+    participant UI as Admin Dashboard (React)
+    participant Server as Backend API (Node.js)
+    participant Socket as Socket.IO Bus
+    participant DB as MySQL Database
+
+    Admin->>UI: Enter Credentials & Click 'Go On Duty'
+    UI->>Server: POST /api/auth/login
+    Server->>DB: Verify Credentials
+    DB-->>Server: Return User Details & JWT Token
+    Server-->>UI: Authentication Success (Audio Siren Unlocked)
+    
+    Socket->>UI: Event: 'new-incident-alert'
+    UI->>Admin: Trigger Audible Emergency Siren & Visual Toast
+    
+    Admin->>UI: Review Incident Details & Assign Vehicle
+    UI->>Server: PUT /api/incidents/:id/assign
+    Server->>DB: UPDATE incidents SET status='Dispatched', vehicle_id=?
+    DB-->>Server: Confirm Update
+    Server->>Socket: Emit 'incident-status-updated'
+    Socket-->>UI: Real-Time UI Synchronization
+    Server-->>UI: Return Success Response
+```
+
+##### Figure 22. Resident Emergency SOS (Online vs. Offline Queue) Sequence Diagram
+This diagram outlines the decision flow and interaction when a resident triggers the 3-second emergency panic button under both online and offline network environments.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Resident as Resident / Eyewitness
+    participant Button as SOS Panic Button (UI)
+    participant GPS as Hardware Satellite GPS
+    participant Storage as IndexedDB / LocalStorage
+    participant SMS as Native Device SMS
+    participant Server as Cloud API Server
+
+    Resident->>Button: Press and Hold 3 Seconds
+    Button->>Button: Render Circular Progress & Haptic Pulse
+    Button->>GPS: Request High-Accuracy Satellite Coordinates
+    GPS-->>Button: Return (Latitude, Longitude)
+
+    alt Network Connection Available (Online)
+        Button->>Server: POST /api/incidents (Type: 'SOS Panic')
+        Server->>Server: 5-Minute Deduplication Guard Check
+        Server-->>Button: Incident Created (HTTP 201) / Updated (HTTP 200)
+        Button->>Resident: Redirect to Live Incident Tracking Screen
+    else No Signal / Airplane Mode (Offline)
+        Button->>Storage: saveOfflineSos({ lat, lng, tapCount })
+        Storage-->>Button: Confirmed Queued in IndexedDB
+        Button->>Resident: Display 'SOS QUEUED OFFLINE' Banner with GPS
+        opt Immediate Cellular SMS Action
+            Resident->>Button: Click 'Send Direct SMS Now'
+            Button->>SMS: Open SMS to 09485224345 with GPS link
+        end
+        Note over Button,Server: When device catches cellular signal or Wi-Fi
+        Button->>Server: Auto-sync syncOfflineQueue() (Workbox / IDB)
+        Server-->>Button: Successfully Dispatched
+        Button->>Storage: clearOfflineSos()
+    end
+```
+
+---
+
+#### Activity Diagrams
+
+##### Figure 23. Resident Incident Reporting Activity Diagram (2-Step Wizard)
+This activity diagram maps the logical flow of submitting an incident using the streamlined 2-step reporting wizard, from category selection and dynamic questions to GPS localization and cloud submission.
+
+```mermaid
+flowchart TD
+    Start([Start]) --> Login[User Authenticates Credentials]
+    Login --> Choice{Network Online?}
+    
+    Choice -- Yes --> Step1[Open Wizard Step 1: Emergency & Evidence]
+    Choice -- No --> OfflineNotice[Display Offline Notice & SMS Generator]
+    
+    Step1 --> Cat[Select Emergency Category: Medical, Fire, Flood, etc.]
+    Cat --> DynamicFields[Fill Dynamic Context Questions]
+    DynamicFields --> Photo{Attach Photo Proof?}
+    Photo -- Yes --> UploadPhoto[Capture/Attach Image]
+    Photo -- No --> NextStep[Click 'Next: Location & Details']
+    UploadPhoto --> NextStep
+    
+    NextStep --> Step2[Open Wizard Step 2: Location & Send]
+    Step2 --> Pin[Auto-Detect GPS Landmark or Pin MapPicker]
+    Pin --> Desc[Input Incident Description Details]
+    Desc --> Submit[Click 'Submit Emergency Report']
+    
+    Submit --> Validate{Fields Valid?}
+    Validate -- No --> Error[Display Validation Error & Haptic Buzz]
+    Error --> Step1
+    Validate -- Yes --> Save[Store Report in Database & Queue Cloudinary]
+    Save --> Broadcast[Emit WebSocket Alert to MDRRMO Command Post]
+    Broadcast --> Finish([Display Tracking Code & End])
+```
+
+##### Figure 24. Admin Incident Dispatch & False Alarm Activity Diagram
+This activity diagram portrays the operational workflow performed by MDRRMO dispatchers upon receiving emergency tickets.
+
+```mermaid
+flowchart TD
+    Start([Start]) --> AudioUnlock[Dispatcher Unlocks Audio 'Go On Duty']
+    AudioUnlock --> Wait[Listen for Incoming Socket.IO Incidents]
+    Wait --> Alert[Receive New Incident & Sound Emergency Siren]
+    
+    Alert --> Inspect[Inspect Incident Location, Details & Citizen Verification Badge]
+    Inspect --> Assess{Is Report Legitimate?}
+    
+    Assess -- Nuisance / False Alarm --> MarkFalse[Flag Incident as 'False Alarm']
+    MarkFalse --> LogAudit[Record Reason in System Audit Logs]
+    LogAudit --> CloseTicket[Close Ticket Without Dispatching Units]
+    
+    Assess -- Valid Emergency --> SelectUnit[Select Available Response Unit: Ambulance / BFP / Patrol]
+    SelectUnit --> Dispatch[Update Status to 'Dispatched']
+    Dispatch --> NotifyResponder[Push Notification to Field Responder]
+    NotifyResponder --> Track[Monitor Live Movement on Command Map]
+    Track --> Resolved[Responder Resolves Emergency on Scene]
+    Resolved --> Export[Archive Incident for Monthly MDRRMO Report]
+    Export --> EndNode([End])
+```
+
+---
+
+### Network and Layout of the System
+
+#### Figure 25. Network Layout of the System
+
+```mermaid
+flowchart TD
+    subgraph Municipal Field Environment
+        ResidentMobile["Resident Smartphone (PWA / Mobile Web)"]
+        ResponderTablet["Field Responder Vehicle (Ambulance / BFP Tablet)"]
+        GPS["Direct Satellite GPS Constellation"]
+    end
+
+    GPS -. Radio Signals .-> ResidentMobile
+    GPS -. Radio Signals .-> ResponderTablet
+
+    subgraph Internet & Cloud Infrastructure
+        Internet((Public Internet / Cellular 4G/5G / GSM))
+        Firewall["Cloudflare Web Application Firewall (SSL / DDoS Protection)"]
+        VercelCDN["Vercel Global CDN (Frontend React Hosting)"]
+        RenderServer["Render Cloud Web Server (Node.js & Socket.IO API)"]
+        Cloudinary["Cloudinary Cloud CDN (Incident Photo Storage)"]
+        AivenDB[("Aiven Cloud MySQL 8.0 Relational Database Cluster")]
+    end
+
+    ResidentMobile <==> Internet
+    ResponderTablet <==> Internet
+    Internet <==> Firewall
+    Firewall <==> VercelCDN
+    Firewall <==> RenderServer
+    RenderServer <==> AivenDB
+    RenderServer <==> Cloudinary
+
+    subgraph MDRRMO Command Post (Jamindan Hall)
+        Modem["Municipal Fiber Modem / Router"]
+        Switch["Gigabit Ethernet Switch"]
+        AdminWorkstation["MDRRMO Dispatch Workstation (Dual Monitor PC)"]
+        AudioSpeakers["Command Center Audio System (Emergency Siren)"]
+        Printer["Network Report Printer (PDF/Hardcopy)"]
+    end
+
+    Internet <==> Modem
+    Modem <==> Switch
+    Switch <==> AdminWorkstation
+    AdminWorkstation --> AudioSpeakers
+    AdminWorkstation --> Printer
+```
+
+#### Network Architecture Narrative
+
+The **Jamindan Emergency Response Community Platform** utilizes a distributed, hybrid client-server and cloud-native network architecture designed for maximum fault tolerance, rapid packet transit, and continuous disaster reliability:
+
+1. **Client Edge Layer (Residents & Mobile Responders):** Endpoints communicate with the system using mobile data (4G/LTE/5G) or community Wi-Fi hotspots. When mobile networks are inaccessible, the client device interfaces directly with **overhead GPS satellites via radio frequency hardware chips**, bypassing the telecommunications infrastructure to lock geographical coordinates.
+2. **Cloud Security & Load-Balancing Layer:** All public incoming traffic passes through **Cloudflare SSL/TLS reverse proxies and firewalls**, filtering malicious distributed denial-of-service (DDoS) traffic and enforcing HTTPS encryption.
+3. **Application & Real-Time Pipeline Layer:** The backend application is hosted on high-performance Linux cloud containers (**Render**). It exposes RESTful JSON endpoints alongside an active **Socket.IO WebSocket daemon**. The WebSocket connection maintains persistent, full-duplex TCP channels with dispatchers, ensuring that emergency siren triggers and status changes propagate with latency under 300 milliseconds.
+4. **Relational Data & Media Storage Layer:** System states, user profiles, evacuation records, and incident histories are persistently maintained within a managed **Aiven Cloud MySQL relational database cluster** equipped with automated backups and encrypted connections. High-resolution incident photographic evidence is streamed directly to **Cloudinary Media CDN**, preserving server memory and disk bandwidth.
+5. **Municipal Command Post Layer (Local Operations Center):** Located at the MDRRMO Emergency Operations Center in Jamindan, dispatchers access the system over dedicated municipal fiber internet backed by an uninterruptible power supply (UPS). Dual-monitor desktop workstations continuously display the Command Map and Incident Inbox, connected to local sound monitors for audible emergency alarms and hardcopy document printers for official compliance logs.
+
+---
+
+### Design and Implementation Issues
+
+During the design, development, and iterative optimization phases of the platform, six critical technical challenges were identified and systematically resolved:
+
+1. **Rural Telecommunications Dead Zones and Mountainous Topography:**
+   - *Problem:* Jamindan possesses mountainous terrains and remote riverbank barangays where commercial cellular signals frequently drop, making purely web-dependent apps useless during major typhoons.
+   - *Resolution:* Implemented an **offline-first local storage queue (IndexedDB)** coupled with **hardware-level satellite GPS geolocation**. If a resident triggers an alert without network connectivity, the report is securely staged on their device, displays a clear reassurance beacon, enables an instant pre-populated GSM SMS fallback (`09485224345`), and auto-synchronizes to the cloud via Workbox background synchronization the instant signal is re-acquired.
+
+2. **Leaflet Map Touch Trapping and Mobile Route Directions Obstruction:**
+   - *Problem:* When residents scrolled through the evacuation shelters page on small mobile screens, dragging fingers over the embedded map trapped vertical page scrolling. Furthermore, when drawing routes to available shelters, Leaflet Routing Machine injected a massive turn-by-turn text table that completely blocked the small 270px map view without an accessible close button.
+   - *Resolution:* Built an **interactive touch gesture lock** (`[ 👆 Tap to interact with map ]` overlay and floating `[ 🔒 Lock scroll ]` pill) that keeps normal page scrolling fluid. Additionally, suppressed the native Leaflet itinerary table, replacing it with a sleek **floating glass route control bar** on the map showing shelter name, distance, ETA, and an instant red **`[ ✕ Clear Route ]`** button, alongside a dedicated **turn-by-turn bottom-sheet modal** that opens cleanly on demand.
+
+3. **Mobile Layout Symmetry, Button Height Imbalance, and Safety Check-In Touch Optimization:**
+   - *Problem:* In earlier versions of `ResidentDashboard.jsx`, the Safety Check-In card utilized an auto-fit grid (`repeat(auto-fit, minmax(135px, 1fr))`). On standard smartphone viewports (360px–412px), this resulted in an awkward, asymmetric 2-column wrap where Button 2 ("🏛️ At Evacuation Center") wrapped onto two lines of text (height ~54px) while Button 1 ("✅ I Am Safe") was only one line (height ~38px). Furthermore, Button 3 ("🆘 Needs Assistance") sat isolated on the left side of the second row, leaving a noticeable empty rectangular void on the right. This layout looked unbalanced and increased the risk of panicked misclicks during crises.
+   - *Resolution:* Engineered a dedicated responsive layout (`.resident-safety-grid`) that automatically shifts between a 3-equal-column grid on desktop/tablets and a unified 1-column full-width vertical stack on mobile viewports. Standardized all check-in buttons to a uniform `min-height: 46px` meeting mobile touch ergonomics standards, centered text to prevent awkward word wrapping in English and Hiligaynon dialects, and added a high-contrast safety confirmation modal to prevent accidental `Needs Assistance` alarms.
+
+4. **Mobile Screen Clutter in Complex Incident Forms and Administrative Tables:**
+   - *Problem:* Complex forms with multiple subfields (fire structure counts, victim numbers, water level choices, photos, map pickers) created excessive vertical scrolling on 360px mobile viewports. Similarly, administrative analytics tables required awkward horizontal scrolling.
+   - *Resolution:* Restructured `ReportIncident.jsx` into a focused **2-Step Wizard** (`Step 1: Emergency & Evidence` $\rightarrow$ `Step 2: Location & Send`), reducing cognitive overload during high-stress reporting. In `AdminAnalytics.jsx`, implemented responsive card feeds that automatically convert wide data tables into native mobile cards when viewed on smartphones.
+
+5. **Modern Web Browser Audio Restrictions on Dispatch Sirens:**
+   - *Problem:* Modern web browsers (Google Chrome, Microsoft Edge, Apple Safari) enforce strict auto-play security policies that silence programmatic audio alarms unless the user has actively interacted with the webpage.
+   - *Resolution:* Implemented an administrative **"Go On Duty" Web Audio unlock protocol**. Upon logging in, dispatchers are presented with a dedicated on-duty modal that resumes the `AudioContext` and pre-loads HTML5 audio buffers, ensuring that subsequent background emergency sirens ring out at full volume immediately upon an incident's arrival.
+
+6. **Security, Role-Based Access Control, and Data Privacy Compliance:**
+   - *Problem:* Storing civilian names, residential addresses, vulnerability classifications (PWD, seniors, infants), and real-time responder movements requires adherence to the Philippine Data Privacy Act of 2012 (RA 10173).
+   - *Resolution:* Enforced industry-standard cryptographic practices. All user passwords are irreversibly salted and hashed with **bcrypt**. API communications require **JSON Web Tokens (JWT)** passed via HTTP headers, validated by strict server-side role-based middleware (`requireRole(['Admin', 'Responder'])`). All SQL interactions use parameterized prepared queries, thoroughly insulating the platform against SQL injection vulnerabilities.
