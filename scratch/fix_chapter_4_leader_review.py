@@ -24,6 +24,7 @@ NEW_IMG_DIR = os.path.join(SCRATCH_DIR, "new_screenshots")
 DIAGRAM_DIR = os.path.join(SCRATCH_DIR, "diagram_images")
 
 OUT_STANDALONE = r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_REVISED_PERFECT.docx"
+OUT_PANEL = r"C:\Users\huawei\Downloads\CHAPTER_4_JAMINDAN_RESIZED_FOR_PANEL.docx"
 OUT_ERROR_OVERWRITE = r"C:\Users\huawei\Downloads\error-chapter-4.docx"
 
 def get_image_size(file_path):
@@ -282,7 +283,7 @@ def build_chapter_4(doc):
 
     # Insert Figure 6: Client-Server Interaction Diagram
     fig6_path = os.path.join(DIAGRAM_DIR, "fig6_client_server_jamindan.png")
-    add_image_centered(doc, fig6_path, target_width=Inches(5.5))
+    add_image_centered(doc, fig6_path, target_width=Inches(6.0))
     add_figure_caption(doc, "6", "Client-Server Interaction Diagram of the Emergency Response Platform")
 
     add_styled_paragraph(doc,
@@ -344,6 +345,7 @@ def build_chapter_4(doc):
         "To accommodate different types of emergency incident information, the database also uses JSON attributes for category-specific details, such as flood water depth, the number of trapped individuals, structure fire classifications, and vehicle collision counts. This approach allows the system to store additional incident information while maintaining the relational structure of its core records. This section describes the database organization and its intended data management approach, including its relational structure and the use of JSON attributes for flexible incident information.")
 
     # Insert Figure 8: Real Jamindan ERD
+    doc.add_page_break()
     fig8_path = os.path.join(DIAGRAM_DIR, "fig8_erd_jamindan.png")
     add_image_centered(doc, fig8_path, target_width=Inches(6.0))
     add_figure_caption(doc, "8", "Entity-Relationship Diagram of the Emergency Response Community Platform")
@@ -531,16 +533,25 @@ def main():
     print("Generating Standalone Chapter 4 document...")
     doc_standalone = Document()
     build_chapter_4(doc_standalone)
-    doc_standalone.save(OUT_STANDALONE)
-    print(f"Saved: {OUT_STANDALONE} ({os.path.getsize(OUT_STANDALONE)} bytes)")
+    
+    # Save primary panel-optimized document
+    doc_standalone.save(OUT_PANEL)
+    print(f"Saved Panel Document: {OUT_PANEL} ({os.path.getsize(OUT_PANEL)} bytes)")
 
-    # Also overwrite error-chapter-4.docx so if anyone opens it, it's 100% fixed!
+    # Try saving to OUT_STANDALONE if not locked
+    try:
+        doc_standalone.save(OUT_STANDALONE)
+        print(f"Saved: {OUT_STANDALONE}")
+    except Exception as e:
+        print(f"Notice: Could not overwrite {OUT_STANDALONE} directly (open in Word): {e}")
+
+    # Also overwrite error-chapter-4.docx
     print("Overwriting error-chapter-4.docx with pristine Chapter 4...")
     try:
         doc_standalone.save(OUT_ERROR_OVERWRITE)
         print(f"Saved: {OUT_ERROR_OVERWRITE}")
     except Exception as e:
-        print(f"Notice: Could not overwrite error-chapter-4.docx directly (may be open in Word): {e}")
+        print(f"Notice: Could not overwrite error-chapter-4.docx directly: {e}")
 
 if __name__ == "__main__":
     main()
