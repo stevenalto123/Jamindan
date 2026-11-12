@@ -292,7 +292,7 @@ def build_chapter_4(doc):
 
     # Insert Figure 7: System Architecture Diagram
     fig7_path = os.path.join(DIAGRAM_DIR, "fig7_system_architecture_jamindan.png")
-    add_image_centered(doc, fig7_path, target_width=Inches(5.8))
+    add_image_centered(doc, fig7_path, target_width=Inches(6.0))
     add_figure_caption(doc, "7", "System Architecture Diagram")
 
     add_styled_paragraph(doc,
@@ -345,7 +345,7 @@ def build_chapter_4(doc):
 
     # Insert Figure 8: Real Jamindan ERD
     fig8_path = os.path.join(DIAGRAM_DIR, "fig8_erd_jamindan.png")
-    add_image_centered(doc, fig8_path, target_width=Inches(5.8))
+    add_image_centered(doc, fig8_path, target_width=Inches(6.0))
     add_figure_caption(doc, "8", "Entity-Relationship Diagram of the Emergency Response Community Platform")
 
     add_styled_paragraph(doc,
