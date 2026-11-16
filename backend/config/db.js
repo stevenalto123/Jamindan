@@ -520,6 +520,123 @@ const initializeDatabase = async () => {
       }
     }
 
+    // 5. Backdate seed accounts, news, and populate 2-month-old historical incident data
+    try {
+      // Backdate accounts to September 2026 (over 2 months ago)
+      await pool.query("UPDATE users SET created_at = '2026-09-01 08:00:00' WHERE username IN ('admin', 'responder', 'bfp_responder', 'rhu_medic', 'resident') AND created_at > '2026-09-02'");
+
+      // Backdate advisories and news to September and October 2026
+      await pool.query("UPDATE news SET created_at = '2026-09-18 08:30:00' WHERE title LIKE '%Typhoon%'");
+      await pool.query("UPDATE news SET created_at = '2026-10-12 14:00:00' WHERE title LIKE '%Seminar%'");
+      await pool.query("UPDATE news SET created_at = '2026-09-01 09:00:00' WHERE title LIKE '%Launch%'");
+
+      // Check if historical 2-month-old incidents already exist
+      const [histRows] = await pool.query("SELECT COUNT(*) as count FROM incidents WHERE code LIKE '#2026-09-%'");
+      if (histRows[0].count === 0) {
+        console.log('Seeding 2-month historical emergency incident records...');
+        
+        // Fetch user IDs for relations
+        const [adminU] = await pool.query("SELECT id FROM users WHERE username = 'admin' LIMIT 1");
+        const [residentU] = await pool.query("SELECT id FROM users WHERE username = 'resident' LIMIT 1");
+        const [rescueU] = await pool.query("SELECT id FROM users WHERE username = 'responder' LIMIT 1");
+        const [bfpU] = await pool.query("SELECT id FROM users WHERE username = 'bfp_responder' LIMIT 1");
+        const [rhuU] = await pool.query("SELECT id FROM users WHERE username = 'rhu_medic' LIMIT 1");
+
+        const adminId = adminU[0]?.id || 1;
+        const residentId = residentU[0]?.id || adminId;
+        const rescueId = rescueU[0]?.id || adminId;
+        const bfpId = bfpU[0]?.id || adminId;
+        const rhuId = rhuU[0]?.id || adminId;
+
+        // Fetch vehicle IDs
+        const [v1] = await pool.query("SELECT id FROM vehicles WHERE agency = 'MDRRMO' LIMIT 1");
+        const [v2] = await pool.query("SELECT id FROM vehicles WHERE agency = 'BFP' LIMIT 1");
+        const [v3] = await pool.query("SELECT id FROM vehicles WHERE agency = 'RHU' LIMIT 1");
+        const vehMdrrmo = v1[0]?.id || null;
+        const vehBfp = v2[0]?.id || null;
+        const vehRhu = v3[0]?.id || null;
+
+        // Incident 1 (2 Months Ago - Sept 14, 2026: River Overflow / Flood in Agloloway)
+        const [inc1] = await pool.query(`
+          INSERT INTO incidents (code, reporter_id, responder_id, vehicle_id, type, lead_agency, description, location_lat, location_lng, location_address, status, response_notes, resources_used, created_at, updated_at)
+          VALUES ('#2026-09-0014', ?, ?, ?, 'Flood', 'MDRRMO', 'Rising water levels along Mambusao River overflowed onto low-lying purok pathways. Three families assisted to high ground.', 11.4110, 122.4750, 'Purok 2, Brgy. Agloloway, Jamindan', 'Resolved', 'MDRRMO Rescue Unit deployed with rescue van. Evacuated 12 individuals to barangay multipurpose hall safely. Water subsided after 4 hours.', 'Rescue Van 1, Life Vests, First Aid Kit', '2026-09-14 07:15:00', '2026-09-14 11:45:00')
+        `, [residentId, rescueId, vehMdrrmo]);
+
+        await pool.query(`
+          INSERT INTO incident_status_history (incident_id, status, comment, updated_by, created_at) VALUES
+          (?, 'Pending', 'Incident reported via Jamindan Emergency App.', ?, '2026-09-14 07:15:00'),
+          (?, 'Acknowledged', 'MDRRMO Dispatcher acknowledged incident.', ?, '2026-09-14 07:19:00'),
+          (?, 'Responding', 'MDRRMO Rescue Team dispatched.', ?, '2026-09-14 07:25:00'),
+          (?, 'On Scene', 'Team arrived at Agloloway riverbank.', ?, '2026-09-14 07:38:00'),
+          (?, 'Resolved', 'Area secured, water level normalized.', ?, '2026-09-14 11:45:00')
+        `, [inc1.insertId, residentId, inc1.insertId, adminId, inc1.insertId, rescueId, inc1.insertId, rescueId, inc1.insertId, rescueId]);
+
+        // Incident 2 (2 Months Ago - Sept 22, 2026: Vehicular Accident in Lucero)
+        const [inc2] = await pool.query(`
+          INSERT INTO incidents (code, reporter_id, responder_id, vehicle_id, type, lead_agency, description, location_lat, location_lng, location_address, status, response_notes, resources_used, created_at, updated_at)
+          VALUES ('#2026-09-0022', ?, ?, ?, 'Accident', 'RHU', 'Single motorcycle skidded on wet asphalt along the provincial road. Rider sustained minor lacerations and abrasions.', 11.4172, 122.4950, 'Brgy. Lucero Highway, Jamindan', 'Resolved', 'RHU ambulance team coordinated on scene. Wound dressing administered. Rider escorted to Mambusao District Hospital for clearance.', 'RHU Medical Transport Ambulance, Splints, Sterile Bandages', '2026-09-22 16:30:00', '2026-09-22 17:50:00')
+        `, [residentId, rhuId, vehRhu]);
+
+        await pool.query(`
+          INSERT INTO incident_status_history (incident_id, status, comment, updated_by, created_at) VALUES
+          (?, 'Pending', 'Motorist accident reported.', ?, '2026-09-22 16:30:00'),
+          (?, 'Acknowledged', 'RHU Medical Unit alerted.', ?, '2026-09-22 16:33:00'),
+          (?, 'Responding', 'RHU Ambulance en route.', ?, '2026-09-22 16:38:00'),
+          (?, 'On Scene', 'Medics arrived, first aid administered.', ?, '2026-09-22 16:49:00'),
+          (?, 'Resolved', 'Patient transported safely, road cleared.', ?, '2026-09-22 17:50:00')
+        `, [inc2.insertId, residentId, inc2.insertId, adminId, inc2.insertId, rhuId, inc2.insertId, rhuId, inc2.insertId, rhuId]);
+
+        // Incident 3 (1 Month Ago - Oct 08, 2026: Kitchen Fire in Poblacion)
+        const [inc3] = await pool.query(`
+          INSERT INTO incidents (code, reporter_id, responder_id, vehicle_id, type, lead_agency, description, location_lat, location_lng, location_address, status, response_notes, resources_used, created_at, updated_at)
+          VALUES ('#2026-10-0008', ?, ?, ?, 'Fire', 'BFP', 'Kitchen fire caused by loose LPG hose in residential wooden kitchen. Contained quickly before spreading to neighboring structures.', 11.4294, 122.4828, 'Zone 3, Brgy. Poblacion, Jamindan', 'Resolved', 'BFP Jamindan Engine 1 deployed with 4 firefighters. Fire extinguished using dry chemical extinguisher and 1 hose line. No casualties.', 'BFP Jamindan Fire Engine 1, 10lb Dry Chemical Extinguisher', '2026-10-08 19:10:00', '2026-10-08 20:05:00')
+        `, [residentId, bfpId, vehBfp]);
+
+        await pool.query(`
+          INSERT INTO incident_status_history (incident_id, status, comment, updated_by, created_at) VALUES
+          (?, 'Pending', 'Emergency fire report received.', ?, '2026-10-08 19:10:00'),
+          (?, 'Acknowledged', 'BFP Jamindan alerted.', ?, '2026-10-08 19:12:00'),
+          (?, 'Responding', 'Fire Engine 1 en route.', ?, '2026-10-08 19:15:00'),
+          (?, 'On Scene', 'Attack line deployed, suppression active.', ?, '2026-10-08 19:22:00'),
+          (?, 'Resolved', 'Fire completely extinguished, overhauling done.', ?, '2026-10-08 20:05:00')
+        `, [inc3.insertId, residentId, inc3.insertId, adminId, inc3.insertId, bfpId, inc3.insertId, bfpId, inc3.insertId, bfpId]);
+
+        // Incident 4 (1 Month Ago - Oct 19, 2026: Acute Medical Emergency in Agtambi)
+        const [inc4] = await pool.query(`
+          INSERT INTO incidents (code, reporter_id, responder_id, vehicle_id, type, lead_agency, description, location_lat, location_lng, location_address, status, response_notes, resources_used, created_at, updated_at)
+          VALUES ('#2026-10-0019', ?, ?, ?, 'Medical', 'RHU', 'Senior citizen experiencing acute chest pain and shortness of breath during monsoon weather.', 11.4450, 122.4680, 'Brgy. Agtambi, Jamindan', 'Resolved', 'RHU Paramedic Team dispatched with transport ambulance. Oxygen support provided. Patient successfully stabilized and admitted at Capiz Doctors Hospital.', 'RHU Medical Transport Ambulance, Oxygen Tank, BP Monitor', '2026-10-19 21:05:00', '2026-10-19 22:45:00')
+        `, [residentId, rhuId, vehRhu]);
+
+        await pool.query(`
+          INSERT INTO incident_status_history (incident_id, status, comment, updated_by, created_at) VALUES
+          (?, 'Pending', 'Emergency medical call.', ?, '2026-10-19 21:05:00'),
+          (?, 'Acknowledged', 'MHO Emergency team notified.', ?, '2026-10-19 21:08:00'),
+          (?, 'Responding', 'Ambulance dispatched.', ?, '2026-10-19 21:14:00'),
+          (?, 'On Scene', 'Vitals checked, oxygen therapy administered.', ?, '2026-10-19 21:28:00'),
+          (?, 'Resolved', 'Patient turned over to attending hospital physician.', ?, '2026-10-19 22:45:00')
+        `, [inc4.insertId, residentId, inc4.insertId, adminId, inc4.insertId, rhuId, inc4.insertId, rhuId, inc4.insertId, rhuId]);
+
+        // Incident 5 (2 Weeks Ago - Nov 02, 2026: Minor Landslide Road Clearing in Jaena Norte)
+        const [inc5] = await pool.query(`
+          INSERT INTO incidents (code, reporter_id, responder_id, vehicle_id, type, lead_agency, description, location_lat, location_lng, location_address, status, response_notes, resources_used, created_at, updated_at)
+          VALUES ('#2026-11-0002', ?, ?, ?, 'Landslide', 'MDRRMO', 'Minor soil erosion and fallen bamboo blocking one lane of barangay access road after continuous monsoon rain.', 11.4380, 122.5020, 'Sitio Ilawod, Brgy. Jaena Norte, Jamindan', 'Resolved', 'MDRRMO clearing crew deployed with chainsaw and backhoe operator. Debris cleared, road opened to two-way traffic.', 'Chainsaw, Safety Cones, Clearing Shovels', '2026-11-02 08:20:00', '2026-11-02 11:30:00')
+        `, [residentId, rescueId, vehMdrrmo]);
+
+        await pool.query(`
+          INSERT INTO incident_status_history (incident_id, status, comment, updated_by, created_at) VALUES
+          (?, 'Pending', 'Barangay official reported road obstruction.', ?, '2026-11-02 08:20:00'),
+          (?, 'Acknowledged', 'Clearing operation scheduled.', ?, '2026-11-02 08:24:00'),
+          (?, 'Responding', 'Clearing team in transit.', ?, '2026-11-02 08:35:00'),
+          (?, 'On Scene', 'Clearing operations commenced.', ?, '2026-11-02 08:52:00'),
+          (?, 'Resolved', 'Road 100% passable, cones retrieved.', ?, '2026-11-02 11:30:00')
+        `, [inc5.insertId, residentId, inc5.insertId, adminId, inc5.insertId, rescueId, inc5.insertId, rescueId, inc5.insertId, rescueId]);
+
+        console.log('Seeded 5 realistic 2-month-old historical emergency incidents successfully.');
+      }
+    } catch (e) {
+      console.error('Error seeding historical incidents:', e);
+    }
+
     // Seed system settings
     const [mciRows] = await pool.query("SELECT * FROM system_settings WHERE setting_key = 'mci_mode'");
     if (mciRows.length === 0) {
