@@ -424,7 +424,7 @@ router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), asy
   }
 
   try {
-    const [incidentRows] = await db.query('SELECT code, reporter_id, status, responder_id, vehicle_id FROM incidents WHERE id = ?', [id]);
+    const [incidentRows] = await db.query('SELECT code, reporter_id, status, responder_id, vehicle_id, response_notes, resources_used FROM incidents WHERE id = ?', [id]);
     const incident = incidentRows[0];
     if (!incident) {
       return res.status(404).json({ message: 'Incident not found' });
@@ -447,10 +447,17 @@ router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), asy
             resources_used = ?, 
             updated_at = CURRENT_TIMESTAMP
       `;
+      const finalNotes = isSwitchingToFalseAlarm 
+        ? providedNotes 
+        : (providedNotes !== null ? providedNotes : (incident.response_notes || null));
+      const finalResources = isSwitchingToFalseAlarm 
+        ? providedResources 
+        : (providedResources !== null ? providedResources : (incident.resources_used || null));
+
       const updateParams = [
         status,
-        isSwitchingToFalseAlarm ? providedNotes : (providedNotes !== null ? providedNotes : incident.response_notes),
-        isSwitchingToFalseAlarm ? providedResources : (providedResources !== null ? providedResources : incident.resources_used)
+        finalNotes || null,
+        finalResources || null
       ];
       
       if (req.user.role === 'Responder' && incident.responder_id === null) {
@@ -481,15 +488,17 @@ router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), asy
       `, [id, status, fullComment, req.user.id]);
 
       // 3. Notify resident
-      await conn.execute(`
-        INSERT INTO notifications (user_id, title, message, reference_type, reference_id)
-        VALUES (?, ?, ?, 'incident', ?)
-      `, [
-        incident.reporter_id,
-        'Report Status Update',
-        `Your incident report ${incident.code} has been updated to "${status}".`,
-        id
-      ]);
+      if (incident.reporter_id) {
+        await conn.execute(`
+          INSERT INTO notifications (user_id, title, message, reference_type, reference_id)
+          VALUES (?, ?, ?, 'incident', ?)
+        `, [
+          incident.reporter_id,
+          'Report Status Update',
+          `Your incident report ${incident.code} has been updated to "${status}".`,
+          id
+        ]);
+      }
     });
 
       await db.logAudit(`Incident status updated to [${status}] for ${incident.code}`, req.user.username, req.ip);
@@ -505,7 +514,7 @@ router.put('/:id/status', authRequired, requireRole(['Admin', 'Responder']), asy
 
   } catch (error) {
     console.error('Update status error:', error);
-    return res.status(500).json({ message: 'Server error while updating status' });
+    return res.status(500).json({ message: 'Server error while updating status: ' + (error.message || '') });
   }
 });
 
