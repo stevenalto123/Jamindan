@@ -644,6 +644,19 @@ const initializeDatabase = async () => {
       console.log('Seeded initial MCI Mode setting as false.');
     }
 
+    // Clear stale test broadcasts on startup so random test data never locks the user interface
+    try {
+      await pool.query(`
+        UPDATE notifications 
+        SET reference_type = REPLACE(reference_type, 'broadcast:', 'broadcast_ended:') 
+        WHERE reference_type LIKE 'broadcast:%' 
+        AND (title LIKE '%fnw%' OR message LIKE '%duhfks%' OR created_at < NOW() - INTERVAL 4 HOUR)
+      `);
+      console.log('Cleaned up stale test broadcasts.');
+    } catch (bErr) {
+      console.warn('Stale broadcast cleanup:', bErr.message);
+    }
+
     console.log('MySQL Database Initialization Complete.');
   } catch (error) {
     console.error('MySQL database initialization failed:', error);
