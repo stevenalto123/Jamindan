@@ -20,20 +20,67 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Generous Rate Limiter for Step 1 username/email availability check
+const availabilityLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: { message: 'Too many availability checks. Please wait a moment and try again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 const { storage } = require('../config/cloudinary');
 
 const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|webp|heic|heif/;
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    
-    if (mimetype && extname) {
+    const allowedExt = /\.(jpe?g|png|webp|heic|heif)$/i;
+    const allowedMime = /^image\/(jpe?g|png|webp|heic|heif)$/i;
+    const ext = path.extname(file.originalname || '');
+    const hasValidExt = allowedExt.test(ext);
+    const hasValidMime = allowedMime.test(file.mimetype || '');
+
+    // Allow matching mime+ext, or valid iOS HEIC/camera capture blobs where Safari/Android omits extension or sends generic stream mime
+    if (
+      (hasValidMime && (hasValidExt || !ext)) ||
+      ((!file.mimetype || file.mimetype === 'application/octet-stream') && hasValidExt)
+    ) {
       return cb(null, true);
     }
     cb(new Error('SECURITY ERROR: Only image files (JPG, PNG, WEBP, HEIC) are allowed.'));
+  }
+});
+
+// Check Username & Email Availability before leaving Step 1
+router.post('/check-availability', availabilityLimiter, async (req, res) => {
+  try {
+    const cleanUsername = (req.body.username || '').trim().toLowerCase();
+    const cleanEmail = (req.body.email || '').trim().toLowerCase();
+
+    if (!cleanUsername && !cleanEmail) {
+      return res.json({ available: true });
+    }
+
+    const [existing] = await db.execute(
+      'SELECT username, email FROM users WHERE username = ? OR email = ? LIMIT 1',
+      [cleanUsername, cleanEmail]
+    );
+
+    if (existing.length > 0) {
+      const match = existing[0];
+      const field = match.username === cleanUsername ? 'username' : 'email';
+      const message =
+        field === 'username'
+          ? 'That username is already taken. Please choose a different username.'
+          : 'That email address is already registered. Try signing in or using a different email.';
+      return res.status(409).json({ available: false, field, message });
+    }
+
+    return res.json({ available: true });
+  } catch (err) {
+    console.error('Availability check error:', err);
+    return res.status(500).json({ message: 'Unable to verify username/email availability right now.' });
   }
 });
 
