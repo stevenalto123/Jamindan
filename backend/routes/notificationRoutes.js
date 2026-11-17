@@ -26,18 +26,38 @@ router.get('/active-broadcast', async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT id, title, message, reference_type, created_at FROM notifications 
-      WHERE reference_type LIKE 'broadcast%' 
+      WHERE reference_type LIKE 'broadcast:%' 
       AND created_at >= NOW() - INTERVAL 4 HOUR
-      ORDER BY created_at DESC 
+      ORDER BY id DESC 
       LIMIT 1
     `);
     
     if (rows && rows.length > 0) {
       const b = rows[0];
-      const severity = b.reference_type && b.reference_type.includes(':') 
-        ? b.reference_type.split(':')[1] 
-        : 'extreme';
-      return res.json({ active: true, broadcast: { ...b, severity } });
+      const parts = (b.reference_type || '').split(':');
+      const severity = parts[1] || 'extreme';
+      const broadcastKey = parts[2] || String(b.id);
+
+      let target_area = 'Municipality of Jamindan (All Barangays)';
+      let cleanMessage = b.message;
+      const match = b.message && b.message.match(/^\[(.*?)\]\s*([\s\S]*)$/);
+      if (match) {
+        target_area = match[1];
+        cleanMessage = match[2];
+      }
+
+      return res.json({ 
+        active: true, 
+        broadcast: { 
+          id: broadcastKey,
+          dbId: b.id,
+          title: b.title,
+          message: cleanMessage,
+          severity,
+          target_area,
+          created_at: b.created_at
+        } 
+      });
     }
     return res.json({ active: false, broadcast: null });
   } catch (error) {
@@ -92,6 +112,21 @@ router.put('/read-all', async (req, res) => {
   }
 });
 
+// Mark broadcast as read for current user by batch key or id
+router.put('/broadcast/:key/read', async (req, res) => {
+  const { key } = req.params;
+  try {
+    await db.execute(
+      'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND (reference_type LIKE ? OR id = ?)',
+      [req.user.id, `%:${key}`, /^\d+$/.test(key) ? Number(key) : -1]
+    );
+    return res.json({ message: 'Broadcast marked as read' });
+  } catch (error) {
+    console.error('Mark broadcast read error:', error);
+    return res.status(500).json({ message: 'Server error while marking broadcast as read' });
+  }
+});
+
 // ADMIN ONLY: Mass Broadcast Notification (supports NDRRMC Extreme, Severe, and Advisory)
 router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
   const { title, message, severity = 'extreme', target_area = 'Municipality of Jamindan (All Barangays)' } = req.body;
@@ -101,6 +136,7 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
 
   try {
     const [users] = await db.query('SELECT id, push_subscription FROM users WHERE is_active = 1');
+    const batchKey = Date.now().toString(36);
     
     let sentCount = 0;
     const alertPrefix = severity === 'extreme' 
@@ -113,12 +149,13 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
       title: `${alertPrefix} - ${title}`,
       body: formattedBody,
       icon: '/jamindan-seal.png',
-      url: `/?broadcast=1&title=${encodeURIComponent(title)}&msg=${encodeURIComponent(message)}&severity=${encodeURIComponent(severity)}&area=${encodeURIComponent(target_area)}`
+      url: `/?broadcast=1&b_id=${encodeURIComponent(batchKey)}&title=${encodeURIComponent(title)}&msg=${encodeURIComponent(message)}&severity=${encodeURIComponent(severity)}&area=${encodeURIComponent(target_area)}`
     });
 
+    let broadcastId = batchKey;
     if (users.length > 0) {
-      // Bulk insert notifications for all active users in a single query
-      const insertValues = users.map(u => [u.id, title, formattedBody, `broadcast:${severity}`, null]);
+      // Bulk insert notifications for all active users in a single query with shared batchKey
+      const insertValues = users.map(u => [u.id, title, formattedBody, `broadcast:${severity}:${batchKey}`, null]);
       await db.query(
         'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES ?',
         [insertValues]
@@ -145,6 +182,7 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.emit('new-broadcast', { 
+        id: broadcastId,
         title, 
         message, 
         severity, 
@@ -152,6 +190,14 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
         created_at: new Date().toISOString() 
       });
     }
+
+    try {
+      await db.logAudit(
+        `Transmitted NDRRMC Mass Broadcast: "${title}" (${severity.toUpperCase()}) for ${target_area}`,
+        req.user.username,
+        req.ip
+      );
+    } catch (aErr) {}
 
     // Automatically activate resident safety check-in on emergency broadcasts
     if (severity === 'extreme' || severity === 'severe') {
@@ -170,10 +216,59 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
       }
     }
 
-    return res.json({ message: `Broadcast sent to ${sentCount} devices successfully.` });
+    return res.json({ 
+      success: true,
+      broadcastId,
+      message: `Broadcast transmitted to ${sentCount} devices successfully.` 
+    });
   } catch (error) {
     console.error('Broadcast error:', error);
     return res.status(500).json({ message: 'Server error while broadcasting' });
+  }
+});
+
+// ADMIN ONLY: Cancel / Stand Down Active Mass Broadcast Across All Devices
+router.post('/broadcast/clear', requireRole(['Admin']), async (req, res) => {
+  try {
+    // End all active broadcasts
+    const [result] = await db.query(`
+      UPDATE notifications 
+      SET reference_type = REPLACE(reference_type, 'broadcast:', 'broadcast_ended:') 
+      WHERE reference_type LIKE 'broadcast:%' 
+      AND created_at >= NOW() - INTERVAL 24 HOUR
+    `);
+
+    // Reset safety check-in
+    try {
+      await db.query(`
+        INSERT INTO system_settings (setting_key, setting_value)
+        VALUES ('safety_checkin_active', 'false')
+        ON DUPLICATE KEY UPDATE setting_value = 'false'
+      `);
+    } catch (sErr) {}
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('broadcast-cancelled', { 
+        reason: 'Stand down issued by NDRRMC Operations Center',
+        clearedAt: new Date().toISOString()
+      });
+      io.emit('safety-checkin-mode-changed', { active: false, reason: 'broadcast_cleared' });
+      io.emit('safety-checkin-updated');
+    }
+
+    try {
+      await db.logAudit('Admin issued Stand Down: Active NDRRMC Emergency Broadcast ended and silenced', req.user.username, req.ip);
+    } catch (aErr) {}
+
+    return res.json({ 
+      success: true, 
+      message: 'Active emergency broadcast stood down and silenced across all devices.',
+      affectedRows: result.affectedRows 
+    });
+  } catch (error) {
+    console.error('Clear broadcast error:', error);
+    return res.status(500).json({ message: 'Server error while clearing broadcast' });
   }
 });
 
@@ -298,7 +393,7 @@ router.get('/safety-checkins', async (req, res) => {
       [req.user.id]
     );
 
-    // Check if safety check-in is currently active (via manual setting or active emergency broadcast)
+    // Check if safety check-in is currently active (respects explicit setting in system_settings)
     let isCheckinActive = false;
     try {
       const [settingRows] = await db.query(
@@ -306,13 +401,11 @@ router.get('/safety-checkins', async (req, res) => {
       );
       if (settingRows && settingRows.length > 0) {
         isCheckinActive = settingRows[0].setting_value === 'true';
-      }
-
-      // If not manually forced active, also check if there is an active emergency broadcast within last 4 hours
-      if (!isCheckinActive) {
+      } else {
+        // Fallback: If not explicitly configured yet, check if there is an active emergency broadcast
         const [activeBroadcasts] = await db.query(`
           SELECT id FROM notifications 
-          WHERE reference_type LIKE 'broadcast%' 
+          WHERE reference_type LIKE 'broadcast:%' 
           AND created_at >= NOW() - INTERVAL 4 HOUR
           LIMIT 1
         `);
