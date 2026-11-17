@@ -63,6 +63,15 @@ const NDRRMC_PRESETS = [
   }
 ];
 
+const JAMINDAN_BARANGAYS = [
+  'Agambulong', 'Agbun-od', 'Agcagay', 'Aglibacao', 'Agloloway', 
+  'Bayebaye', 'Caridad', 'Esperanza', 'Fe', 'Ganzon', 
+  'Guintas', 'Igang', 'Jaena Norte', 'Jaena Sur', 'Jagnaya', 
+  'Lapaz', 'Linambasan', 'Lucero', 'Maantol', 'Masgrau', 
+  'Milan', 'Molet', 'Pangabat', 'Pangabuan', 'Pasol-o', 
+  'Poblacion', 'San Jose', 'San Juan', 'San Vicente', 'Santo Rosario'
+].sort();
+
 const AdminDashboard = () => {
   const { t } = useLanguage();
   const { user, setUser } = useAuth();
@@ -80,6 +89,7 @@ const AdminDashboard = () => {
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [broadcastSeverity, setBroadcastSeverity] = useState('extreme');
   const [broadcastArea, setBroadcastArea] = useState('Municipality of Jamindan (All Barangays)');
+  const [isCustomArea, setIsCustomArea] = useState(false);
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [broadcasting, setBroadcasting] = useState(false);
   const [activeBroadcastData, setActiveBroadcastData] = useState(null);
@@ -153,6 +163,7 @@ const AdminDashboard = () => {
     setBroadcastMessage(preset.message);
     setBroadcastSeverity(preset.severity);
     setBroadcastArea(preset.area);
+    setIsCustomArea(false);
   };
 
   const fetchDashboardStats = async () => {
@@ -340,6 +351,7 @@ const AdminDashboard = () => {
       setBroadcastMessage('');
       setBroadcastSeverity('extreme');
       setBroadcastArea('Municipality of Jamindan (All Barangays)');
+      setIsCustomArea(false);
       await fetchDashboardStats();
     } catch (err) {
       console.error(err);
@@ -771,7 +783,7 @@ const AdminDashboard = () => {
                     height: '7px',
                     borderRadius: '50%',
                     backgroundColor: isCheckinActive ? '#16a34a' : '#94a3b8',
-                    boxShadow: isCheckinActive ? '0 0 8px rgba(22, 163, 74, 0.6)' : 'none'
+                    boxShadow: isCheckinActive ? '0 0 8px rgba(220, 38, 38, 0.6)' : 'none'
                   }} />
                   {isCheckinActive ? t('checkinStatusActive') : t('checkinStatusInactive')}
                 </span>
@@ -1201,25 +1213,107 @@ const AdminDashboard = () => {
 
               {/* Target Hazard Area */}
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-main)' }}>
-                  Target Hazard Area
-                </label>
-                <input 
-                  type="text" 
-                  required 
-                  list="jamindan-areas"
-                  value={broadcastArea} 
-                  onChange={e => setBroadcastArea(e.target.value)} 
-                  placeholder="e.g. Municipality of Jamindan (All Barangays)" 
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: '#f8fafc', fontSize: '14px', fontWeight: '600' }}
-                />
-                <datalist id="jamindan-areas">
-                  <option value="Municipality of Jamindan (All Barangays)" />
-                  <option value="Barangays Pangabuan, Jaena Norte, Agambulong, Guibuangan" />
-                  <option value="Barangays Poblacion, Linambasan, Esperanza, Fe" />
-                  <option value="Barangays Lucero, Molet, Jagnaya, San Jose" />
-                  <option value="Barangays Milan, Pasig, San Vicente, Bayuyan" />
-                </datalist>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
+                    Target Hazard Area
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomArea(prev => !prev);
+                      if (!isCustomArea && !broadcastArea) {
+                        setBroadcastArea('');
+                      }
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--primary-color)',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      padding: 0
+                    }}
+                  >
+                    {isCustomArea ? '📋 Choose from Preset List' : '✍️ Type Custom Area'}
+                  </button>
+                </div>
+
+                {!isCustomArea ? (
+                  <select
+                    value={broadcastArea}
+                    onChange={e => {
+                      if (e.target.value === '__custom__') {
+                        setIsCustomArea(true);
+                        setBroadcastArea('');
+                      } else {
+                        setBroadcastArea(e.target.value);
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border-color)',
+                      background: '#f8fafc',
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      color: 'var(--text-main)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <optgroup label="📍 General / Municipal-wide">
+                      <option value="Municipality of Jamindan (All Barangays)">Municipality of Jamindan (All Barangays)</option>
+                    </optgroup>
+                    <optgroup label="🌊 Riverbank & Flood-Prone Clusters">
+                      <option value="Low-lying & Riverbank Barangays (Pangabuan, Jaena Norte, Agambulong, Guibuangan)">
+                        Low-lying & Riverbank Barangays (Pangabuan, Jaena Norte, Agambulong, Guibuangan)
+                      </option>
+                      <option value="Town Center & Poblacion Cluster (Poblacion, Esperanza, Fe, Ganzon)">
+                        Town Center & Poblacion Cluster (Poblacion, Esperanza, Fe, Ganzon)
+                      </option>
+                    </optgroup>
+                    <optgroup label="⛰️ Upland & Mountain Landslide Clusters">
+                      <option value="Upland Mountain Slope Barangays (Agtambi, Jaena Norte, San Jose, Lucero, Linambasan)">
+                        Upland Mountain Slope Barangays (Agtambi, Jaena Norte, San Jose, Lucero, Linambasan)
+                      </option>
+                      <option value="Eastern Barangays (Milan, Pasol-o, San Vicente, Santo Rosario)">
+                        Eastern Barangays (Milan, Pasol-o, San Vicente, Santo Rosario)
+                      </option>
+                    </optgroup>
+                    <optgroup label="🏘️ All 30 Individual Barangays">
+                      {JAMINDAN_BARANGAYS.map(b => (
+                        <option key={b} value={`Barangay ${b}`}>Barangay {b}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="✍️ Custom Specific Location">
+                      <option value="__custom__">✍️ Custom Specific Sitio / Purok / Street...</option>
+                    </optgroup>
+                  </select>
+                ) : (
+                  <div>
+                    <input
+                      type="text"
+                      required
+                      value={broadcastArea}
+                      onChange={e => setBroadcastArea(e.target.value)}
+                      placeholder="e.g. Purok 4, Riverbank, Sitio Malipayon, Brgy. Pangabuan..."
+                      style={{
+                        width: '100%',
+                        padding: '12px 14px',
+                        borderRadius: '12px',
+                        border: '1.5px solid var(--primary-color)',
+                        background: '#ffffff',
+                        fontSize: '14px',
+                        fontWeight: '600'
+                      }}
+                      autoFocus
+                    />
+                    <div style={{ fontSize: '11px', color: 'var(--text-light)', marginTop: '4px' }}>
+                      Type any specific barangay, sitio, purok, or landmark.
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Alert Title */}
