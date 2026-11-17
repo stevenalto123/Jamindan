@@ -47,7 +47,8 @@ const generateIncidentCode = async () => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const randomHex = Math.floor(Math.random() * 65535).toString(16).toUpperCase().padStart(4, '0');
-  return `#${year}-${month}-${randomHex}`;};
+  return `#${year}-${month}-${randomHex}`;
+};
 
 // Create Incident Report (Residents, Admins, and Responders)
 router.post('/', authRequired, requireRole(['Resident', 'Admin', 'Responder']), upload.single('photo'), async (req, res) => {
@@ -547,7 +548,7 @@ router.put('/:id/agency', authRequired, requireRole(['Admin', 'Responder']), asy
   const { lead_agency, agency_notes } = req.body;
 
   try {
-    const [incRows] = await db.query('SELECT code, type, lead_agency FROM incidents WHERE id = ?', [id]);
+    const [incRows] = await db.query('SELECT code, type, status, lead_agency FROM incidents WHERE id = ?', [id]);
     const incident = incRows[0];
     if (!incident) {
       return res.status(404).json({ message: 'Incident not found' });
@@ -560,48 +561,53 @@ router.put('/:id/agency', authRequired, requireRole(['Admin', 'Responder']), asy
       [lead_agency || null, agency_notes || null, id]
     );
 
+    const currentStatus = incident.status || 'Pending';
     const logDetail = `Agency update: Lead [${targetLead}]. Notes: ${agency_notes || 'None'}`;
     await db.query(
-      'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, (SELECT status FROM incidents WHERE id = ?), ?, ?)',
-      [id, id, logDetail, req.user.id]
+      'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, ?, ?, ?)',
+      [id, currentStatus, logDetail, req.user.id]
     );
 
     await db.logAudit(`Agency coordination updated for ${incident.code}: ${targetLead}`, req.user.username, req.ip);
 
     // Notify all active Responders belonging to the target Lead Agency (e.g., RHU, BFP, MDRRMO)
-    let agencyAliases = [targetLead];
-    if (targetLead === 'RHU') agencyAliases.push('Medical');
-    else if (targetLead === 'BFP') agencyAliases.push('Fire');
-    else if (targetLead === 'MDRRMO') agencyAliases.push('Rescue');
+    try {
+      let agencyAliases = [targetLead];
+      if (targetLead === 'RHU') agencyAliases.push('Medical');
+      else if (targetLead === 'BFP') agencyAliases.push('Fire');
+      else if (targetLead === 'MDRRMO') agencyAliases.push('Rescue');
 
-    const [agencyResponders] = await db.query(
-      'SELECT id, push_subscription FROM users WHERE role = "Responder" AND is_active = 1 AND agency_type IN (?, ?)',
-      [agencyAliases[0], agencyAliases[1] || agencyAliases[0]]
-    );
-
-    const notifTitle = `🚨 Inter-Agency Handoff (${targetLead})`;
-    const notifBody = `Incident ${incident.code} (${incident.type}) is assigned to ${targetLead}.${agency_notes ? ' Notes: ' + agency_notes : ''}`;
-
-    for (const resp of agencyResponders) {
-      await db.execute(
-        'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES (?, ?, ?, ?, ?)',
-        [resp.id, notifTitle, notifBody, 'incident', id]
+      const [agencyResponders] = await db.query(
+        'SELECT id, push_subscription FROM users WHERE role = "Responder" AND is_active = 1 AND agency_type IN (?, ?)',
+        [agencyAliases[0], agencyAliases[1] || agencyAliases[0]]
       );
 
-      if (resp.push_subscription) {
+      const notifTitle = `🚨 Inter-Agency Handoff (${targetLead})`;
+      const notifBody = `Incident ${incident.code} (${incident.type}) is assigned to ${targetLead}.${agency_notes ? ' Notes: ' + agency_notes : ''}`;
+
+      for (const resp of agencyResponders) {
         try {
-          const subscription = JSON.parse(resp.push_subscription);
-          const webpush = require('web-push');
-          await webpush.sendNotification(subscription, JSON.stringify({
-            title: notifTitle,
-            body: notifBody,
-            icon: '/logo.png',
-            url: '/incidents/' + id
-          }));
-        } catch (pushErr) {
-          console.error('Failed to send agency handoff push to responder', resp.id);
+          await db.execute(
+            'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES (?, ?, ?, ?, ?)',
+            [resp.id, notifTitle, notifBody, 'incident', id]
+          );
+
+          if (resp.push_subscription) {
+            const subscription = JSON.parse(resp.push_subscription);
+            const webpush = require('web-push');
+            await webpush.sendNotification(subscription, JSON.stringify({
+              title: notifTitle,
+              body: notifBody,
+              icon: '/logo.png',
+              url: '/incidents/' + id
+            })).catch(() => {});
+          }
+        } catch (respErr) {
+          console.warn('Responder notification warning:', respErr.message);
         }
       }
+    } catch (notifErr) {
+      console.warn('Inter-agency notifications skipped:', notifErr.message);
     }
 
     const io = req.app.get('io');
@@ -620,7 +626,7 @@ router.put('/:id/agency', authRequired, requireRole(['Admin', 'Responder']), asy
     return res.json({ message: 'Agency coordination updated successfully.' });
   } catch (error) {
     console.error('Update agency error:', error);
-    return res.status(500).json({ message: 'Server error while updating agency' });
+    return res.status(500).json({ message: 'Server error while updating agency: ' + (error.message || '') });
   }
 });
 
@@ -818,9 +824,3 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
 });
 
 module.exports = router;
-
-
-
-
-
-
