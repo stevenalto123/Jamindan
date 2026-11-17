@@ -127,7 +127,68 @@ router.put('/broadcast/:key/read', async (req, res) => {
   }
 });
 
-// ADMIN ONLY: Mass Broadcast Notification (supports NDRRMC Extreme, Severe, and Advisory)
+// Official 30 Barangays in Jamindan for targeted emergency alerts
+const JAMINDAN_BARANGAYS = [
+  'Agambulong', 'Agbun-od', 'Agcagay', 'Aglibacao', 'Agloloway', 
+  'Bayebaye', 'Caridad', 'Esperanza', 'Fe', 'Ganzon', 
+  'Guintas', 'Igang', 'Jaena Norte', 'Jaena Sur', 'Jagnaya', 
+  'Lapaz', 'Linambasan', 'Lucero', 'Maantol', 'Masgrau', 
+  'Milan', 'Molet', 'Pangabat', 'Pangabuan', 'Pasol-o', 
+  'Poblacion', 'San Jose', 'San Juan', 'San Vicente', 'Santo Rosario'
+];
+
+const matchesBarangayInText = (text, brgy) => {
+  if (!text || !brgy) return false;
+  const clean = brgy.trim().replace(/^Barangay\s+/i, '').trim();
+  if (!clean) return false;
+  const escaped = clean.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const regex = new RegExp(`(^|\\b|\\W)${escaped}(\\b|\\W|$)`, 'i');
+  return regex.test(text);
+};
+
+const isUserInTargetArea = (user, target_area) => {
+  // Admins and Responders ALWAYS receive broadcasts for command situational awareness & dispatch
+  if (!user || user.role === 'Admin' || user.role === 'Responder') {
+    return true;
+  }
+
+  if (!target_area) return true;
+
+  const areaStr = String(target_area).trim();
+  const areaLower = areaStr.toLowerCase();
+
+  // If municipal-wide or targeting all barangays, everyone receives it
+  if (
+    areaLower.includes('all barangays') || 
+    areaLower === 'municipality of jamindan' ||
+    areaLower === 'all'
+  ) {
+    return true;
+  }
+
+  // Resident's registered barangay
+  const userBarangay = (user.barangay || '').trim();
+  if (!userBarangay) {
+    // If resident has no barangay set on profile, default to true so life-saving alerts aren't missed
+    return true;
+  }
+
+  // Check if resident's barangay matches target area or cluster
+  if (matchesBarangayInText(areaStr, userBarangay)) {
+    return true;
+  }
+
+  // If the target area specifically names other known Jamindan barangay(s), and this resident is not in any of them
+  const mentionsAnyKnownBarangay = JAMINDAN_BARANGAYS.some(b => matchesBarangayInText(areaStr, b));
+  if (!mentionsAnyKnownBarangay) {
+    // Target is a general landmark or road without a specific barangay named -> notify all residents
+    return true;
+  }
+
+  return false;
+};
+
+// ADMIN ONLY: Mass Broadcast Notification (supports NDRRMC Extreme, Severe, and Advisory with Strict Area Targeting)
 router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
   const { title, message, severity = 'extreme', target_area = 'Municipality of Jamindan (All Barangays)' } = req.body;
   if (!title || !message) {
@@ -135,7 +196,8 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
   }
 
   try {
-    const [users] = await db.query('SELECT id, push_subscription FROM users WHERE is_active = 1');
+    const [users] = await db.query('SELECT id, role, barangay, push_subscription FROM users WHERE is_active = 1');
+    const targetedUsers = users.filter(u => isUserInTargetArea(u, target_area));
     const batchKey = Date.now().toString(36);
     
     let sentCount = 0;
@@ -153,16 +215,16 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
     });
 
     let broadcastId = batchKey;
-    if (users.length > 0) {
-      // Bulk insert notifications for all active users in a single query with shared batchKey
-      const insertValues = users.map(u => [u.id, title, formattedBody, `broadcast:${severity}:${batchKey}`, null]);
+    if (targetedUsers.length > 0) {
+      // Bulk insert notifications ONLY for targeted users (and Responders/Admins)
+      const insertValues = targetedUsers.map(u => [u.id, title, formattedBody, `broadcast:${severity}:${batchKey}`, null]);
       await db.query(
         'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES ?',
         [insertValues]
       );
 
-      // Dispatch Web Push in parallel
-      const pushPromises = users
+      // Dispatch Web Push in parallel strictly to targeted users
+      const pushPromises = targetedUsers
         .filter(u => u.push_subscription)
         .map(async (u) => {
           try {
@@ -193,7 +255,7 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
 
     try {
       await db.logAudit(
-        `Transmitted NDRRMC Mass Broadcast: "${title}" (${severity.toUpperCase()}) for ${target_area}`,
+        `Transmitted NDRRMC Mass Broadcast: "${title}" (${severity.toUpperCase()}) for ${target_area} (${targetedUsers.length} users targeted)`,
         req.user.username,
         req.ip
       );
