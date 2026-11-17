@@ -217,7 +217,7 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
     }
 
     return res.json({ 
-      success: true,
+      success: true, 
       broadcastId,
       message: `Broadcast transmitted to ${sentCount} devices successfully.` 
     });
@@ -230,7 +230,18 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
 // ADMIN ONLY: Cancel / Stand Down Active Mass Broadcast Across All Devices
 router.post('/broadcast/clear', requireRole(['Admin']), async (req, res) => {
   try {
-    // End all active broadcasts
+    // 1. Immediately notify all connected devices via Socket.IO so all siren audio & modals silence instantly
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('broadcast-cancelled', { 
+        reason: 'Stand down issued by NDRRMC Operations Center',
+        clearedAt: new Date().toISOString()
+      });
+      io.emit('safety-checkin-mode-changed', { active: false, reason: 'broadcast_cleared' });
+      io.emit('safety-checkin-updated');
+    }
+
+    // 2. End all active broadcasts in DB
     const [result] = await db.query(`
       UPDATE notifications 
       SET reference_type = REPLACE(reference_type, 'broadcast:', 'broadcast_ended:') 
@@ -246,16 +257,6 @@ router.post('/broadcast/clear', requireRole(['Admin']), async (req, res) => {
         ON DUPLICATE KEY UPDATE setting_value = 'false'
       `);
     } catch (sErr) {}
-
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('broadcast-cancelled', { 
-        reason: 'Stand down issued by NDRRMC Operations Center',
-        clearedAt: new Date().toISOString()
-      });
-      io.emit('safety-checkin-mode-changed', { active: false, reason: 'broadcast_cleared' });
-      io.emit('safety-checkin-updated');
-    }
 
     try {
       await db.logAudit('Admin issued Stand Down: Active NDRRMC Emergency Broadcast ended and silenced', req.user.username, req.ip);
