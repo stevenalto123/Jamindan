@@ -432,13 +432,92 @@ const AppLayout = ({ children }) => {
   );
 };
 
+// Top-Level Error Boundary to protect iOS and mobile web views from white screens
+class GlobalErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('[GlobalErrorBoundary] Caught rendering error:', error, errorInfo);
+  }
+
+  handleReload = () => {
+    try {
+      sessionStorage.clear();
+      window.location.reload();
+    } catch (e) {
+      window.location.href = '/login';
+    }
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          padding: '24px',
+          textAlign: 'center',
+          backgroundColor: '#eaeeeb',
+          fontFamily: 'sans-serif'
+        }}>
+          <div style={{
+            maxWidth: '440px',
+            width: '100%',
+            backgroundColor: '#ffffff',
+            padding: '30px 24px',
+            borderRadius: '16px',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+            border: '1px solid #dbe2dd'
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '12px' }}>🚨</div>
+            <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#2c3e50', marginBottom: '8px' }}>
+              Jamindan Emergency Response
+            </h2>
+            <p style={{ fontSize: '13px', color: '#5a6e5f', marginBottom: '20px', lineHeight: '1.5' }}>
+              The platform encountered a display issue on this device. Tap the button below to restore your session.
+            </p>
+            <button
+              onClick={this.handleReload}
+              style={{
+                width: '100%',
+                padding: '14px',
+                backgroundColor: '#3d7a50',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                fontWeight: '700',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+            >
+              🔄 Refresh & Restore
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   return (
-    <AuthProvider>
-      <NotificationHandler />
-      <LanguageProvider>
-        <SystemProvider>
-          <Router>
+    <GlobalErrorBoundary>
+      <AuthProvider>
+        <NotificationHandler />
+        <LanguageProvider>
+          <SystemProvider>
+            <Router>
             <EmergencyBroadcastHandler />
             <Routes>
               {/* Public Routes */}
@@ -613,28 +692,8 @@ function App() {
         </SystemProvider>
       </LanguageProvider>
     </AuthProvider>
+    </GlobalErrorBoundary>
   );
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
