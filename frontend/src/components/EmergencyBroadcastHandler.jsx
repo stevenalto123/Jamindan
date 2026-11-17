@@ -5,6 +5,64 @@ import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 
 // Safely parse initial broadcast from URL or storage
+const JAMINDAN_BARANGAYS = [
+  'Agambulong', 'Agbun-od', 'Agcagay', 'Aglibacao', 'Agloloway', 
+  'Bayebaye', 'Caridad', 'Esperanza', 'Fe', 'Ganzon', 
+  'Guintas', 'Igang', 'Jaena Norte', 'Jaena Sur', 'Jagnaya', 
+  'Lapaz', 'Linambasan', 'Lucero', 'Maantol', 'Masgrau', 
+  'Milan', 'Molet', 'Pangabat', 'Pangabuan', 'Pasol-o', 
+  'Poblacion', 'San Jose', 'San Juan', 'San Vicente', 'Santo Rosario'
+];
+
+const matchesBarangayInText = (text, brgy) => {
+  if (!text || !brgy) return false;
+  const clean = brgy.trim().replace(/^Barangay\s+/i, '').trim();
+  if (!clean) return false;
+  const escaped = clean.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const regex = new RegExp(`(^|\\b|\\W)${escaped}(\\b|\\W|$)`, 'i');
+  return regex.test(text);
+};
+
+const isUserInTargetArea = (user, target_area) => {
+  // Admins and Responders ALWAYS receive broadcasts for situational awareness & dispatch
+  if (!user || user.role === 'Admin' || user.role === 'Responder') {
+    return true;
+  }
+
+  if (!target_area) return true;
+
+  const areaStr = String(target_area).trim();
+  const areaLower = areaStr.toLowerCase();
+
+  // If municipal-wide or targeting all barangays, everyone receives it
+  if (
+    areaLower.includes('all barangays') || 
+    areaLower === 'municipality of jamindan' ||
+    areaLower === 'all'
+  ) {
+    return true;
+  }
+
+  // Resident's registered barangay
+  const userBarangay = (user.barangay || '').trim();
+  if (!userBarangay) {
+    return true;
+  }
+
+  // Check if resident's barangay matches target area or cluster
+  if (matchesBarangayInText(areaStr, userBarangay)) {
+    return true;
+  }
+
+  // If the target area specifically names other known Jamindan barangay(s), and this resident is not in any of them
+  const mentionsAnyKnownBarangay = JAMINDAN_BARANGAYS.some(b => matchesBarangayInText(areaStr, b));
+  if (!mentionsAnyKnownBarangay) {
+    return true;
+  }
+
+  return false;
+};
+
 const getInitialBroadcast = () => {
   try {
     if (typeof window !== 'undefined' && window.location.search) {
@@ -338,6 +396,12 @@ const EmergencyBroadcastHandler = () => {
           const dismissedById = localStorage.getItem('dismissed_broadcast_' + b.id);
           if (dismissedById === 'true') return;
 
+          // STRICT AREA FILTER: Check if this user is in the target area (or is a Responder/Admin)
+          if (!isUserInTargetArea(user, b.target_area)) {
+            setActiveBroadcast(null);
+            return;
+          }
+
           setActiveBroadcast({
             id: b.id,
             title: b.title,
@@ -365,6 +429,11 @@ const EmergencyBroadcastHandler = () => {
         return;
       }
 
+      // STRICT AREA FILTER: Sound siren and trigger modal ONLY if this user is in the target area
+      if (!isUserInTargetArea(user, data.target_area)) {
+        return;
+      }
+
       setActiveBroadcast({
         id: broadcastId,
         title: data.title,
@@ -388,7 +457,20 @@ const EmergencyBroadcastHandler = () => {
       window.removeEventListener('focus', checkActiveBroadcast);
       socket.disconnect();
     };
-  }, [location.pathname, user?.id, user?.role, authLoading]);
+  }, [location.pathname, user?.id, user?.role, user?.barangay, authLoading]);
+
+  // If user profile loads or changes and they are not targeted, ensure active alert closes
+  useEffect(() => {
+    if (activeBroadcast && !activeBroadcast.isPreview && user?.role === 'Resident') {
+      if (!isUserInTargetArea(user, activeBroadcast.target_area)) {
+        if (window.stopBroadcastAudio) {
+          window.stopBroadcastAudio();
+        }
+        setIsAudioActive(false);
+        setActiveBroadcast(null);
+      }
+    }
+  }, [user?.role, user?.barangay, activeBroadcast?.id]);
 
   const handleAcknowledgeBroadcast = async (e) => {
     if (e) {
