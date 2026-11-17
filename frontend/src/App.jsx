@@ -105,8 +105,16 @@ const RootRedirect = () => {
   return <Navigate to={`/dashboard${location.search}`} replace />;
 };
 
+const getSafeAudioUnlocked = () => {
+  try {
+    return sessionStorage.getItem('audio_unlocked') === 'true';
+  } catch (e) {
+    return false;
+  }
+};
+
 window.globalAudioCtx = null;
-let isAudioUnlockedGlobal = sessionStorage.getItem('audio_unlocked') === 'true';
+let isAudioUnlockedGlobal = getSafeAudioUnlocked();
 
 // Main App Layout Wrapper (Resolves titles dynamically to match templates)
 const AppLayout = ({ children }) => {
@@ -356,12 +364,12 @@ const AppLayout = ({ children }) => {
       
       setAudioUnlocked(true);
       isAudioUnlockedGlobal = true;
-      sessionStorage.setItem('audio_unlocked', 'true');
+      try { sessionStorage.setItem('audio_unlocked', 'true'); } catch (storageErr) {}
     } catch(e) {
       console.warn("Audio unlock failed:", e);
       setAudioUnlocked(true); // Fallback so they aren't stuck
       isAudioUnlockedGlobal = true;
-      sessionStorage.setItem('audio_unlocked', 'true');
+      try { sessionStorage.setItem('audio_unlocked', 'true'); } catch (storageErr) {}
     }
   };
 
@@ -370,6 +378,7 @@ const AppLayout = ({ children }) => {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-color)', padding: '20px', textAlign: 'center', zIndex: 9999 }}>
         {/* Render audio elements hidden so refs are populated for unlock */}
+
         <audio id="siren-audio" ref={sirenRef} src="/siren.wav" preload="auto" loop style={{display: "none"}}></audio>
         <audio id="chime-audio" ref={chimeRef} src="/chime.wav" preload="auto" loop style={{display: "none"}}></audio>
         <div style={{ background: 'var(--card-bg)', padding: '40px 30px', borderRadius: '24px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', maxWidth: '400px', width: '100%' }}>
