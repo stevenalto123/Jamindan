@@ -82,6 +82,9 @@ const AdminDashboard = () => {
   const [broadcastArea, setBroadcastArea] = useState('Municipality of Jamindan (All Barangays)');
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [broadcasting, setBroadcasting] = useState(false);
+  const [activeBroadcastData, setActiveBroadcastData] = useState(null);
+  const [clearingBroadcast, setClearingBroadcast] = useState(false);
+  const [testingSiren, setTestingSiren] = useState(false);
   const navigate = useNavigate();
 
   const handleToggleSafetyCheckin = async () => {
@@ -153,14 +156,18 @@ const AdminDashboard = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      const [res, safetyRes] = await Promise.all([
+      const [res, safetyRes, broadcastRes] = await Promise.all([
         axios.get('/api/dashboard/stats'),
-        axios.get('/api/notifications/safety-checkins').catch(() => ({ data: null }))
+        axios.get('/api/notifications/safety-checkins').catch(() => ({ data: null })),
+        axios.get('/api/notifications/active-broadcast').catch(() => ({ data: null }))
       ]);
       setData(res.data);
       if (safetyRes.data) {
         setSafetyData(safetyRes.data);
         setIsCheckinActive(Boolean(safetyRes.data.isCheckinActive));
+      }
+      if (broadcastRes?.data) {
+        setActiveBroadcastData(broadcastRes.data);
       }
     } catch (err) {
       console.error('Error fetching admin stats', err);
@@ -184,12 +191,83 @@ const AdminDashboard = () => {
       }
       fetchDashboardStats();
     });
+    socket.on('new-broadcast', (msg) => {
+      if (msg) {
+        setActiveBroadcastData({ active: true, broadcast: msg });
+      }
+      fetchDashboardStats();
+    });
+    socket.on('broadcast-cancelled', () => {
+      setActiveBroadcastData({ active: false, broadcast: null });
+      fetchDashboardStats();
+    });
 
     return () => {
       clearInterval(interval);
       socket.disconnect();
     };
   }, []);
+
+  const handleClearBroadcast = async () => {
+    if (!window.confirm('Are you sure you want to stand down and cancel the active emergency broadcast across all resident devices?')) {
+      return;
+    }
+    setClearingBroadcast(true);
+    try {
+      await axios.post('/api/notifications/broadcast/clear');
+      setActiveBroadcastData({ active: false, broadcast: null });
+      alert('Active emergency broadcast has been successfully stood down and silenced.');
+      await fetchDashboardStats();
+    } catch (err) {
+      console.error('Failed to stand down broadcast', err);
+      const errMsg = err.response?.data?.message || err.message || 'Unknown network error';
+      alert(`Failed to stand down broadcast: ${errMsg}`);
+    } finally {
+      setClearingBroadcast(false);
+    }
+  };
+
+  const handleTestSiren = () => {
+    if (testingSiren) return;
+    setTestingSiren(true);
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) {
+        const audio = document.getElementById('siren-audio');
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+          setTimeout(() => { audio.pause(); audio.currentTime = 0; setTestingSiren(false); }, 4000);
+        } else {
+          setTestingSiren(false);
+        }
+        return;
+      }
+      const ctx = new AudioContext();
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      osc1.frequency.setValueAtTime(853, ctx.currentTime);
+      osc2.frequency.setValueAtTime(960, ctx.currentTime);
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+      osc1.start();
+      osc2.start();
+      setTimeout(() => {
+        try {
+          osc1.stop();
+          osc2.stop();
+          ctx.close();
+        } catch (e) {}
+        setTestingSiren(false);
+      }, 4000);
+    } catch (e) {
+      console.warn('Siren preview error:', e);
+      setTestingSiren(false);
+    }
+  };
 
   const handleBroadcast = async (e) => {
     e.preventDefault();
@@ -208,6 +286,7 @@ const AdminDashboard = () => {
       setBroadcastMessage('');
       setBroadcastSeverity('extreme');
       setBroadcastArea('Municipality of Jamindan (All Barangays)');
+      await fetchDashboardStats();
     } catch (err) {
       console.error(err);
       alert('Failed to send broadcast.');
@@ -242,6 +321,111 @@ const AdminDashboard = () => {
 
   return (
     <div className="content-body" style={{ padding: '24px', margin: '0 auto', maxWidth: '1200px', paddingBottom: '80px' }}>
+
+      {/* Active NDRRMC Emergency Broadcast Banner for Command Center */}
+      {user?.role === 'Admin' && activeBroadcastData?.active && activeBroadcastData.broadcast && (
+        <div style={{
+          backgroundColor: activeBroadcastData.broadcast.severity === 'extreme' ? '#fef2f2' : (activeBroadcastData.broadcast.severity === 'severe' ? '#fff7ed' : '#eff6ff'),
+          border: `2px solid ${activeBroadcastData.broadcast.severity === 'extreme' ? '#dc2626' : (activeBroadcastData.broadcast.severity === 'severe' ? '#ea580c' : '#2563eb')}`,
+          borderRadius: '20px',
+          padding: '18px 24px',
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+          boxShadow: '0 8px 30px rgba(220, 38, 38, 0.15)',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '280px' }}>
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '14px',
+              backgroundColor: activeBroadcastData.broadcast.severity === 'extreme' ? '#dc2626' : (activeBroadcastData.broadcast.severity === 'severe' ? '#ea580c' : '#2563eb'),
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '24px',
+              boxShadow: '0 4px 14px rgba(220, 38, 38, 0.35)'
+            }}>
+              🚨
+            </div>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: '900', color: activeBroadcastData.broadcast.severity === 'extreme' ? '#dc2626' : (activeBroadcastData.broadcast.severity === 'severe' ? '#ea580c' : '#2563eb'), textTransform: 'uppercase', letterSpacing: '0.8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#dc2626', animation: 'pulse 1.2s infinite' }}></span>
+                Active Broadcast in Progress ({activeBroadcastData.broadcast.severity?.toUpperCase() || 'EXTREME'})
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: '800', color: '#0f172a', margin: '2px 0' }}>
+                {activeBroadcastData.broadcast.title}
+              </div>
+              <div style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>
+                📍 {activeBroadcastData.broadcast.target_area || 'Municipality of Jamindan'} • {activeBroadcastData.broadcast.message}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => window.previewEmergencyBroadcastModal?.(activeBroadcastData.broadcast)}
+              style={{
+                backgroundColor: 'white',
+                color: 'var(--text-main)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                fontWeight: '700',
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              👁️ Preview Resident Popup
+            </button>
+            <button
+              onClick={() => setShowBroadcastModal(true)}
+              style={{
+                backgroundColor: 'white',
+                color: 'var(--text-main)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                padding: '10px 16px',
+                fontWeight: '700',
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <Radio size={16} /> Broadcast Controls
+            </button>
+            <button
+              onClick={handleClearBroadcast}
+              disabled={clearingBroadcast}
+              style={{
+                backgroundColor: '#dc2626',
+                color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                padding: '10px 18px',
+                fontWeight: '800',
+                fontSize: '13px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(220, 38, 38, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              {clearingBroadcast ? 'Stopping...' : '🛑 Stand Down / End Alert'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Admin Exclusive: Top Metrics */}
       {user?.role === 'Admin' && (
@@ -811,6 +995,52 @@ const AdminDashboard = () => {
               </button>
             </div>
 
+            {/* Active Alert Warning in Modal */}
+            {activeBroadcastData?.active && activeBroadcastData.broadcast && (
+              <div style={{
+                marginBottom: '18px',
+                padding: '14px 16px',
+                borderRadius: '16px',
+                backgroundColor: '#fee2e2',
+                border: '1.5px solid #dc2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px'
+              }}>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: '900', color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                    🚨 Broadcast Live on Resident Screens
+                  </div>
+                  <div style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', margin: '2px 0' }}>
+                    {activeBroadcastData.broadcast.title}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b' }}>
+                    Issued: {new Date(activeBroadcastData.broadcast.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearBroadcast}
+                  disabled={clearingBroadcast}
+                  style={{
+                    backgroundColor: '#dc2626',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '8px 14px',
+                    fontSize: '12px',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 4px 10px rgba(220, 38, 38, 0.3)'
+                  }}
+                >
+                  {clearingBroadcast ? 'Stopping...' : 'Stand Down'}
+                </button>
+              </div>
+            )}
+
             {/* Quick 1-Click NDRRMC Presets */}
             <div style={{ marginBottom: '18px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', fontWeight: '800', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
@@ -991,6 +1221,31 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               )}
+              
+              <button
+                type="button"
+                onClick={handleTestSiren}
+                disabled={testingSiren}
+                style={{
+                  width: '100%',
+                  padding: '11px',
+                  marginBottom: '14px',
+                  borderRadius: '12px',
+                  border: '1.5px dashed #dc2626',
+                  backgroundColor: testingSiren ? '#fee2e2' : '#fff5f5',
+                  color: '#dc2626',
+                  fontWeight: '800',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {testingSiren ? '🔊 Sounding Local Siren (4s)...' : '🔊 Test 853Hz/960Hz Emergency Siren Locally (4s)'}
+              </button>
               
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button type="button" style={{ flex: 1, padding: '14px', borderRadius: '12px', background: '#f1f5f9', border: 'none', color: 'var(--text-main)', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }} onClick={() => setShowBroadcastModal(false)}>
