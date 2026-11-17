@@ -84,11 +84,10 @@ const EmergencyBroadcastHandler = () => {
         try { compressor.disconnect(); } catch (e) {}
         compressor = null;
       }
-      if (audioCtx && audioCtx.state !== 'closed') {
-        audioCtx.close().catch(e => console.warn(e));
-        audioCtx = null;
+      // Keep AudioContext alive so browser autoplay permission persists across multiple broadcasts
+      if (audioCtx && audioCtx.state === 'running') {
+        try { audioCtx.suspend(); } catch (e) {}
       }
-      window.globalAudioCtx = null;
       window.isBroadcastActive = false;
       [sirenRef.current, chimeRef.current].forEach((el) => {
         if (el) {
@@ -211,6 +210,10 @@ const EmergencyBroadcastHandler = () => {
             }).catch(e => console.warn('HTML5 siren deferred until user gesture:', e));
           }
 
+          if (audioCtx && audioCtx.state === 'running') {
+            setIsAudioActive(true);
+          }
+
           // Pulsed attention cadence (800ms ON / 150ms OFF)
           let isPulseOn = true;
           oscInterval = setInterval(() => {
@@ -247,6 +250,28 @@ const EmergencyBroadcastHandler = () => {
       stopAudio();
     };
   }, [activeBroadcast]);
+
+  // Universal pre-warm of siren and chime audio elements on first user interaction
+  useEffect(() => {
+    const prewarmMedia = () => {
+      [sirenRef.current, chimeRef.current].forEach(el => {
+        if (el) {
+          el.volume = 0.001;
+          el.play().then(() => {
+            el.pause();
+            el.currentTime = 0;
+            el.volume = 1.0;
+          }).catch(() => {});
+        }
+      });
+    };
+    window.addEventListener('click', prewarmMedia, { once: true });
+    window.addEventListener('touchstart', prewarmMedia, { once: true });
+    return () => {
+      window.removeEventListener('click', prewarmMedia);
+      window.removeEventListener('touchstart', prewarmMedia);
+    };
+  }, []);
 
   // Allow AdminDashboard to preview the Resident broadcast modal on demand
   useEffect(() => {
