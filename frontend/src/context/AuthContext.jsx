@@ -11,19 +11,44 @@ if (window.Capacitor) {
 
 const AuthContext = createContext(null);
 
+const safeStorageGet = (storage, key) => {
+  try {
+    return storage.getItem(key);
+  } catch (e) {
+    return null;
+  }
+};
+
+const safeStorageSet = (storage, key, value) => {
+  try {
+    storage.setItem(key, value);
+  } catch (e) {
+    // Ignore restricted WebView / Private Browsing storage errors
+  }
+};
+
+const safeStorageRemove = (storage, key) => {
+  try {
+    storage.removeItem(key);
+  } catch (e) {
+    // Ignore
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(sessionStorage.getItem('token') || localStorage.getItem('token') || null);
+  const [token, setToken] = useState(() => safeStorageGet(sessionStorage, 'token') || safeStorageGet(localStorage, 'token') || null);
   const [loading, setLoading] = useState(true);
 
-  // Sync token to Axios headers
+  // Sync token to Axios headers and active session cache
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      sessionStorage.setItem('token', token);
+      safeStorageSet(sessionStorage, 'token', token);
     } else {
       delete axios.defaults.headers.common['Authorization'];
-      sessionStorage.removeItem('token');
+      safeStorageRemove(sessionStorage, 'token');
+      safeStorageRemove(localStorage, 'token');
     }
   }, [token]);
 
@@ -37,27 +62,37 @@ export const AuthProvider = ({ children }) => {
       try {
         const res = await axios.get('/api/auth/me');
         setUser(res.data);
-        sessionStorage.setItem('cached_user', JSON.stringify(res.data));
-        localStorage.setItem('cached_user', JSON.stringify(res.data));
-        
-        // Auto-subscribe ALL users to Web Push Notifications (so Residents get mass broadcasts)
+        const serialized = JSON.stringify(res.data);
+        safeStorageSet(sessionStorage, 'cached_user', serialized);
+        if (safeStorageGet(localStorage, 'token')) {
+          safeStorageSet(localStorage, 'cached_user', serialized);
+        }
+
+        // Quietly sync Web Push ONLY if permission was already granted by the user
         if (res.data) {
-          subscribeToPushNotifications();
+          subscribeToPushNotifications(false);
         }
       } catch (err) {
         console.error('Failed to load user profile on startup', err);
         // If it's a network error (offline), DO NOT log them out. Just use cached user.
         if (!err.response || (err.response.status !== 401 && err.response.status !== 403)) {
-          const cachedUser = sessionStorage.getItem('cached_user') || localStorage.getItem('cached_user');
+          const cachedUser = safeStorageGet(sessionStorage, 'cached_user') || safeStorageGet(localStorage, 'cached_user');
           if (cachedUser) {
-            setUser(JSON.parse(cachedUser));
+            try {
+              setUser(JSON.parse(cachedUser));
+            } catch (parseErr) {
+              safeStorageRemove(sessionStorage, 'cached_user');
+              safeStorageRemove(localStorage, 'cached_user');
+            }
           }
         } else {
-          // If the server explicitly says the token is invalid (e.g. 401), then log out
+          // Clear expired/invalid credentials from BOTH sessionStorage and localStorage
           setToken(null);
           setUser(null);
-          sessionStorage.removeItem('cached_user');
-          localStorage.removeItem('cached_user');
+          safeStorageRemove(sessionStorage, 'token');
+          safeStorageRemove(sessionStorage, 'cached_user');
+          safeStorageRemove(localStorage, 'token');
+          safeStorageRemove(localStorage, 'cached_user');
         }
       } finally {
         setLoading(false);
@@ -78,7 +113,7 @@ export const AuthProvider = ({ children }) => {
     return outputArray;
   };
 
-  const subscribeToPushNotifications = async () => {
+  const subscribeToPushNotifications = async (allowPrompt = false) => {
     if (
       typeof window === 'undefined' ||
       !('Notification' in window) ||
@@ -89,12 +124,14 @@ export const AuthProvider = ({ children }) => {
       return;
     }
     try {
-      const permission = await window.Notification.requestPermission();
+      let permission = window.Notification.permission;
+      if (permission === 'default' && allowPrompt) {
+        permission = await window.Notification.requestPermission();
+      }
       if (permission !== 'granted') return;
 
       const registration = await navigator.serviceWorker.ready;
-      if (!registration) {
-        console.warn("No active service worker found for push subscription.");
+      if (!registration || !registration.pushManager) {
         return;
       }
 
@@ -110,7 +147,8 @@ export const AuthProvider = ({ children }) => {
 
       await axios.post('/api/push/subscribe', { subscription });
     } catch (err) {
-      console.error('Failed to subscribe to push notifications:', err);
+      // Browser/device push unavailable (e.g., headless browser, incognito, or iOS non-PWA tab)
+      console.debug('Push subscription unavailable:', err?.message || err);
     }
   };
 
@@ -118,27 +156,34 @@ export const AuthProvider = ({ children }) => {
     // Request permission immediately on click but DO NOT await it so it doesn't block login if browser hangs
     if (typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission === 'default') {
       try {
-        window.Notification.requestPermission().catch(err => console.warn('Silent permission request failed', err));
+        window.Notification.requestPermission().catch(() => {});
       } catch (err) {
-        console.warn('Silent permission request failed', err);
+        // Ignore
       }
     }
 
     const res = await axios.post('/api/auth/login', { username, password });
-    
+    const serializedUser = JSON.stringify(res.data.user);
+
     axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-    sessionStorage.setItem('token', res.data.token);
-    sessionStorage.setItem('cached_user', JSON.stringify(res.data.user));
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('cached_user', JSON.stringify(res.data.user));
-    
+    safeStorageSet(sessionStorage, 'token', res.data.token);
+    safeStorageSet(sessionStorage, 'cached_user', serializedUser);
+
+    if (rememberMe) {
+      safeStorageSet(localStorage, 'token', res.data.token);
+      safeStorageSet(localStorage, 'cached_user', serializedUser);
+    } else {
+      safeStorageRemove(localStorage, 'token');
+      safeStorageRemove(localStorage, 'cached_user');
+    }
+
     setToken(res.data.token);
     setUser(res.data.user);
-    
-    if (res.data.user) {
-      subscribeToPushNotifications();
+
+    if (res.data.user && typeof window !== 'undefined' && 'Notification' in window && window.Notification?.permission === 'granted') {
+      subscribeToPushNotifications(false);
     }
-    
+
     return res.data.user;
   };
 
@@ -155,10 +200,10 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setToken(null);
       setUser(null);
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('cached_user');
-      localStorage.removeItem('token');
-      localStorage.removeItem('cached_user');
+      safeStorageRemove(sessionStorage, 'token');
+      safeStorageRemove(sessionStorage, 'cached_user');
+      safeStorageRemove(localStorage, 'token');
+      safeStorageRemove(localStorage, 'cached_user');
     }
   };
 
@@ -167,13 +212,14 @@ export const AuthProvider = ({ children }) => {
     // Reload user data
     const res = await axios.get('/api/auth/me');
     setUser(res.data);
-    
+
     // Update the cache so it doesn't revert on refresh
-    if (sessionStorage.getItem('token')) {
-      sessionStorage.setItem('cached_user', JSON.stringify(res.data));
+    const serialized = JSON.stringify(res.data);
+    if (safeStorageGet(sessionStorage, 'token')) {
+      safeStorageSet(sessionStorage, 'cached_user', serialized);
     }
-    if (localStorage.getItem('token')) {
-      localStorage.setItem('cached_user', JSON.stringify(res.data));
+    if (safeStorageGet(localStorage, 'token')) {
+      safeStorageSet(localStorage, 'cached_user', serialized);
     }
   };
 
@@ -191,7 +237,8 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateProfile,
-    changePassword
+    changePassword,
+    subscribeToPushNotifications
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
