@@ -79,9 +79,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   const subscribeToPushNotifications = async () => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (
+      typeof window === 'undefined' ||
+      !('Notification' in window) ||
+      !window.Notification ||
+      !('serviceWorker' in navigator) ||
+      !('PushManager' in window)
+    ) {
+      return;
+    }
     try {
-      const permission = await Notification.requestPermission();
+      const permission = await window.Notification.requestPermission();
       if (permission !== 'granted') return;
 
       const registration = await navigator.serviceWorker.ready;
@@ -108,9 +116,9 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password, rememberMe = false) => {
     // Request permission immediately on click but DO NOT await it so it doesn't block login if browser hangs
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+    if (typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission === 'default') {
       try {
-        Notification.requestPermission().catch(err => console.warn('Silent permission request failed', err));
+        window.Notification.requestPermission().catch(err => console.warn('Silent permission request failed', err));
       } catch (err) {
         console.warn('Silent permission request failed', err);
       }
