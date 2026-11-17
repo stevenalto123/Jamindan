@@ -53,7 +53,11 @@ const EmergencyBroadcastHandler = () => {
     let compressor = null;
     let oscInterval = null;
 
-    const getMediaEl = (sev) => (sev === 'advisory' ? chimeRef.current : sirenRef.current);
+    const getMediaEl = (sev) => {
+      if (sev === 'advisory') return chimeRef.current;
+      if (sev === 'severe') return null; // Severe uses dedicated synthesized Web Audio High Alert Tone
+      return sirenRef.current; // Extreme uses full dual-frequency NDRRMC siren audio
+    };
 
     const stopAudio = () => {
       window.unlockBroadcastAudio = null;
@@ -133,10 +137,12 @@ const EmergencyBroadcastHandler = () => {
       window.isBroadcastActive = true;
       const severity = activeBroadcast.severity || 'extreme';
 
-      // 1. Continuous Nonstop In-App Vibration Pattern
+      // 1. In-App Vibration Pattern (Extreme: long continuous, Severe: rapid urgent pulses, Advisory: gentle blips)
       const vibPattern = severity === 'advisory' 
         ? [500, 300, 500] 
-        : [3500, 500, 3500, 500, 3500, 500];
+        : (severity === 'severe' 
+            ? [700, 200, 700, 200, 700, 200] 
+            : [3500, 500, 3500, 500, 3500, 500]);
 
       if (navigator.vibrate) {
         navigator.vibrate(vibPattern);
@@ -145,9 +151,9 @@ const EmergencyBroadcastHandler = () => {
         if (navigator.vibrate && window.isBroadcastActive) {
           navigator.vibrate(vibPattern);
         }
-      }, 4000);
+      }, severity === 'severe' ? 2500 : 4000);
 
-      // 2. Synthesize Official NDRRMC Dual-Frequency Attention Signal (853 Hz + 960 Hz pure sines)
+      // 2. Synthesize Multi-Tier Alert Audio (Extreme: 853Hz+960Hz NDRRMC, Severe: 750Hz+950Hz High Alert Tone, Advisory: 660Hz Chime)
       const playNdrrmcTwoTone = () => {
         try {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -163,7 +169,7 @@ const EmergencyBroadcastHandler = () => {
           }
 
           gainNode = audioCtx.createGain();
-          const maxGain = severity === 'advisory' ? 0.6 : 1.0;
+          const maxGain = severity === 'advisory' ? 0.6 : (severity === 'severe' ? 0.85 : 1.0);
           gainNode.gain.setValueAtTime(maxGain, audioCtx.currentTime);
 
           compressor = audioCtx.createDynamicsCompressor();
@@ -177,12 +183,30 @@ const EmergencyBroadcastHandler = () => {
           compressor.connect(audioCtx.destination);
 
           if (severity === 'advisory') {
+            // 🔵 ADVISORY: Gentle single chime sine wave
             osc1 = audioCtx.createOscillator();
             osc1.type = 'sine';
             osc1.frequency.setValueAtTime(660, audioCtx.currentTime);
             osc1.connect(gainNode);
             osc1.start();
+          } else if (severity === 'severe') {
+            // 🟠 SEVERE: Distinct High Alert Warning Tone (750 Hz triangle + 950 Hz sine rapid warning cadence)
+            osc1 = audioCtx.createOscillator();
+            osc2 = audioCtx.createOscillator();
+
+            osc1.type = 'triangle'; // Penetrating crisp alert timbre
+            osc1.frequency.setValueAtTime(750, audioCtx.currentTime);
+
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(950, audioCtx.currentTime);
+
+            osc1.connect(gainNode);
+            osc2.connect(gainNode);
+
+            osc1.start();
+            osc2.start();
           } else {
+            // 🔴 EXTREME: Official NDRRMC Dual-Frequency Attention Signal (853 Hz + 960 Hz pure sines)
             osc1 = audioCtx.createOscillator();
             osc2 = audioCtx.createOscillator();
 
@@ -199,7 +223,7 @@ const EmergencyBroadcastHandler = () => {
             osc2.start();
           }
 
-          // HTML5 Audio siren or advisory chime in parallel
+          // HTML5 Audio siren or advisory chime in parallel (Severe uses pure Web Audio high-alert tone without heavy air-raid siren)
           const currentMedia = getMediaEl(severity);
           if (currentMedia) {
             currentMedia.volume = 1.0;
@@ -214,8 +238,9 @@ const EmergencyBroadcastHandler = () => {
             setIsAudioActive(true);
           }
 
-          // Pulsed attention cadence (800ms ON / 150ms OFF)
+          // Dynamic Cadence: Severe = 250ms rapid warning beeps; Extreme = 800ms NDRRMC pulse; Advisory = 1200ms chime pulse
           let isPulseOn = true;
+          const pulseIntervalMs = severity === 'severe' ? 250 : (severity === 'advisory' ? 1200 : 800);
           oscInterval = setInterval(() => {
             if (audioCtx && audioCtx.state !== 'closed' && gainNode) {
               isPulseOn = !isPulseOn;
@@ -225,7 +250,7 @@ const EmergencyBroadcastHandler = () => {
             } else {
               clearInterval(oscInterval);
             }
-          }, 800);
+          }, pulseIntervalMs);
 
         } catch (err) {
           console.warn('NDRRMC audio synthesis error:', err);
