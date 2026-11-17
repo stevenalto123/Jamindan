@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
@@ -85,6 +85,7 @@ const AdminDashboard = () => {
   const [activeBroadcastData, setActiveBroadcastData] = useState(null);
   const [clearingBroadcast, setClearingBroadcast] = useState(false);
   const [testingSiren, setTestingSiren] = useState(false);
+  const lastClearedAtRef = useRef(0);
   const navigate = useNavigate();
 
   const handleToggleSafetyCheckin = async () => {
@@ -167,7 +168,10 @@ const AdminDashboard = () => {
         setIsCheckinActive(Boolean(safetyRes.data.isCheckinActive));
       }
       if (broadcastRes?.data) {
-        setActiveBroadcastData(broadcastRes.data);
+        // Prevent resurrecting a broadcast that was stood down within the last 12 seconds
+        if (Date.now() - lastClearedAtRef.current > 12000) {
+          setActiveBroadcastData(broadcastRes.data);
+        }
       }
     } catch (err) {
       console.error('Error fetching admin stats', err);
@@ -193,6 +197,7 @@ const AdminDashboard = () => {
     });
     socket.on('new-broadcast', (msg) => {
       if (msg) {
+        lastClearedAtRef.current = 0;
         setActiveBroadcastData({ active: true, broadcast: msg });
       }
       fetchDashboardStats();
@@ -212,14 +217,24 @@ const AdminDashboard = () => {
     if (!window.confirm('Are you sure you want to stand down and cancel the active emergency broadcast across all resident devices?')) {
       return;
     }
+
+    // 1. Instant Optimistic UI Response: dismiss banner & kill local audio immediately (0ms delay)
+    lastClearedAtRef.current = Date.now();
+    const prevBroadcast = activeBroadcastData;
+    setActiveBroadcastData({ active: false, broadcast: null });
+    if (window.stopBroadcastAudio) {
+      window.stopBroadcastAudio();
+    }
     setClearingBroadcast(true);
+
     try {
-      await axios.post('/api/notifications/broadcast/clear');
-      setActiveBroadcastData({ active: false, broadcast: null });
-      alert('Active emergency broadcast has been successfully stood down and silenced.');
-      await fetchDashboardStats();
+      await axios.post('/api/notifications/broadcast/clear', {}, { timeout: 10000 });
+      // Successfully cleared and stood down across all devices
     } catch (err) {
       console.error('Failed to stand down broadcast', err);
+      // Rollback only if the backend genuinely failed
+      lastClearedAtRef.current = 0;
+      setActiveBroadcastData(prevBroadcast);
       const errMsg = err.response?.data?.message || err.message || 'Unknown network error';
       alert(`Failed to stand down broadcast: ${errMsg}`);
     } finally {
