@@ -58,16 +58,25 @@ const NotificationHandler = () => {
   };
 
   const showNotification = (title, body) => {
-    if (Notification.permission === 'granted') {
-      new Notification(title, { body, icon: '/logo.png' });
+    try {
+      if (typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission === 'granted') {
+        new window.Notification(title, { body, icon: '/logo.png' });
+      }
+    } catch (e) {
+      console.warn("Notification display failed:", e);
     }
   };
 
   useEffect(() => {
     if (!user) return;
     
-    if (Notification.permission === 'default') {
-      Notification.requestPermission();
+    // Safely check Notification API availability (prevents fatal ReferenceError on iOS Safari)
+    try {
+      if (typeof window !== 'undefined' && 'Notification' in window && window.Notification && window.Notification.permission === 'default') {
+        window.Notification.requestPermission().catch(e => console.warn("Permission request error:", e));
+      }
+    } catch (e) {
+      console.warn("Notification permission check failed:", e);
     }
 
     const socketUrl = axios.defaults.baseURL || '';
@@ -158,9 +167,3 @@ const NotificationHandler = () => {
 };
 
 export default NotificationHandler;
-
-
-
-
-
-
