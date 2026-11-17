@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
+import { createAuthSocket } from '../utils/socket';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { FileText, Search, PlusCircle, Eye, Trash2, Download, Printer, Flame, HeartPulse, Droplets, Car, ShieldAlert, HelpCircle, MapPin, Clock, ChevronRight, AlertTriangle, Filter, Shield, X } from 'lucide-react';
@@ -79,8 +79,7 @@ const IncidentList = () => {
   }, [search]);
 
   useEffect(() => {
-    const socketUrl = axios.defaults.baseURL || '';
-    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    const socket = createAuthSocket({ transports: ['websocket', 'polling'] });
     socket.on('new-incident', () => fetchIncidents(true));
     socket.on('incident-status-updated', () => fetchIncidents(true));
     socket.on('responder-dispatched', () => fetchIncidents(true));
@@ -137,6 +136,7 @@ const IncidentList = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const handleDeleteIncident = async (id, code) => {
@@ -423,7 +423,7 @@ const IncidentList = () => {
       </div>
 
       <div className="glass-card" style={{ background: 'var(--card-bg)', borderRadius: '16px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: '600px' }}>
-        
+
         {/* Level 1: Quick Status Pill Tabs */}
         <div className="no-print" style={{ 
           padding: '12px 20px', 

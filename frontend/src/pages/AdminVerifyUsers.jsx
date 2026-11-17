@@ -97,7 +97,7 @@ const AdminVerifyUsers = () => {
           <p style={{ fontSize: '14px', color: 'var(--text-light)', margin: 0 }}>There are no pending registrations waiting for your approval.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', gap: '20px' }}>
           {pendingUsers.map(user => (
             <div key={user.id} style={{ 
               background: 'var(--card-bg)', 
@@ -142,7 +142,7 @@ const AdminVerifyUsers = () => {
                 </div>
               </div>
 
-              <div style={{ padding: '20px', background: '#f8fafc', flex: 1 }}>
+              <div style={{ padding: '20px', background: 'var(--card-alt)', flex: 1 }}>
                 <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                   
                   {/* ID Document */}
@@ -155,9 +155,9 @@ const AdminVerifyUsers = () => {
                       style={{ 
                         width: '100%', 
                         height: '130px', 
-                        background: 'white',
+                        background: 'var(--card-bg)',
                         borderRadius: '10px', 
-                        border: '2px dashed #cbd5e1',
+                        border: '2px dashed var(--border-color)',
                         cursor: user.id_photo_path ? 'zoom-in' : 'default',
                         overflow: 'hidden',
                         position: 'relative',
@@ -355,4 +355,3 @@ const AdminVerifyUsers = () => {
 };
 
 export default AdminVerifyUsers;
-

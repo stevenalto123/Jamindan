@@ -82,8 +82,11 @@ const AdminViewUser = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Pending': return <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700' }}>Pending</span>;
-      case 'Dispatched': return <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700' }}>Dispatched</span>;
-      case 'In Progress': return <span style={{ background: '#e0e7ff', color: '#4338ca', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700' }}>In Progress</span>;
+      case 'Acknowledged': return <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700' }}>Acknowledged</span>;
+      case 'Dispatched':
+      case 'Responding': return <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700' }}>{status}</span>;
+      case 'In Progress':
+      case 'On Scene': return <span style={{ background: '#e0e7ff', color: '#4338ca', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700' }}>{status}</span>;
       case 'Resolved': return <span style={{ background: '#dcfce7', color: '#15803d', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700' }}>Resolved</span>;
       case 'False Alarm': return <span style={{ background: '#f1f5f9', color: '#64748b', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700' }}>False Alarm</span>;
       default: return <span style={{ background: '#f1f5f9', color: '#475569', padding: '4px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700' }}>{status}</span>;

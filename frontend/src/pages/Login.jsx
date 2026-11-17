@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowRight, User, Lock, Eye, EyeOff } from 'lucide-react';
 
@@ -12,16 +12,21 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const resolvePostLoginPath = (loggedInUser) => {
+    const from = location.state?.from;
+    if (from?.pathname && !['/login', '/register', '/forgot-password'].includes(from.pathname) && !from.pathname.startsWith('/reset-password')) {
+      return `${from.pathname}${from.search || ''}${from.hash || ''}`;
+    }
+    return (loggedInUser.role === 'Admin' || loggedInUser.role === 'Responder') ? '/admin' : '/dashboard';
+  };
 
   React.useEffect(() => {
     if (user) {
-      if (user.role === 'Admin' || user.role === 'Responder') {
-        navigate('/admin', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      navigate(resolvePostLoginPath(user), { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,12 +39,8 @@ const Login = () => {
     setError('');
 
     try {
-      const user = await login(username, password, rememberMe);
-      if (user.role === 'Admin' || user.role === 'Responder') {
-        navigate('/admin', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      const loggedInUser = await login(username, password, rememberMe);
+      navigate(resolvePostLoginPath(loggedInUser), { replace: true });
     } catch (err) {
       console.error(err);
       if (!err.response) {

@@ -12,13 +12,9 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { hapticTap } from '../utils/haptics';
+import { BARANGAYS } from './Register';
 
-const JAMINDAN_BARANGAYS = [
-  'All', 'Agcalaga', 'Aglanot', 'Agloban', 'Agloloway', 'Bayuyan', 'Cabatangan', 'Caridad', 
-  'Esperanza', 'Fe', 'Ganzon', 'Guintas', 'Igang', 'Jagnaya', 'Jaena Norte', 'Jaena Sur', 
-  'Kibao', 'Linambasan', 'Lucero', 'Maayon', 'Milan', 'Molet', 'Pangabuan', 'Pasol-o', 
-  'Poblacion', 'San Jose', 'San Juan', 'San Roque', 'San Vicente', 'Santa Cruz', 'Santa Fe'
-];
+const JAMINDAN_BARANGAYS = ['All', ...BARANGAYS];
 
 const AGENCIES = ['All', 'MDRRMO', 'BFP', 'RHU'];
 
@@ -141,11 +137,16 @@ const AdminAnalytics = () => {
       heatLayerRef.current = null;
     }
 
-    if (heatData.length > 0 && mapRef.current) {
+    const safeHeatPoints = Array.isArray(heatData)
+      ? heatData.filter((pt) => Array.isArray(pt) && pt.length >= 2 && Number.isFinite(Number(pt[0])) && Number.isFinite(Number(pt[1])))
+          .map((pt) => [Number(pt[0]), Number(pt[1]), Number.isFinite(Number(pt[2])) ? Number(pt[2]) : 0.7])
+      : [];
+
+    if (safeHeatPoints.length > 0 && mapRef.current) {
       window.L = L;
       import('leaflet.heat').then(() => {
         if (L.heatLayer && mapRef.current) {
-          heatLayerRef.current = L.heatLayer(heatData, {
+          heatLayerRef.current = L.heatLayer(safeHeatPoints, {
             radius: 35,
             blur: 20,
             maxZoom: 17,
@@ -250,6 +251,7 @@ const AdminAnalytics = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const COLORS = ['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899', '#64748b'];

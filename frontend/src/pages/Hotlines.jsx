@@ -7,6 +7,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { hapticEmergency, hapticSuccess, hapticTap } from '../utils/haptics';
+import { copyTextSafe } from '../utils/clipboard';
 
 // ─── Agency Type & Category Detection ──────────────────────────────────────
 const getAgencyMeta = (name = '', barangay = '') => {
@@ -66,8 +67,12 @@ const Hotlines = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [copiedNum, setCopiedNum] = useState('');
   const [recentHotlines, setRecentHotlines] = useState(() => {
-    const saved = localStorage.getItem('recentHotlines');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('recentHotlines');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
   });
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
 
@@ -102,8 +107,12 @@ const Hotlines = () => {
       }
     } catch (err) {
       console.warn('Offline or API failed, using fallback hotlines.', err);
-      const cached = localStorage.getItem('cached_hotlines');
-      setHotlines(cached ? JSON.parse(cached) : JAMINDAN_FALLBACK);
+      try {
+        const cached = localStorage.getItem('cached_hotlines');
+        setHotlines(cached ? JSON.parse(cached) : JAMINDAN_FALLBACK);
+      } catch (parseErr) {
+        setHotlines(JAMINDAN_FALLBACK);
+      }
     } finally {
       setLoading(false);
     }
@@ -156,11 +165,13 @@ const Hotlines = () => {
     }
   };
 
-  const handleCopy = (num) => {
-    navigator.clipboard.writeText(num);
-    setCopiedNum(num);
-    hapticSuccess();
-    setTimeout(() => setCopiedNum(''), 1800);
+  const handleCopy = async (num) => {
+    const copied = await copyTextSafe(num);
+    if (copied) {
+      setCopiedNum(num);
+      hapticSuccess();
+      setTimeout(() => setCopiedNum(''), 1800);
+    }
   };
 
   const handleCall = async (e, hotline, number) => {
@@ -170,7 +181,7 @@ const Hotlines = () => {
     setRecentHotlines(prev => {
       const filtered = prev.filter(h => h.id !== hotline.id);
       const updated = [newRecent, ...filtered].slice(0, 3);
-      localStorage.setItem('recentHotlines', JSON.stringify(updated));
+      try { localStorage.setItem('recentHotlines', JSON.stringify(updated)); } catch (storageErr) {}
       return updated;
     });
     try {

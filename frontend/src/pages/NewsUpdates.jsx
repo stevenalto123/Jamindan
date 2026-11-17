@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
+import { createAuthSocket } from '../utils/socket';
 import { useAuth, BACKEND_URL } from '../context/AuthContext';
 import {
   PlusCircle, Trash2, Edit2, X, Upload, AlertTriangle,
@@ -78,32 +78,8 @@ const NewsUpdates = () => {
         params: { category: categoryFilter }
       });
       const localFeed = res.data || [];
-
-      let autoFeed = [];
-      if (categoryFilter === 'All' || categoryFilter === 'News') {
-        try {
-          const rssUrl = 'https://news.google.com/rss/search?q=Capiz+OR+Panay+OR+Jamindan+AND+(typhoon+OR+earthquake+OR+disaster+OR+flood+OR+weather)&hl=en-PH&gl=PH&ceid=PH:en';
-          const rssRes = await axios.get(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
-          if (rssRes.data && rssRes.data.items) {
-            autoFeed = rssRes.data.items.map(item => ({
-              id: `auto-${item.guid || item.link}`,
-              title: item.title,
-              content: (item.description || '').replace(/<[^>]+>/g, ''),
-              category: 'News',
-              image_path: item.thumbnail || null,
-              author_name: item.source || 'Regional News Feed',
-              created_at: item.pubDate,
-              is_auto: true,
-              link: item.link
-            }));
-          }
-        } catch (rssErr) {
-          console.error('Failed to fetch automated news', rssErr);
-        }
-      }
-
-      const combined = [...localFeed, ...autoFeed].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      setFeed(combined);
+      const sortedFeed = [...localFeed].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setFeed(sortedFeed);
     } catch (err) {
       console.error('Error fetching news feed', err);
     } finally {
@@ -114,8 +90,7 @@ const NewsUpdates = () => {
   useEffect(() => {
     fetchFeed();
 
-    const socketUrl = axios.defaults.baseURL || '';
-    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    const socket = createAuthSocket({ transports: ['websocket', 'polling'] });
     socket.on('new-news', () => fetchFeed());
     return () => socket.disconnect();
   }, [categoryFilter]);
@@ -316,7 +291,7 @@ const NewsUpdates = () => {
           <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '13px' }}>Check back later for news and advisories.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))', gap: '16px' }}>
           {filteredFeed.map((article) => {
             const style = getCategoryStyle(article.category);
             const CatIcon = style.icon;

@@ -88,13 +88,17 @@ const EvacuationCenters = () => {
     try {
       const res = await axios.get('/api/emergency/evacuation-centers');
       setCenters(res.data);
-      localStorage.setItem('cached_evacuation_centers', JSON.stringify(res.data));
+      try { localStorage.setItem('cached_evacuation_centers', JSON.stringify(res.data)); } catch (storageErr) {}
     } catch (err) {
       console.error(err);
-      const cached = localStorage.getItem('cached_evacuation_centers');
-      if (cached) {
-        setCenters(JSON.parse(cached));
-      } else {
+      try {
+        const cached = localStorage.getItem('cached_evacuation_centers');
+        if (cached) {
+          setCenters(JSON.parse(cached));
+        } else {
+          setError('Failed to fetch evacuation centers.');
+        }
+      } catch (parseErr) {
         setError('Failed to fetch evacuation centers.');
       }
     } finally {
@@ -145,6 +149,16 @@ const EvacuationCenters = () => {
       setLocationError(t('geoNotSupported') || 'Geolocation is not supported by your browser.');
       setUserLocation(null);
     }
+  }, []);
+
+  // Clean up map instance on component unmount
+  useEffect(() => {
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
+    };
   }, []);
 
   // Initialize Map
@@ -432,6 +446,7 @@ const EvacuationCenters = () => {
       latitude: latitude ? parseFloat(latitude) : null,
       longitude: longitude ? parseFloat(longitude) : null
     };
+
 
     try {
       if (isEditing) {
@@ -854,6 +869,7 @@ const EvacuationCenters = () => {
                       cursor: 'pointer',
                       boxShadow: '0 2px 6px rgba(239, 68, 68, 0.4)'
                     }}
+
                   >
                     <X size={16} />
                   </button>
@@ -921,7 +937,7 @@ const EvacuationCenters = () => {
                 {isEditing && (
                   <div className="form-group" style={{ margin: 0 }}>
                     <label className="form-label">{t('currentHeadcount')}</label>
-                    <input type="number" name="currentHeadcount" className="form-input" value={formData.currentHeadcount} onChange={handleFormChange} min="0" max={formData.capacity} />
+                    <input type="number" name="currentHeadcount" className="form-input" value={formData.currentHeadcount} onChange={handleFormChange} min="0" />
                   </div>
                 )}
 

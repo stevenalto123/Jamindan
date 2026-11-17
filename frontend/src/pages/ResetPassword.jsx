@@ -28,8 +28,8 @@ const ResetPassword = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password)) {
+      setError('Password must be at least 8 characters long and contain at least one uppercase letter and one number.');
       return;
     }
 

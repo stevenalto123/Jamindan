@@ -159,7 +159,7 @@ const AdminResponders = () => {
           <p style={{ margin: 0, color: 'var(--text-light)', fontSize: '13px' }}>{t('noResponders') || 'No responders found.'}</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(270px, 100%), 1fr))', gap: '14px' }}>
           {filteredResponders.map((resp) => {
             const isOnDuty = resp.is_on_duty === 1;
             return (
@@ -181,7 +181,7 @@ const AdminResponders = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
                   {resp.avatar ? (
                     <img
-                      src={resp.avatar}
+                      src={resp.avatar.startsWith('http') || resp.avatar.startsWith('data:') ? resp.avatar : `https://jamindan.onrender.com${resp.avatar}`}
                       alt={resp.full_name}
                       style={{
                         width: '42px',

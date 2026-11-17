@@ -49,9 +49,10 @@ const ForgotPassword = () => {
                 <input
                   type="text"
                   className="form-input form-input-with-icon"
+                  style={{ paddingRight: '16px', fontSize: '16px' }}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your Username or Email"
+                  placeholder="Username or email address"
                   required
                 />
               </div>

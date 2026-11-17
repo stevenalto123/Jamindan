@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { io } from 'socket.io-client';
+import { createAuthSocket } from '../utils/socket';
+import { copyTextSafe } from '../utils/clipboard';
 import { useReactToPrint } from 'react-to-print';
 import { useAuth } from '../context/AuthContext';
 import MapDisplay from '../components/MapDisplay';
@@ -76,7 +77,7 @@ const TrackStatus = () => {
   const fetchVehicles = () => {
     if (user?.role === 'Admin') {
       axios.get('/api/vehicles')
-        .then(res => setVehiclesList(Array.isArray(res.data) ? res.data : []))
+        .then(res => setVehiclesList(Array.isArray(res.data) ? res.data : (res.data?.vehicles || [])))
         .catch(err => console.error(err));
     }
   };
@@ -139,8 +140,7 @@ const TrackStatus = () => {
 
   // Listen for real-time status updates
   useEffect(() => {
-    const socketUrl = axios.defaults.baseURL || '';
-    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    const socket = createAuthSocket({ transports: ['websocket', 'polling'] });
     
     // Use the same incident room used for chat
     socket.emit('join-incident-room', id);
@@ -363,9 +363,9 @@ const TrackStatus = () => {
     return resources;
   };
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    alert('Link copied to clipboard!');
+  const copyLink = async () => {
+    const ok = await copyTextSafe(window.location.href);
+    alert(ok ? 'Link copied to clipboard!' : 'Unable to copy link automatically on this browser.');
   };
 
   // Status index for the stepper
@@ -534,7 +534,7 @@ const TrackStatus = () => {
       {parsedDetails && Object.keys(parsedDetails).length > 0 && (
         <div style={{ backgroundColor: 'var(--card-alt)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '14px' }}>
           <h4 style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: '8px', letterSpacing: '0.4px' }}>Structured Incident Data</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '8px' }}>
             {Object.entries(parsedDetails).map(([key, value]) => (
               <div key={key}>
                 <div style={{ fontSize: '11px', color: 'var(--text-light)', textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</div>
@@ -566,7 +566,7 @@ const TrackStatus = () => {
             📍 {incident.location_address ? incident.location_address : (incident.location_lat ? 'Current GPS Location' : `Barangay ${incident.reporter_barangay}`)}
           </p>
         </div>
-        {isStaff && (
+        {isStaff && incident.location_lat && incident.location_lng && (
           <a 
             href={`https://www.google.com/maps/dir/?api=1${responderLat && responderLng ? `&origin=${responderLat},${responderLng}` : ''}&destination=${incident.location_lat},${incident.location_lng}&travelmode=driving&dir_action=navigate`}
             target="_blank" 
@@ -1250,8 +1250,3 @@ const TrackStatus = () => {
 };
 
 export default TrackStatus;
-
-
-
-
-

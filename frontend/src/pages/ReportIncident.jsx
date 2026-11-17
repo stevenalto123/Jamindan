@@ -171,10 +171,21 @@ const ReportIncident = () => {
 
   const handleDetailChange = (field, value) => setDetails(prev => ({ ...prev, [field]: value }));
 
+  useEffect(() => {
+    return () => {
+      if (photoPreview && photoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
+
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.size > 5 * 1024 * 1024) { setError('Photo size exceeds 5MB limit.'); return; }
+      if (photoPreview && photoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(photoPreview);
+      }
       setPhoto(file);
       setPhotoPreview(URL.createObjectURL(file));
       setError('');
@@ -348,7 +359,7 @@ const ReportIncident = () => {
             console.error('IDB Save failed', e);
           }
         };
-        prepareAndSave();
+        await prepareAndSave();
 
         hapticSuccess();
         setSuccess('offline');
@@ -954,7 +965,7 @@ const ReportIncident = () => {
                   type="text"
                   id="locationText"
                   className="form-input"
-                  style={{ paddingRight: '40px' }}
+                  style={{ paddingRight: '40px', fontSize: '16px' }}
                   value={locationText}
                   onChange={(e) => setLocationText(e.target.value)}
                   placeholder={t('locationPlaceholder')}
@@ -973,6 +984,7 @@ const ReportIncident = () => {
               <textarea
                 id="description"
                 className="form-textarea"
+                style={{ fontSize: '16px' }}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={t('descriptionPlaceholder')}
@@ -1159,4 +1171,3 @@ const ReportIncident = () => {
 };
 
 export default ReportIncident;
-

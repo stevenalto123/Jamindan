@@ -162,27 +162,36 @@ const CommandMap = ({ isWidget = false }) => {
     }
   }, [mapStyle]);
 
-  // Fullscreen Handler
+  // Fullscreen Handler (with iOS Safari / unsupported browser fallback)
   const toggleFullscreen = () => {
     hapticTap();
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`);
-      });
+    const fsElement = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!fsElement) {
+      const target = containerRef.current;
+      const reqFs = target?.requestFullscreen || target?.webkitRequestFullscreen;
+      if (reqFs) {
+        Promise.resolve(reqFs.call(target)).catch((err) => {
+          console.warn(`Fullscreen unavailable: ${err?.message || err}`);
+        });
+      }
     } else {
-      document.exitFullscreen();
+      const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exitFs) {
+        Promise.resolve(exitFs.call(document)).catch(() => {});
+      }
     }
   };
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      setIsFullscreen(Boolean(document.fullscreenElement || document.webkitFullscreenElement));
       // Let leaflet know the container size changed
       setTimeout(() => {
         if (mapRef.current) mapRef.current.invalidateSize();
       }, 200);
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 

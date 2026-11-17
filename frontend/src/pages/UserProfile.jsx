@@ -22,12 +22,20 @@ const UserProfile = () => {
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [email, setEmail] = useState(user?.email || '');
   
-  // Format date correctly for input type="date"
+  // Format date safely without UTC timezone shift
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
+    if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      return dateStr.slice(0, 10);
+    }
     try {
-      return new Date(dateStr).toISOString().split('T')[0];
-    } catch(e) {
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return '';
+      const yr = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const dy = String(d.getDate()).padStart(2, '0');
+      return `${yr}-${mo}-${dy}`;
+    } catch (e) {
       return '';
     }
   };
@@ -100,6 +108,10 @@ const UserProfile = () => {
     }
     if (age < 0) {
       setError('Date of birth cannot be in the future.');
+      return;
+    }
+    if (email && email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Please enter a valid email address.');
       return;
     }
     if (emergencyContactPhone && (emergencyContactPhone.length !== 11 || !emergencyContactPhone.startsWith('09'))) {
@@ -438,32 +450,34 @@ const UserProfile = () => {
               </div>
 
               {/* Date of Birth & Age */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 100px', gap: '12px' }}>
-                <div className="form-group" style={{ margin: 0 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 110px', gap: '12px' }}>
+                <div className="form-group" style={{ margin: 0, minWidth: 0 }}>
                   <label className="form-label">
-                    Date of Birth {user?.role !== 'Admin' && <Lock size={12} style={{ marginLeft: '4px', color: '#888', display: 'inline-block', verticalAlign: 'middle' }} />}
+                    Date of Birth {user?.role !== 'Admin' && <Lock size={12} style={{ marginLeft: '4px', color: 'var(--text-muted)', display: 'inline-block', verticalAlign: 'middle' }} />}
                   </label>
                   <input 
                     type="date" 
                     className="form-input" 
-                    style={{ width: '100%', backgroundColor: user?.role !== 'Admin' ? '#f0f2f0' : 'white', color: user?.role !== 'Admin' ? '#666' : 'inherit', cursor: user?.role !== 'Admin' ? 'not-allowed' : 'text' }}
+                    style={{ width: '100%', boxSizing: 'border-box', fontSize: '16px', backgroundColor: user?.role !== 'Admin' ? 'var(--card-alt)' : 'var(--bg-color)', color: user?.role !== 'Admin' ? 'var(--text-muted)' : 'var(--text-main)', cursor: user?.role !== 'Admin' ? 'not-allowed' : 'text' }}
                     value={dateOfBirth} 
                     onChange={(e) => {
                       const dobVal = e.target.value;
                       setDateOfBirth(dobVal);
                       if (dobVal) {
-                        const birthDate = new Date(dobVal);
-                        const today = new Date();
-                        let calcAge = today.getFullYear() - birthDate.getFullYear();
-                        const m = today.getMonth() - birthDate.getMonth();
-                        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) calcAge--;
-                        if (calcAge >= 0) setAge(calcAge);
+                        const [yr, mo, dy] = dobVal.split('-').map(Number);
+                        if (yr && mo && dy) {
+                          const today = new Date();
+                          let calcAge = today.getFullYear() - yr;
+                          const m = (today.getMonth() + 1) - mo;
+                          if (m < 0 || (m === 0 && today.getDate() < dy)) calcAge--;
+                          if (calcAge >= 0) setAge(calcAge);
+                        }
                       }
                     }}
                     disabled={user?.role !== 'Admin'}
                   />
                 </div>
-                <div className="form-group" style={{ margin: 0 }}>
+                <div className="form-group" style={{ margin: 0, minWidth: 0 }}>
                   <label className="form-label">Age</label>
                   <input 
                     type="number" 

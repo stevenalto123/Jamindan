@@ -23,11 +23,15 @@ const ResidentDashboard = () => {
     e.preventDefault();
     hapticEmergency();
     const newRecent = { id: agencyName, agency_name: agencyName, contact_number: number, category: category };
-    const saved = localStorage.getItem('recentHotlines');
-    let prev = saved ? JSON.parse(saved) : [];
-    const filtered = prev.filter(h => h.id !== newRecent.id);
-    const updated = [newRecent, ...filtered].slice(0, 3);
-    localStorage.setItem('recentHotlines', JSON.stringify(updated));
+    try {
+      const saved = localStorage.getItem('recentHotlines');
+      const prev = saved ? JSON.parse(saved) : [];
+      const filtered = Array.isArray(prev) ? prev.filter(h => h.id !== newRecent.id) : [];
+      const updated = [newRecent, ...filtered].slice(0, 3);
+      localStorage.setItem('recentHotlines', JSON.stringify(updated));
+    } catch (e) {
+      // Ignore corrupt cache or restricted storage
+    }
     try {
       await axios.post('/api/emergency/hotlines/log', { hotline_name: agencyName, hotline_number: number });
     } catch (err) {
@@ -291,7 +295,7 @@ const ResidentDashboard = () => {
               🚨 <strong>{t('confirmAssistanceNote')}</strong>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
               <button
                 type="button"
                 onClick={() => setShowAssistanceConfirm(false)}

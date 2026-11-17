@@ -6,8 +6,8 @@ const DownloadApp = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="auth-container">
-      <div className="auth-card" style={{ textAlign: 'center', padding: '40px 30px' }}>
+    <div className="auth-page">
+      <div className="auth-card" style={{ textAlign: 'center', padding: '36px 24px' }}>
         
         {/* App Icon / Logo */}
         <div style={{ marginBottom: '20px' }}>
@@ -58,21 +58,21 @@ const DownloadApp = () => {
         {/* Features List */}
         <div style={{ textAlign: 'left', marginBottom: '30px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '15px' }}>
-            <div style={{ backgroundColor: '#e8f5e9', padding: '8px', borderRadius: '50%' }}>
+            <div style={{ backgroundColor: 'rgba(15, 76, 44, 0.1)', padding: '8px', borderRadius: '50%' }}>
               <Zap size={20} color="var(--primary-color)" />
             </div>
             <div>
-              <h4 style={{ margin: 0, fontSize: '15px', color: 'var(--text-color)' }}>Instant Alerts</h4>
+              <h4 style={{ margin: 0, fontSize: '15px', color: 'var(--text-main)' }}>Instant Alerts</h4>
               <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>Get real-time announcements</p>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '15px' }}>
-            <div style={{ backgroundColor: '#e8f5e9', padding: '8px', borderRadius: '50%' }}>
+            <div style={{ backgroundColor: 'rgba(15, 76, 44, 0.1)', padding: '8px', borderRadius: '50%' }}>
               <ShieldCheck size={20} color="var(--primary-color)" />
             </div>
             <div>
-              <h4 style={{ margin: 0, fontSize: '15px', color: 'var(--text-color)' }}>Verified Responses</h4>
+              <h4 style={{ margin: 0, fontSize: '15px', color: 'var(--text-main)' }}>Verified Responses</h4>
               <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>Direct connection to local authorities</p>
             </div>
           </div>
@@ -81,7 +81,7 @@ const DownloadApp = () => {
         {/* Return Button */}
         <button 
           onClick={() => navigate('/login')} 
-          className="btn btn-outline"
+          className="btn btn-secondary"
           style={{ width: '100%' }}
         >
           Return to Login

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
+import { createAuthSocket } from '../utils/socket';
 import { useAuth } from '../context/AuthContext';
 import { 
   Bell, 
@@ -195,8 +195,7 @@ const AdminDashboard = () => {
     fetchDashboardStats();
     const interval = setInterval(fetchDashboardStats, 3000);
 
-    const socketUrl = axios.defaults.baseURL || '';
-    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    const socket = createAuthSocket({ transports: ['websocket', 'polling'] });
     socket.on('safety-checkin-updated', () => {
       fetchDashboardStats();
     });
@@ -367,7 +366,15 @@ const AdminDashboard = () => {
     try {
       const newStatus = user.is_on_duty === 1 ? 0 : 1;
       await axios.put('/api/auth/duty', { is_on_duty: newStatus });
-      setUser(prev => ({ ...prev, is_on_duty: newStatus }));
+      setUser(prev => {
+        const updated = { ...prev, is_on_duty: newStatus };
+        const serialized = JSON.stringify(updated);
+        try {
+          if (sessionStorage.getItem('token')) sessionStorage.setItem('cached_user', serialized);
+          if (localStorage.getItem('token')) localStorage.setItem('cached_user', serialized);
+        } catch (storageErr) {}
+        return updated;
+      });
     } catch (err) {
       console.error('Duty toggle error', err);
       alert('Failed to update duty status.');
@@ -403,7 +410,7 @@ const AdminDashboard = () => {
           boxShadow: '0 8px 30px rgba(220, 38, 38, 0.15)',
           flexWrap: 'wrap'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '280px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: '1 1 240px', minWidth: 0 }}>
             <div style={{
               width: '46px',
               height: '46px',
@@ -436,7 +443,7 @@ const AdminDashboard = () => {
             <button
               onClick={() => window.previewEmergencyBroadcastModal?.(activeBroadcastData.broadcast)}
               style={{
-                backgroundColor: 'white',
+                backgroundColor: 'var(--card-bg)',
                 color: 'var(--text-main)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '12px',
@@ -454,7 +461,7 @@ const AdminDashboard = () => {
             <button
               onClick={() => setShowBroadcastModal(true)}
               style={{
-                backgroundColor: 'white',
+                backgroundColor: 'var(--card-bg)',
                 color: 'var(--text-main)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '12px',
@@ -783,7 +790,7 @@ const AdminDashboard = () => {
                     height: '7px',
                     borderRadius: '50%',
                     backgroundColor: isCheckinActive ? '#16a34a' : '#94a3b8',
-                    boxShadow: isCheckinActive ? '0 0 8px rgba(220, 38, 38, 0.6)' : 'none'
+                    boxShadow: isCheckinActive ? '0 0 8px rgba(22, 163, 74, 0.6)' : 'none'
                   }} />
                   {isCheckinActive ? t('checkinStatusActive') : t('checkinStatusInactive')}
                 </span>
@@ -964,7 +971,6 @@ const AdminDashboard = () => {
                               type="button"
                               disabled={updatingCheckinId === item.id || updatingCheckinId === item.user_id}
                               onClick={() => handleMarkResidentSafe(item)}
-                              title="Mark as Assisted / Safe"
                               style={{
                                 backgroundColor: '#059669',
                                 color: '#fff',
@@ -1144,7 +1150,7 @@ const AdminDashboard = () => {
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '800', color: 'var(--text-main)' }}>
                   Alert Severity Tier
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '8px' }}>
                   <button
                     type="button"
                     onClick={() => setBroadcastSeverity('extreme')}
@@ -1255,7 +1261,7 @@ const AdminDashboard = () => {
                       padding: '12px 14px',
                       borderRadius: '12px',
                       border: '1px solid var(--border-color)',
-                      background: '#f8fafc',
+                      background: 'var(--bg-color)',
                       fontSize: '14px',
                       fontWeight: '700',
                       color: 'var(--text-main)',
@@ -1303,7 +1309,8 @@ const AdminDashboard = () => {
                         padding: '12px 14px',
                         borderRadius: '12px',
                         border: '1.5px solid var(--primary-color)',
-                        background: '#ffffff',
+                        background: 'var(--bg-color)',
+                        color: 'var(--text-main)',
                         fontSize: '14px',
                         fontWeight: '600'
                       }}
@@ -1314,6 +1321,29 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Target Audience Delivery Badge */}
+                <div style={{
+                  marginTop: '8px',
+                  padding: '9px 12px',
+                  borderRadius: '10px',
+                  backgroundColor: broadcastArea.toLowerCase().includes('all barangays') ? '#f0fdf4' : '#eff6ff',
+                  border: `1px solid ${broadcastArea.toLowerCase().includes('all barangays') ? '#bbf7d0' : '#bfdbfe'}`,
+                  fontSize: '11px',
+                  color: broadcastArea.toLowerCase().includes('all barangays') ? '#166534' : '#1e40af',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontWeight: '600'
+                }}>
+                  <span>{broadcastArea.toLowerCase().includes('all barangays') ? '📢' : '🎯'}</span>
+                  <span>
+                    {broadcastArea.toLowerCase().includes('all barangays')
+                      ? 'Municipal-wide: All residents, responders, and admins across Jamindan will receive this alert.'
+                      : `Targeted Delivery: Only residents registered in ${broadcastArea} (plus all on-duty Responders & Admins) will receive this alert.`
+                    }
+                  </span>
+                </div>
               </div>
 
               {/* Alert Title */}
@@ -1327,7 +1357,7 @@ const AdminDashboard = () => {
                   value={broadcastTitle} 
                   onChange={e => setBroadcastTitle(e.target.value)} 
                   placeholder="e.g. RED RAINFALL WARNING & FLOOD ADVISORY" 
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: '#f8fafc', fontSize: '14px', fontWeight: '700' }}
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-color)', color: 'var(--text-main)', fontSize: '14px', fontWeight: '700' }}
                 />
               </div>
 
@@ -1342,7 +1372,7 @@ const AdminDashboard = () => {
                   value={broadcastMessage} 
                   onChange={e => setBroadcastMessage(e.target.value)} 
                   placeholder="Type emergency instructions, evacuation directions, or hotlines..."
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: '#f8fafc', fontSize: '14px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-color)', color: 'var(--text-main)', fontSize: '14px', resize: 'vertical' }}
                 ></textarea>
               </div>
 
