@@ -193,6 +193,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    const logoutPath = typeof window !== 'undefined' ? window.location.pathname : '';
     try {
       await axios.post('/api/auth/logout');
     } catch (err) {
@@ -200,10 +201,14 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setToken(null);
       setUser(null);
+      delete axios.defaults.headers.common['Authorization'];
       safeStorageRemove(sessionStorage, 'token');
       safeStorageRemove(sessionStorage, 'cached_user');
       safeStorageRemove(localStorage, 'token');
       safeStorageRemove(localStorage, 'cached_user');
+      if (logoutPath) {
+        safeStorageSet(sessionStorage, 'logged_out_from', logoutPath);
+      }
     }
   };
 
