@@ -352,21 +352,29 @@ router.get('/:id/responder-location', authRequired, async (req, res) => {
 
   try {
     const [rows] = await db.query(`
-      SELECT i.reporter_id, u.current_lat, u.current_lng, u.full_name as responder_name
+      SELECT i.reporter_id, i.responder_id, u.current_lat, u.current_lng, u.full_name as responder_name
       FROM incidents i
-      JOIN users u ON i.responder_id = u.id
+      LEFT JOIN users u ON i.responder_id = u.id
       WHERE i.id = ?
     `, [id]);
 
     const data = rows[0];
 
     if (!data) {
-      return res.status(404).json({ message: 'Responder or Incident not found.' });
+      return res.status(404).json({ message: 'Incident not found.' });
     }
 
     // Security check: Only the reporter or an Admin/Responder can track
     if (req.user.role === 'Resident' && data.reporter_id !== req.user.id) {
       return res.status(403).json({ message: 'Access denied' });
+    }
+
+    if (!data.responder_id) {
+      return res.json({
+        responder_name: null,
+        lat: null,
+        lng: null
+      });
     }
 
     return res.json({
