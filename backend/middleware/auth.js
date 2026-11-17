@@ -1,6 +1,16 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
+let warnedMissingSecret = false;
+const getJwtSecret = () => {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (!warnedMissingSecret && process.env.NODE_ENV === 'production') {
+    warnedMissingSecret = true;
+    console.warn('[SECURITY WARNING] JWT_SECRET env var is not set; using fallback secret.');
+  }
+  return 'fallback_secret';
+};
+
 const authRequired = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader) {
@@ -13,7 +23,7 @@ const authRequired = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    const decoded = jwt.verify(token, getJwtSecret());
     
     // Verify user still exists, is active, and (if Resident) is verified in DB
     const [rows] = await db.execute('SELECT id, username, role, agency_type, is_active, is_verified FROM users WHERE id = ?', [decoded.id]);
@@ -58,5 +68,6 @@ const requireRole = (allowedRoles) => {
 
 module.exports = {
   authRequired,
-  requireRole
+  requireRole,
+  getJwtSecret
 };
