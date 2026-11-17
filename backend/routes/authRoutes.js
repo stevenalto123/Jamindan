@@ -3,13 +3,21 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
-const { authRequired, requireRole } = require('../middleware/auth');
+const { authRequired, requireRole, getJwtSecret } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
+const { createImageUpload } = require('../config/cloudinary');
+
+const escapeHtml = (str = '') => String(str)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
 
 // Strict Authentication Rate Limiter (Max 15 requests per 15 minutes)
 const authLimiter = rateLimit({
@@ -29,28 +37,7 @@ const availabilityLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const { storage } = require('../config/cloudinary');
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-  fileFilter: (req, file, cb) => {
-    const allowedExt = /\.(jpe?g|png|webp|heic|heif)$/i;
-    const allowedMime = /^image\/(jpe?g|png|webp|heic|heif)$/i;
-    const ext = path.extname(file.originalname || '');
-    const hasValidExt = allowedExt.test(ext);
-    const hasValidMime = allowedMime.test(file.mimetype || '');
-
-    // Allow matching mime+ext, or valid iOS HEIC/camera capture blobs where Safari/Android omits extension or sends generic stream mime
-    if (
-      (hasValidMime && (hasValidExt || !ext)) ||
-      ((!file.mimetype || file.mimetype === 'application/octet-stream') && hasValidExt)
-    ) {
-      return cb(null, true);
-    }
-    cb(new Error('SECURITY ERROR: Only image files (JPG, PNG, WEBP, HEIC) are allowed.'));
-  }
-});
+const upload = createImageUpload(10);
 
 // Check Username & Email Availability before leaving Step 1
 router.post('/check-availability', availabilityLimiter, async (req, res) => {
@@ -198,7 +185,7 @@ router.post('/login', authLimiter, async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
-      process.env.JWT_SECRET || 'fallback_secret',
+      getJwtSecret(),
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
@@ -281,11 +268,40 @@ router.put('/duty', authRequired, async (req, res) => {
 router.put('/profile', authRequired, async (req, res) => {
   const { full_name, email, age, date_of_birth, phone, barangay, avatar, purok_sitio, blood_type, allergies, medical_conditions, emergency_contact_name, emergency_contact_phone } = req.body;
 
-  if (!full_name || !phone || !barangay) {
-    return res.status(400).json({ message: 'Full name, phone, and barangay are required' });
-  }
-
   try {
+    const [existingRows] = await db.execute(
+      'SELECT id, role, is_verified, full_name, email, age, date_of_birth, phone, barangay, avatar FROM users WHERE id = ?',
+      [req.user.id]
+    );
+    const existing = existingRows[0];
+    if (!existing) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Verified Residents cannot alter KYC-verified legal identity fields (full_name, dob, age) after ID approval
+    const lockIdentity = existing.role === 'Resident' && Boolean(existing.is_verified);
+    const nextFullName = lockIdentity
+      ? existing.full_name
+      : (full_name && full_name.trim() ? full_name.trim() : existing.full_name);
+    const nextAge = lockIdentity
+      ? existing.age
+      : (age !== undefined && age !== '' && !Number.isNaN(parseInt(age, 10)) ? parseInt(age, 10) : existing.age);
+    const nextDob = lockIdentity
+      ? existing.date_of_birth
+      : (date_of_birth !== undefined ? (date_of_birth || existing.date_of_birth) : existing.date_of_birth);
+    const nextPhone = phone !== undefined && phone.trim() ? phone.trim() : existing.phone;
+    const nextBarangay = barangay !== undefined && barangay.trim() ? barangay.trim() : existing.barangay;
+    const nextEmail = email !== undefined && String(email).trim() ? String(email).trim() : existing.email;
+    const nextAvatar = avatar ? avatar : existing.avatar;
+
+    if (!nextFullName || !nextPhone || !nextBarangay) {
+      return res.status(400).json({ message: 'Full name, phone, and barangay are required' });
+    }
+
+    if (nextEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
+      return res.status(400).json({ message: 'Please enter a valid email address.' });
+    }
+
     await db.execute(`
       UPDATE users 
       SET full_name = ?, email = ?, age = ?, date_of_birth = ?, phone = ?, barangay = ?, avatar = ?,
@@ -293,13 +309,13 @@ router.put('/profile', authRequired, async (req, res) => {
           emergency_contact_name = ?, emergency_contact_phone = ?
       WHERE id = ?
     `, [
-      full_name.trim(),
-      email ? email.trim() : null,
-      age ? parseInt(age) : 18,
-      date_of_birth || null,
-      phone.trim(),
-      barangay.trim(),
-      avatar || null,
+      nextFullName,
+      nextEmail || null,
+      nextAge ?? 18,
+      nextDob || null,
+      nextPhone,
+      nextBarangay,
+      nextAvatar || null,
       purok_sitio || null,
       blood_type || null,
       allergies || null,
@@ -394,12 +410,16 @@ router.put('/verify-user/:userId', authRequired, requireRole('Admin'), async (re
     const { action } = req.body; // 'approve' or 'reject'
     const userId = req.params.userId;
 
-    // Fetch user details first to get email and name for notification
-    const [rows] = await db.execute('SELECT full_name, email FROM users WHERE id = ?', [userId]);
+    // Fetch user details first to verify role/pending status and get email and name for notification
+    const [rows] = await db.execute('SELECT id, role, is_verified, full_name, email FROM users WHERE id = ?', [userId]);
     const targetUser = rows[0];
 
     if (!targetUser) {
       return res.status(404).json({ message: 'User not found.' });
+    }
+
+    if (action !== 'approve' && action !== 'reject') {
+      return res.status(400).json({ message: 'Invalid verification action.' });
     }
 
     if (action === 'approve') {
@@ -414,7 +434,7 @@ router.put('/verify-user/:userId', authRequired, requireRole('Admin'), async (re
             subject: 'Account Approved - Jamindan Emergency Response',
             html: `
               <h3>Welcome to Jamindan Emergency Response!</h3>
-              <p>Hello ${targetUser.full_name},</p>
+              <p>Hello ${escapeHtml(targetUser.full_name)},</p>
               <p>Great news! Your account registration has been officially verified and approved by our administrators.</p>
               <p>You can now log into the mobile app to access emergency services, view responder locations, and receive community alerts.</p>
               <br>
@@ -430,7 +450,10 @@ router.put('/verify-user/:userId', authRequired, requireRole('Admin'), async (re
 
       return res.json({ message: 'User approved successfully.' });
     } else if (action === 'reject') {
-      await db.execute('DELETE FROM users WHERE id = ?', [userId]);
+      if (targetUser.role !== 'Resident' || Boolean(targetUser.is_verified)) {
+        return res.status(400).json({ message: 'Only pending Resident accounts can be rejected.' });
+      }
+      await db.execute('DELETE FROM users WHERE id = ? AND role = ? AND is_verified = 0', [userId, 'Resident']);
       await db.logAudit(`Rejected and deleted user account ID: ${userId}`, req.user.username, req.ip);
 
       // Send Rejection Email
@@ -441,7 +464,7 @@ router.put('/verify-user/:userId', authRequired, requireRole('Admin'), async (re
             subject: 'Registration Update - Jamindan Emergency Response',
             html: `
               <h3>Registration Update</h3>
-              <p>Hello ${targetUser.full_name},</p>
+              <p>Hello ${escapeHtml(targetUser.full_name)},</p>
               <p>We are writing to inform you that your recent account registration was unable to be verified and has been rejected by our administrators.</p>
               <p>This is usually due to one of the following reasons:</p>
               <ul>
@@ -552,18 +575,17 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 3600000); // 1 hour
 
-    await db.execute('INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)', [email, token, expiresAt]);
+    await db.execute('INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)', [user.email, token, expiresAt]);
 
-    // Securely determine client URL against whitelist to avoid Host/Origin header injection
-    const defaultOrigin = process.env.CLIENT_ORIGIN || 'https://jamindan-emergency.vercel.app';
+    // Securely determine client URL against strict allowlist to avoid Host/Origin header injection
+    const defaultOrigin = process.env.CLIENT_ORIGIN || 'https://jamindan-flax.vercel.app';
     let clientUrl = defaultOrigin;
     if (req.headers.origin) {
       try {
         const originUrl = new URL(req.headers.origin);
+        const allowedHosts = new Set(['localhost', '127.0.0.1', 'jamindan-flax.vercel.app']);
         if (
-          originUrl.hostname === 'localhost' ||
-          originUrl.hostname === '127.0.0.1' ||
-          originUrl.hostname.endsWith('.vercel.app') ||
+          allowedHosts.has(originUrl.hostname) ||
           (process.env.CLIENT_ORIGIN && originUrl.origin === new URL(process.env.CLIENT_ORIGIN).origin)
         ) {
           clientUrl = originUrl.origin;
@@ -580,7 +602,7 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
       text: `Hello ${user.full_name},\n\nYou requested a password reset. Click the link below to reset it:\n\n${resetLink}\n\nThis link is valid for 1 hour.\n\nIf you did not request this, please ignore this email.`,
       html: `
         <h3>Password Reset</h3>
-        <p>Hello ${user.full_name},</p>
+        <p>Hello ${escapeHtml(user.full_name)},</p>
         <p>You requested a password reset. Click the button below to reset it:</p>
         <a href="${resetLink}" style="display:inline-block;padding:10px 20px;background:#c0392b;color:#fff;text-decoration:none;border-radius:5px;">Reset Password</a>
         <p><br>If the button doesn't work (or if this email is in your Spam folder), copy and paste the following link into your browser:</p>

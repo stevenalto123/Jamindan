@@ -33,8 +33,9 @@ router.get('/admin/:userId', async (req, res) => {
 // Add household member
 router.post('/', async (req, res) => {
   const { full_name, age, gender, medical_notes } = req.body;
-  if (!full_name || !age || !gender) {
-    return res.status(400).json({ message: 'Full name, age, and gender are required' });
+  const parsedAge = Number(age);
+  if (!full_name || !String(full_name).trim() || age === undefined || age === null || age === '' || Number.isNaN(parsedAge) || parsedAge < 0 || parsedAge > 130 || !gender) {
+    return res.status(400).json({ message: 'Full name, valid age (0-130), and gender are required' });
   }
   try {
     await db.execute(

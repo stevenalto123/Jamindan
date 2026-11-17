@@ -110,7 +110,7 @@ router.get('/resident', requireRole(['Resident']), async (req, res) => {
     const [totalRows] = await db.query('SELECT COUNT(*) as count FROM incidents WHERE reporter_id = ?', [reporterId]);
     const totalReported = totalRows[0].count;
 
-    const [activeRows] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE reporter_id = ? AND status != 'Resolved'", [reporterId]);
+    const [activeRows] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE reporter_id = ? AND status NOT IN ('Resolved', 'False Alarm')", [reporterId]);
     const activeReported = activeRows[0].count;
 
     const [resolvedRows] = await db.query("SELECT COUNT(*) as count FROM incidents WHERE reporter_id = ? AND status = 'Resolved'", [reporterId]);

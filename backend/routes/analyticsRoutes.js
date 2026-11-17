@@ -18,6 +18,9 @@ const buildFilterConditions = (query, tableAlias = 'i') => {
   } else if (startDate) {
     conditions.push(`DATE(${tableAlias}.created_at) >= DATE(?)`);
     params.push(startDate);
+  } else if (endDate) {
+    conditions.push(`DATE(${tableAlias}.created_at) <= DATE(?)`);
+    params.push(endDate);
   } else if (period === 'today') {
     const todayPst = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
     conditions.push(`DATE(${tableAlias}.created_at) = ?`);
@@ -63,8 +66,8 @@ router.get('/summary', async (req, res) => {
     const [resolvedRows] = await db.query(`SELECT COUNT(*) as count ${baseJoin} ${resolvedWhere}`, params);
 
     const activeWhere = whereClause 
-      ? `${whereClause} AND i.status != 'Resolved'` 
-      : "WHERE i.status != 'Resolved'";
+      ? `${whereClause} AND i.status NOT IN ('Resolved', 'False Alarm')` 
+      : "WHERE i.status NOT IN ('Resolved', 'False Alarm')";
     const [activeRows] = await db.query(`SELECT COUNT(*) as count ${baseJoin} ${activeWhere}`, params);
     
     // Average response time in minutes
@@ -188,7 +191,7 @@ router.get('/reports/barangay-summary', async (req, res) => {
         COALESCE(u.barangay, 'Unknown') as barangay,
         COUNT(i.id) as total_incidents,
         SUM(CASE WHEN i.status = 'Resolved' THEN 1 ELSE 0 END) as resolved_count,
-        SUM(CASE WHEN i.status != 'Resolved' THEN 1 ELSE 0 END) as active_count,
+        SUM(CASE WHEN i.status NOT IN ('Resolved', 'False Alarm') THEN 1 ELSE 0 END) as active_count,
         SUM(CASE WHEN i.type = 'Fire' THEN 1 ELSE 0 END) as fire_count,
         SUM(CASE WHEN i.type = 'Medical' THEN 1 ELSE 0 END) as medical_count,
         SUM(CASE WHEN i.type = 'Flood' THEN 1 ELSE 0 END) as flood_count,

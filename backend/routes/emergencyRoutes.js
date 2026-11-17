@@ -62,16 +62,26 @@ router.get('/hotlines/logs', requireRole(['Admin']), async (req, res) => {
   }
 });
 
+const VALID_EVAC_STATUSES = ['Open', 'Full', 'Closed', 'Standby'];
+
 // ADMIN ONLY - Add evacuation center
 router.post('/evacuation-centers', requireRole(['Admin']), async (req, res) => {
   const { name, location, capacity, status, latitude, longitude } = req.body;
-  if (!name || !location || !capacity) {
+  if (!name || !String(name).trim() || !location || !String(location).trim() || capacity === undefined || capacity === '') {
     return res.status(400).json({ message: 'Name, location, and capacity are required' });
+  }
+  const parsedCapacity = parseInt(capacity, 10);
+  if (!Number.isInteger(parsedCapacity) || parsedCapacity < 1) {
+    return res.status(400).json({ message: 'Capacity must be a positive whole number.' });
+  }
+  const nextStatus = status || 'Closed';
+  if (!VALID_EVAC_STATUSES.includes(nextStatus)) {
+    return res.status(400).json({ message: 'Invalid evacuation center status.' });
   }
   try {
     await db.execute(
       'INSERT INTO evacuation_centers (name, location, capacity, status, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, location, parseInt(capacity), status || 'Closed', latitude || null, longitude || null]
+      [name.trim(), location.trim(), parsedCapacity, nextStatus, latitude || null, longitude || null]
     );
     return res.status(201).json({ message: 'Evacuation center added successfully' });
   } catch (error) {
@@ -83,14 +93,28 @@ router.post('/evacuation-centers', requireRole(['Admin']), async (req, res) => {
 // ADMIN ONLY - Update evacuation center
 router.put('/evacuation-centers/:id', requireRole(['Admin']), async (req, res) => {
   const { name, location, capacity, current_headcount, status, latitude, longitude } = req.body;
-  if (!name || !location || !capacity) {
+  if (!name || !String(name).trim() || !location || !String(location).trim() || capacity === undefined || capacity === '') {
     return res.status(400).json({ message: 'Name, location, and capacity are required' });
   }
+  const parsedCapacity = parseInt(capacity, 10);
+  const parsedHeadcount = current_headcount !== undefined && current_headcount !== '' ? parseInt(current_headcount, 10) : 0;
+  if (!Number.isInteger(parsedCapacity) || parsedCapacity < 1) {
+    return res.status(400).json({ message: 'Capacity must be a positive whole number.' });
+  }
+  if (!Number.isInteger(parsedHeadcount) || parsedHeadcount < 0) {
+    return res.status(400).json({ message: 'Headcount must be a non-negative whole number.' });
+  }
+  if (status && !VALID_EVAC_STATUSES.includes(status)) {
+    return res.status(400).json({ message: 'Invalid evacuation center status.' });
+  }
   try {
-    await db.execute(
+    const [result] = await db.execute(
       'UPDATE evacuation_centers SET name = ?, location = ?, capacity = ?, current_headcount = ?, status = ?, latitude = ?, longitude = ? WHERE id = ?',
-      [name, location, parseInt(capacity), parseInt(current_headcount || 0), status, latitude || null, longitude || null, req.params.id]
+      [name.trim(), location.trim(), parsedCapacity, parsedHeadcount, status || 'Closed', latitude || null, longitude || null, req.params.id]
     );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Evacuation center not found' });
+    }
     return res.json({ message: 'Evacuation center updated successfully' });
   } catch (error) {
     console.error('Update evacuation center error:', error);
@@ -101,7 +125,10 @@ router.put('/evacuation-centers/:id', requireRole(['Admin']), async (req, res) =
 // ADMIN ONLY - Delete evacuation center
 router.delete('/evacuation-centers/:id', requireRole(['Admin']), async (req, res) => {
   try {
-    await db.execute('DELETE FROM evacuation_centers WHERE id = ?', [req.params.id]);
+    const [result] = await db.execute('DELETE FROM evacuation_centers WHERE id = ?', [req.params.id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Evacuation center not found' });
+    }
     return res.json({ message: 'Evacuation center deleted successfully' });
   } catch (error) {
     console.error('Delete evacuation center error:', error);

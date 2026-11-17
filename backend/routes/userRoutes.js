@@ -2,23 +2,9 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const { authRequired, requireRole } = require('../middleware/auth');
-const multer = require('multer');
-const path = require('path');
-const { storage } = require('../config/cloudinary');
+const { createImageUpload } = require('../config/cloudinary');
 
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|webp|heic|heif/;
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    if (mimetype && extname) {
-      return cb(null, true);
-    }
-    cb(new Error('SECURITY ERROR: Only image files (JPG, PNG, WEBP, HEIC) are allowed.'));
-  }
-});
+const upload = createImageUpload(10);
 
 // Apply auth to all routes in this file
 router.use(authRequired);
@@ -91,8 +77,10 @@ router.post('/', requireRole(['Admin']), upload.fields([
 
 // Get all users (with search, role filter, and pagination)
 router.get('/', requireRole(['Admin', 'Responder']), async (req, res) => {
-  const { search, role, is_on_duty, page = 1, limit = 10 } = req.query;
-  const offset = (parseInt(page) - 1) * parseInt(limit);
+  const { search, role, is_on_duty } = req.query;
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+  const offset = (page - 1) * limit;
 
   try {
     let baseQuery = 'FROM users';
@@ -106,8 +94,21 @@ router.get('/', requireRole(['Admin', 'Responder']), async (req, res) => {
       params.push(wildCard, wildCard, wildCard, wildCard);
     }
 
-    // Role filter
-    if (role) {
+    // Role filter (Responders may only view Admin/Responder colleagues, not Resident PII)
+    if (req.user.role === 'Responder') {
+      if (role && !['Admin', 'Responder'].includes(role)) {
+        return res.json({
+          users: [],
+          pagination: { total: 0, page, limit, totalPages: 0 }
+        });
+      }
+      if (role) {
+        conditions.push('role = ?');
+        params.push(role);
+      } else {
+        conditions.push("role IN ('Admin', 'Responder')");
+      }
+    } else if (role) {
       conditions.push('role = ?');
       params.push(role);
     }
@@ -135,16 +136,16 @@ router.get('/', requireRole(['Admin', 'Responder']), async (req, res) => {
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
     `;
-    const dataParams = [...params, parseInt(limit), offset];
+    const dataParams = [...params, limit, offset];
     const [users] = await db.query(dataQuery, dataParams);
 
     return res.json({
       users,
       pagination: {
         total: totalCount,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(totalCount / parseInt(limit))
+        page,
+        limit,
+        totalPages: Math.ceil(totalCount / limit)
       }
     });
 

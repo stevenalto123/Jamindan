@@ -2,24 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const { authRequired, requireRole } = require('../middleware/auth');
-const webpush = require('web-push');
-
-try {
-  const pubKey = process.env.VAPID_PUBLIC_KEY || 'BJd5fK6r2z9Z39nPfgkV3kKcE9K3K7nvIAC7GFQdgZodVaVz-DRXaCVUoeb3VSjQxQCgJ3jPiDKm6cOI1PuU-oM';
-  const privKey = process.env.VAPID_PRIVATE_KEY || 'gi6UKdgvY7oL2TkiLWuDJPBtBkk0V4M--mXocHO7cF0';
-  
-  if (pubKey && privKey) {
-    webpush.setVapidDetails(
-      process.env.VAPID_EMAIL || 'mailto:admin@jamindan.gov.ph',
-      pubKey,
-      privKey
-    );
-  } else {
-    console.warn('VAPID keys not set in notificationRoutes. Push disabled.');
-  }
-} catch (err) {
-  console.error('Failed to initialize webpush:', err.message);
-}
+const { webpush } = require('../config/push');
 
 // Get latest active emergency broadcast (within last 4 hours) - Public so emergency siren sounds without auth barrier
 router.get('/active-broadcast', async (req, res) => {
@@ -210,7 +193,7 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
     const payload = JSON.stringify({
       title: `${alertPrefix} - ${title}`,
       body: formattedBody,
-      icon: '/jamindan-seal.png',
+      icon: '/logo.png',
       url: `/?broadcast=1&b_id=${encodeURIComponent(batchKey)}&title=${encodeURIComponent(title)}&msg=${encodeURIComponent(message)}&severity=${encodeURIComponent(severity)}&area=${encodeURIComponent(target_area)}`
     });
 
@@ -279,7 +262,7 @@ router.post('/broadcast', requireRole(['Admin']), async (req, res) => {
     }
 
     return res.json({ 
-      success: true, 
+      success: true,
       broadcastId,
       message: `Broadcast transmitted to ${sentCount} devices successfully.` 
     });
@@ -353,18 +336,21 @@ router.post('/broadcast-evacuation', requireRole(['Admin']), async (req, res) =>
       AND id != ?
       AND (
         6371000 * acos(
-          cos(radians(?)) * cos(radians(current_lat)) * cos(radians(current_lng) - radians(?)) + 
-          sin(radians(?)) * sin(radians(current_lat))
+          LEAST(1.0, GREATEST(-1.0,
+            cos(radians(?)) * cos(radians(current_lat)) * cos(radians(current_lng) - radians(?)) + 
+            sin(radians(?)) * sin(radians(current_lat))
+          ))
         )
       ) <= ?
     `, [req.user.id, lat, lng, lat, radius_meters]);
 
     let sentCount = 0;
+    const evacId = `evac_${Date.now()}`;
     const payload = JSON.stringify({
       title: title,
       body: message,
-      icon: '/jamindan-seal.png',
-      url: `/?broadcast=1&title=${encodeURIComponent(title)}&msg=${encodeURIComponent(message)}`
+      icon: '/logo.png',
+      url: `/?broadcast=1&b_id=${encodeURIComponent(evacId)}&title=${encodeURIComponent(title)}&msg=${encodeURIComponent(message)}&severity=extreme`
     });
 
     if (users.length > 0) {
@@ -397,7 +383,14 @@ router.post('/broadcast-evacuation', requireRole(['Admin']), async (req, res) =>
     
     const io = req.app.get('io');
     if (io) {
-      io.emit('new-broadcast', { title, message, type: 'evacuation' });
+      io.emit('new-broadcast', {
+        id: evacId,
+        title,
+        message,
+        type: 'evacuation',
+        severity: 'extreme',
+        target_area: req.body.target_area || 'Evacuation Zone'
+      });
     }
 
     res.json({ message: 'Evacuation broadcast sent successfully', target_users: users.length, pushes_sent: sentCount });

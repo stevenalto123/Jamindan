@@ -1,45 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const db = require('../config/db');
 const { authRequired, requireRole } = require('../middleware/auth');
-const webpush = require('web-push');
+const { webpush } = require('../config/push');
+const { createImageUpload } = require('../config/cloudinary');
 
-try {
-  const pubKey = process.env.VAPID_PUBLIC_KEY || 'BJd5fK6r2z9Z39nPfgkV3kKcE9K3K7nvIAC7GFQdgZodVaVz-DRXaCVUoeb3VSjQxQCgJ3jPiDKm6cOI1PuU-oM';
-  const privKey = process.env.VAPID_PRIVATE_KEY || 'gi6UKdgvY7oL2TkiLWuDJPBtBkk0V4M--mXocHO7cF0';
-  
-  if (pubKey && privKey) {
-    webpush.setVapidDetails(
-      process.env.VAPID_EMAIL || 'mailto:admin@jamindan.gov.ph',
-      pubKey,
-      privKey
-    );
-  } else {
-    console.warn('VAPID keys not set in incidentRoutes. Push notifications disabled.');
-  }
-} catch (err) {
-  console.error('Failed to initialize webpush:', err.message);
-}
-
-const { storage } = require('../config/cloudinary');
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png/;
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    
-    if (mimetype && extname) {
-      return cb(null, true);
-    }
-    cb(new Error('Only JPEG, JPG, and PNG images up to 5MB are allowed!'));
-  }
-});
+const upload = createImageUpload(5);
 
 // Helper: Generate Unique Incident Code
 const generateIncidentCode = async () => {
@@ -47,8 +15,7 @@ const generateIncidentCode = async () => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const randomHex = Math.floor(Math.random() * 65535).toString(16).toUpperCase().padStart(4, '0');
-  return `#${year}-${month}-${randomHex}`;
-};
+  return `#${year}-${month}-${randomHex}`;};
 
 // Create Incident Report (Residents, Admins, and Responders)
 router.post('/', authRequired, requireRole(['Resident', 'Admin', 'Responder']), upload.single('photo'), async (req, res) => {
@@ -594,7 +561,6 @@ router.put('/:id/agency', authRequired, requireRole(['Admin', 'Responder']), asy
 
           if (resp.push_subscription) {
             const subscription = JSON.parse(resp.push_subscription);
-            const webpush = require('web-push');
             await webpush.sendNotification(subscription, JSON.stringify({
               title: notifTitle,
               body: notifBody,
@@ -784,7 +750,6 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
       if (assignedResponder.push_subscription) {
         try {
           const subscription = JSON.parse(assignedResponder.push_subscription);
-          const webpush = require('web-push');
           const payload = JSON.stringify({
             title: '🚨 DISPATCH ALERT',
             body: `You have been dispatched to Incident ${incident.code}${vehicleLabel}. Please respond immediately!`,

@@ -3,8 +3,8 @@ const router = express.Router();
 const db = require('../config/db');
 const { authRequired, requireRole } = require('../middleware/auth');
 
-// Get all system settings
-router.get('/', async (req, res) => {
+// Get all system settings (requires authenticated session)
+router.get('/', authRequired, async (req, res) => {
   try {
     const [rows] = await db.query('SELECT setting_key, setting_value FROM system_settings');
     const settings = {};
