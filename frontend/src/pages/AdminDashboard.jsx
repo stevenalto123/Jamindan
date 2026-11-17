@@ -244,21 +244,60 @@ const AdminDashboard = () => {
         return;
       }
       const ctx = new AudioContext();
-      const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.25, ctx.currentTime);
-      osc1.frequency.setValueAtTime(853, ctx.currentTime);
-      osc2.frequency.setValueAtTime(960, ctx.currentTime);
-      osc1.connect(gain);
-      osc2.connect(gain);
       gain.connect(ctx.destination);
-      osc1.start();
-      osc2.start();
+
+      let osc1 = null;
+      let osc2 = null;
+      let pulseInterval = null;
+
+      if (broadcastSeverity === 'advisory') {
+        // 🔵 ADVISORY: Gentle single chime sine wave (660 Hz)
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        osc1 = ctx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(660, ctx.currentTime);
+        osc1.connect(gain);
+        osc1.start();
+      } else if (broadcastSeverity === 'severe') {
+        // 🟠 SEVERE: Distinct High Alert Warning Tone (750Hz triangle + 950Hz sine rapid warning beeps)
+        gain.gain.setValueAtTime(0.22, ctx.currentTime);
+        osc1 = ctx.createOscillator();
+        osc2 = ctx.createOscillator();
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(750, ctx.currentTime);
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(950, ctx.currentTime);
+        osc1.connect(gain);
+        osc2.connect(gain);
+        osc1.start();
+        osc2.start();
+
+        let pulse = true;
+        pulseInterval = setInterval(() => {
+          pulse = !pulse;
+          gain.gain.setValueAtTime(pulse ? 0.22 : 0.001, ctx.currentTime);
+        }, 250);
+      } else {
+        // 🔴 EXTREME: Authentic NDRRMC Dual Tone Siren (853Hz + 960Hz pure sines)
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        osc1 = ctx.createOscillator();
+        osc2 = ctx.createOscillator();
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(853, ctx.currentTime);
+        osc2.frequency.setValueAtTime(960, ctx.currentTime);
+        osc1.connect(gain);
+        osc2.connect(gain);
+        osc1.start();
+        osc2.start();
+      }
+
       setTimeout(() => {
         try {
-          osc1.stop();
-          osc2.stop();
+          if (pulseInterval) clearInterval(pulseInterval);
+          if (osc1) { osc1.stop(); osc1.disconnect(); }
+          if (osc2) { osc2.stop(); osc2.disconnect(); }
           ctx.close();
         } catch (e) {}
         setTestingSiren(false);
@@ -1231,9 +1270,9 @@ const AdminDashboard = () => {
                   padding: '11px',
                   marginBottom: '14px',
                   borderRadius: '12px',
-                  border: '1.5px dashed #dc2626',
-                  backgroundColor: testingSiren ? '#fee2e2' : '#fff5f5',
-                  color: '#dc2626',
+                  border: `1.5px dashed ${broadcastSeverity === 'extreme' ? '#dc2626' : (broadcastSeverity === 'severe' ? '#ea580c' : '#2563eb')}`,
+                  backgroundColor: testingSiren ? '#f1f5f9' : (broadcastSeverity === 'extreme' ? '#fff5f5' : (broadcastSeverity === 'severe' ? '#fff7ed' : '#eff6ff')),
+                  color: broadcastSeverity === 'extreme' ? '#dc2626' : (broadcastSeverity === 'severe' ? '#ea580c' : '#2563eb'),
                   fontWeight: '800',
                   fontSize: '12px',
                   cursor: 'pointer',
@@ -1244,7 +1283,14 @@ const AdminDashboard = () => {
                   transition: 'all 0.2s ease'
                 }}
               >
-                {testingSiren ? '🔊 Sounding Local Siren (4s)...' : '🔊 Test 853Hz/960Hz Emergency Siren Locally (4s)'}
+                {testingSiren 
+                  ? `🔊 Sounding ${broadcastSeverity.toUpperCase()} Audio Preview (4s)...` 
+                  : (broadcastSeverity === 'extreme' 
+                      ? '🔊 Test EXTREME NDRRMC Siren (853Hz+960Hz) Locally (4s)' 
+                      : (broadcastSeverity === 'severe' 
+                          ? '🔊 Test SEVERE High Alert Warning Tone Locally (4s)' 
+                          : '🔊 Test ADVISORY Public Chime (660Hz) Locally (4s)'))
+                }
               </button>
               
               <div style={{ display: 'flex', gap: '12px' }}>
