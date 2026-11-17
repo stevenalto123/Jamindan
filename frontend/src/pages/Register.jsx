@@ -111,7 +111,7 @@ const Register = () => {
     
     if (score === 0) setPasswordStrength({ score, text: '', color: '' });
     else if (score <= 2) setPasswordStrength({ score, text: 'Weak', color: '#e74c3c' });
-    else if (score === 3) setPasswordStrength({ score, text: 'Medium', color: '#f39c12' });
+    else if (score <= 3) setPasswordStrength({ score, text: 'Medium', color: '#f39c12' });
     else setPasswordStrength({ score, text: 'Strong', color: '#27ae60' });
   };
 
@@ -400,9 +400,84 @@ const Register = () => {
             height: 14px;
           }
         }
+
+        /* Registration Form Layout & iOS Date Overlap Fix */
+        .reg-card {
+          max-width: 600px;
+          padding: 30px;
+          margin: 0 auto;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .reg-grid-dob-age {
+          display: grid;
+          grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+          gap: 15px;
+          width: 100%;
+          align-items: flex-start;
+        }
+
+        .reg-grid-row {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 15px;
+          width: 100%;
+          align-items: flex-start;
+        }
+
+        .reg-grid-dob-age > div,
+        .reg-grid-row > div {
+          min-width: 0;
+          width: 100%;
+        }
+
+        /* iOS Safari Native Date Input Overflow Fix */
+        input[type="date"].form-input,
+        input#date_of_birth {
+          display: block;
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+          box-sizing: border-box;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          appearance: none;
+        }
+
+        input[type="date"]::-webkit-date-and-time-value {
+          text-align: left;
+          min-height: 1.2em;
+          margin: 0;
+        }
+
+        input#age {
+          min-width: 0;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+
+        @media (max-width: 540px) {
+          .reg-card {
+            padding: 24px 16px !important;
+            margin: 0 auto !important;
+          }
+
+          /* Stack Date of Birth & Age vertically on mobile/iOS to completely eliminate overlap */
+          .reg-grid-dob-age {
+            grid-template-columns: 1fr !important;
+            gap: 14px !important;
+          }
+
+          .reg-grid-row {
+            grid-template-columns: 1fr !important;
+            gap: 14px !important;
+          }
+        }
       `}</style>
 
-      <div className="auth-card" style={{ maxWidth: '600px', padding: '30px', margin: '0 auto' }}>
+      <div className="auth-card reg-card">
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <img src="/logo.png" alt="Jamindan Seal" className="auth-logo" style={{ width: '80px', height: '80px' }} />
           <h1 className="auth-title" style={{ fontSize: '22px', margin: '10px 0 5px 0' }}>{t('residentRegistration') || 'Resident Registration'}</h1>
@@ -433,18 +508,27 @@ const Register = () => {
                 <input type="text" id="fullName" name="fullName" className="form-input" value={formData.fullName} onChange={handleChange} placeholder={t('completeName')} required />
               </div>
 
-              <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '15px' }}>
+              <div className="form-group reg-grid-dob-age">
                 <div>
                   <label className="form-label" htmlFor="date_of_birth">Date of Birth <span style={{color: 'red'}}>*</span></label>
                   <input type="date" id="date_of_birth" name="date_of_birth" className="form-input" value={formData.date_of_birth} onChange={handleChange} required />
                 </div>
                 <div>
                   <label className="form-label" htmlFor="age">Age</label>
-                  <input type="number" id="age" name="age" className="form-input" value={formData.age} readOnly style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-muted)' }} />
+                  <input 
+                    type="number" 
+                    id="age" 
+                    name="age" 
+                    className="form-input" 
+                    value={formData.age} 
+                    readOnly 
+                    placeholder="Auto-calculated"
+                    style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-muted)' }} 
+                  />
                 </div>
               </div>
 
-              <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div className="form-group reg-grid-row">
                 <div>
                   <label className="form-label" htmlFor="phone">{t('phoneNumberLabel')} <span style={{color: 'red'}}>*</span></label>
                   <input type="tel" id="phone" name="phone" className="form-input" value={formData.phone} onChange={handleChange} placeholder="09XXXXXXXXX" required />
@@ -470,7 +554,7 @@ const Register = () => {
                 <input type="text" id="username" name="username" className="form-input" value={formData.username} onChange={handleChange} placeholder={t('createUsername')} required />
               </div>
 
-              <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div className="form-group reg-grid-row">
                 <div>
                   <label className="form-label" htmlFor="password">{t('passwordLabel')} <span style={{color: 'red'}}>*</span></label>
                   <div style={{ position: 'relative' }}>
@@ -531,7 +615,7 @@ const Register = () => {
                 This information will help first responders treat you more effectively during an emergency. You can skip this and fill it out later in your profile.
               </p>
 
-              <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div className="form-group reg-grid-row">
                 <div>
                   <label className="form-label" htmlFor="purok_sitio">Purok / Sitio</label>
                   <input type="text" id="purok_sitio" name="purok_sitio" className="form-input" value={formData.purok_sitio} onChange={handleChange} placeholder="e.g. Purok 1" />
@@ -559,7 +643,7 @@ const Register = () => {
               </div>
 
               <h4 style={{ fontSize: '15px', margin: '25px 0 15px 0', color: 'var(--text-main)' }}>Emergency Contact Person</h4>
-              <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div className="form-group reg-grid-row">
                 <div>
                   <label className="form-label" htmlFor="emergency_contact_name">Contact Name</label>
                   <input type="text" id="emergency_contact_name" name="emergency_contact_name" className="form-input" value={formData.emergency_contact_name} onChange={handleChange} placeholder="Full Name" />
@@ -601,7 +685,7 @@ const Register = () => {
                   <option value="Passport">Passport</option>
                   <option value="UMID / SSS">UMID / SSS</option>
                   <option value="Postal ID">Postal ID</option>
-                  <option value="Student ID">Student ID (If 18+)</option>
+                  <option value="Student ID (If 18+)">Student ID (If 18+)</option>
                 </select>
               </div>
 
