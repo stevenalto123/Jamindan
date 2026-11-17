@@ -180,8 +180,8 @@ const TrackStatus = () => {
       getLoc();
       const interval = setInterval(getLoc, 10000); // update every 10s
       return () => clearInterval(interval);
-    } else if (user && id) {
-      // For Admin and Resident tabs: poll the assigned Responder's real location
+    } else if (user && id && incident?.responder_id && !['Resolved', 'False Alarm'].includes(incident?.status)) {
+      // For Admin and Resident tabs: poll the assigned Responder's real location when dispatched
       const pollResponderLoc = () => {
         axios.get(`/api/incidents/${id}/responder-location`)
           .then(res => {
@@ -196,7 +196,7 @@ const TrackStatus = () => {
       const interval = setInterval(pollResponderLoc, 10000);
       return () => clearInterval(interval);
     }
-  }, [user, id]);
+  }, [user, id, incident?.responder_id, incident?.status]);
 
   const handleStatusUpdateSubmit = async (e) => {
     e.preventDefault();

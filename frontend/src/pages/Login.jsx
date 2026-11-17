@@ -15,8 +15,15 @@ const Login = () => {
   const location = useLocation();
 
   const resolvePostLoginPath = (loggedInUser) => {
+    let loggedOutFrom = null;
+    try { loggedOutFrom = sessionStorage.getItem('logged_out_from'); } catch {}
     const from = location.state?.from;
-    if (from?.pathname && !['/login', '/register', '/forgot-password'].includes(from.pathname) && !from.pathname.startsWith('/reset-password')) {
+    if (
+      from?.pathname &&
+      from.pathname !== loggedOutFrom &&
+      !['/login', '/register', '/forgot-password'].includes(from.pathname) &&
+      !from.pathname.startsWith('/reset-password')
+    ) {
       return `${from.pathname}${from.search || ''}${from.hash || ''}`;
     }
     return (loggedInUser.role === 'Admin' || loggedInUser.role === 'Responder') ? '/admin' : '/dashboard';
@@ -27,6 +34,10 @@ const Login = () => {
       navigate(resolvePostLoginPath(user), { replace: true });
     }
   }, [user, navigate, location.state]);
+
+  React.useEffect(() => () => {
+    try { sessionStorage.removeItem('logged_out_from'); } catch {}
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
