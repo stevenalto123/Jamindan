@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import io from 'socket.io-client';
+import { createAuthSocket } from '../utils/socket';
 import { useAuth } from '../context/AuthContext';
 import { Send, MessageSquare } from 'lucide-react';
 
@@ -24,20 +24,25 @@ const IncidentChat = ({ incidentId, incidentStatus }) => {
     };
     fetchChatHistory();
 
-    // 2. Initialize Socket.io
-    const socketUrl = axios.defaults.baseURL || '';
-    socketRef.current = io(socketUrl, { transports: ['websocket', 'polling'] });
+    // 2. Initialize authenticated Socket.io connection
+    socketRef.current = createAuthSocket({ transports: ['websocket', 'polling'] });
     
     // Join the specific incident room
     socketRef.current.emit('join-incident-room', incidentId);
 
-    // Listen for new messages
+    // Listen for new messages (deduped by id)
     socketRef.current.on('new-chat-message', (msg) => {
-      setMessages((prev) => [...prev, msg]);
+      setMessages((prev) => {
+        if (msg?.id && prev.some((m) => m.id === msg.id)) {
+          return prev;
+        }
+        return [...prev, msg];
+      });
     });
 
     return () => {
       if (socketRef.current) {
+        socketRef.current.off('new-chat-message');
         socketRef.current.disconnect();
       }
     };
@@ -87,9 +92,9 @@ const IncidentChat = ({ incidentId, incidentStatus }) => {
           </div>
         ) : (
           messages.map((msg, index) => {
-            const isMe = msg.sender_id === user.id;
+            const isMe = Boolean(user?.id && msg.sender_id === user.id);
             return (
-              <div key={index} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+              <div key={msg.id || index} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
                 <span style={{ fontSize: '11px', color: 'var(--text-light)', marginBottom: '4px', marginLeft: '5px', marginRight: '5px' }}>
                   {isMe ? 'You' : `${msg.full_name} (${msg.role})`}
                 </span>
@@ -132,6 +137,7 @@ const IncidentChat = ({ incidentId, incidentStatus }) => {
                 border: '1px solid var(--border-color)',
                 backgroundColor: 'var(--bg-color)',
                 color: 'var(--text-main)',
+                fontSize: '16px',
                 outline: 'none'
               }}
             />

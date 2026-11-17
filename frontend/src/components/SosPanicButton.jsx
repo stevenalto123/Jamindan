@@ -241,6 +241,7 @@ const SosPanicButton = () => {
       const saved = saveOfflineSos({ lat, lng });
       setQueuedSos(saved);
       await triggerVibrate([400, 150, 400]);
+      isHoldingRef.current = false;
       setHoldProgress(0);
       setIsHolding(false);
       setLoading(false);
@@ -261,6 +262,7 @@ const SosPanicButton = () => {
       
       clearOfflineSos();
       setQueuedSos(null);
+      isHoldingRef.current = false;
       setHoldProgress(0);
       setIsHolding(false);
       setLoading(false);
@@ -272,11 +274,13 @@ const SosPanicButton = () => {
         const saved = saveOfflineSos({ lat, lng });
         setQueuedSos(saved);
         await triggerVibrate([400, 150, 400]);
+        isHoldingRef.current = false;
         setHoldProgress(0);
         setIsHolding(false);
         setLoading(false);
       } else {
         alert(err.response?.data?.message || 'Failed to send SOS Panic. Please call emergency hotline directly!');
+        isHoldingRef.current = false;
         setHoldProgress(0);
         setIsHolding(false);
         setLoading(false);

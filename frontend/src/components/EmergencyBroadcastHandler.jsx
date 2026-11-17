@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { io } from 'socket.io-client';
+import { createAuthSocket } from '../utils/socket';
 import { useAuth } from '../context/AuthContext';
 
 // Safely parse initial broadcast from URL or storage
@@ -24,8 +24,13 @@ const matchesBarangayInText = (text, brgy) => {
 };
 
 const isUserInTargetArea = (user, target_area) => {
+  // Unauthenticated visitors on login/register screens should not receive resident alert modals
+  if (!user) {
+    return false;
+  }
+
   // Admins and Responders ALWAYS receive broadcasts for situational awareness & dispatch
-  if (!user || user.role === 'Admin' || user.role === 'Responder') {
+  if (user.role === 'Admin' || user.role === 'Responder') {
     return true;
   }
 
@@ -118,6 +123,7 @@ const EmergencyBroadcastHandler = () => {
     };
 
     const stopAudio = () => {
+      const wasActive = Boolean(window.isBroadcastActive || interval || oscInterval);
       window.unlockBroadcastAudio = null;
       window.stopBroadcastAudio = null;
       setIsAudioActive(false);
@@ -146,10 +152,6 @@ const EmergencyBroadcastHandler = () => {
         try { compressor.disconnect(); } catch (e) {}
         compressor = null;
       }
-      // Keep AudioContext alive so browser autoplay permission persists across multiple broadcasts
-      if (audioCtx && audioCtx.state === 'running') {
-        try { audioCtx.suspend(); } catch (e) {}
-      }
       window.isBroadcastActive = false;
       [sirenRef.current, chimeRef.current].forEach((el) => {
         if (el) {
@@ -157,8 +159,11 @@ const EmergencyBroadcastHandler = () => {
           el.currentTime = 0;
         }
       });
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(0);
+      // Only cancel active vibration; calling navigator.vibrate(0) on initial idle mount triggers browser blocked warnings
+      if (wasActive && typeof navigator !== 'undefined' && navigator.vibrate) {
+        try {
+          navigator.vibrate(0);
+        } catch (e) {}
       }
     };
 
@@ -377,19 +382,23 @@ const EmergencyBroadcastHandler = () => {
 
   // Check backend active broadcast or listen to real-time socket events
   useEffect(() => {
-    // Wait for auth to resolve so Admin sessions are not hijacked during initial loading redirect
-    if (authLoading) {
+    // Wait for auth to resolve and require an authenticated non-Admin session before opening listeners
+    if (authLoading || !user) {
+      if (!user) {
+        setActiveBroadcast(null);
+      }
       return;
     }
 
     // Never hijack Admin command views automatically (Admins use Command Center Banner & Preview)
-    if (user?.role === 'Admin') {
+    if (user.role === 'Admin') {
       setActiveBroadcast(prev => (prev && !prev.isPreview ? null : prev));
       return;
     }
 
     const checkActiveBroadcast = async () => {
       try {
+
         const res = await axios.get('/api/notifications/active-broadcast');
         if (res.data?.active && res.data.broadcast) {
           const b = res.data.broadcast;
@@ -419,9 +428,8 @@ const EmergencyBroadcastHandler = () => {
     checkActiveBroadcast();
     window.addEventListener('focus', checkActiveBroadcast);
 
-    // Socket.io real-time broadcast listener
-    const socketUrl = axios.defaults.baseURL || '';
-    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    // Authenticated Socket.io real-time broadcast listener
+    const socket = createAuthSocket({ transports: ['websocket', 'polling'] });
 
     socket.on('new-broadcast', (data) => {
       const broadcastId = data.id || ('live_' + Date.now());
@@ -457,7 +465,7 @@ const EmergencyBroadcastHandler = () => {
       window.removeEventListener('focus', checkActiveBroadcast);
       socket.disconnect();
     };
-  }, [location.pathname, user?.id, user?.role, user?.barangay, authLoading]);
+  }, [user?.id, user?.role, user?.barangay, authLoading]);
 
   // If user profile loads or changes and they are not targeted, ensure active alert closes
   useEffect(() => {

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { io } from 'socket.io-client';
-import axios from 'axios';
+import { createAuthSocket } from '../utils/socket';
 import { useAuth } from '../context/AuthContext';
 import { BellOff } from 'lucide-react';
 
@@ -8,7 +7,6 @@ const NotificationHandler = () => {
   const { user } = useAuth();
   const socketRef = useRef(null);
   const [isRinging, setIsRinging] = useState(false);
-  const ringTimeout = useRef(null);
 
   const stopAllAlarms = () => {
     window.isAlarmStopped = true;
@@ -22,7 +20,6 @@ const NotificationHandler = () => {
       chime.pause();
       chime.currentTime = 0;
     }
-    if (ringTimeout.current) clearTimeout(ringTimeout.current);
     setIsRinging(false);
   };
 
@@ -79,26 +76,25 @@ const NotificationHandler = () => {
       console.warn("Notification permission check failed:", e);
     }
 
-    const socketUrl = axios.defaults.baseURL || '';
-    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    const socket = createAuthSocket({ transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
     socket.on('new-incident', (data) => {
-      if (user.role === 'Admin') {
+      if (user.role === 'Admin' && user.is_on_duty !== 0) {
         playSiren();
         showNotification('🚨 URGENT: New Incident', 'A new ' + data.type + ' incident (' + data.code + ') has been reported!');
       }
     });
 
     socket.on('responder-dispatched', (data) => {
-      if (user.role === 'Responder' && String(data.responderId) === String(user.id)) {
+      if (user.role === 'Responder' && user.is_on_duty !== 0 && String(data.responderId) === String(user.id)) {
         playSiren();
         showNotification('🚨 Dispatch Alert', 'You have been assigned to Incident ' + data.code + '. Please respond immediately.');
       }
     });
 
     socket.on('agency-handoff', (data) => {
-      if (user.role === 'Responder') {
+      if (user.role === 'Responder' && user.is_on_duty !== 0) {
         const userAgency = (user.agency_type || 'MDRRMO').toUpperCase();
         const target = (data.leadAgency || '').toUpperCase();
         const isMatch =

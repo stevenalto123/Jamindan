@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { io } from 'socket.io-client';
-import axios from 'axios';
+import { createAuthSocket } from '../utils/socket';
 import { CameraOff, AlertTriangle } from 'lucide-react';
 
 const LiveStreamViewer = ({ incidentId }) => {
@@ -14,8 +13,12 @@ const LiveStreamViewer = ({ incidentId }) => {
   useEffect(() => {
     if (!incidentId) return;
 
-    const socketUrl = axios.defaults.baseURL || '';
-    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    if (typeof window === 'undefined' || !('RTCPeerConnection' in window)) {
+      setError('Live video playback is not supported on this browser.');
+      return;
+    }
+
+    const socket = createAuthSocket({ transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
     socket.on('connect', () => {

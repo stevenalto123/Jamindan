@@ -12,10 +12,16 @@ const MapPicker = ({ lat, lng, onChange }) => {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
+  const onChangeRef = useRef(onChange);
 
   useEffect(() => {
-    const startLat = lat || 11.4287; // Jamindan, Capiz Center
-    const startLng = lng || 122.4842;
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const startLat = Number.isFinite(Number(lat)) ? Number(lat) : 11.4287; // Jamindan, Capiz Center
+    const startLng = Number.isFinite(Number(lng)) ? Number(lng) : 122.4842;
 
     // Define custom theme icon to prevent Vite path breakage and match branding
     const customIcon = L.divIcon({
@@ -35,7 +41,7 @@ const MapPicker = ({ lat, lng, onChange }) => {
       iconAnchor: [8, 8]
     });
 
-    if (!mapRef.current) {
+    if (!mapRef.current && mapContainerRef.current) {
       mapRef.current = L.map(mapContainerRef.current, {
         scrollWheelZoom: true,
         touchZoom: true,
@@ -49,9 +55,10 @@ const MapPicker = ({ lat, lng, onChange }) => {
       // Auto-detect real GPS location on mount
       if (Capacitor.isNativePlatform()) {
         Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 5000 }).then((coordinates) => {
+          if (!isMounted) return;
           const gpsLat = coordinates.coords.latitude;
           const gpsLng = coordinates.coords.longitude;
-          onChange(gpsLat, gpsLng);
+          onChangeRef.current?.(gpsLat, gpsLng);
           if (mapRef.current && markerRef.current) {
             mapRef.current.setView([gpsLat, gpsLng], 16);
             markerRef.current.setLatLng([gpsLat, gpsLng]);
@@ -59,9 +66,10 @@ const MapPicker = ({ lat, lng, onChange }) => {
         }).catch(err => console.warn("Auto GPS failed", err));
       } else if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
+          if (!isMounted) return;
           const gpsLat = pos.coords.latitude;
           const gpsLng = pos.coords.longitude;
-          onChange(gpsLat, gpsLng);
+          onChangeRef.current?.(gpsLat, gpsLng);
           if (mapRef.current && markerRef.current) {
             mapRef.current.setView([gpsLat, gpsLng], 16);
             markerRef.current.setLatLng([gpsLat, gpsLng]);
@@ -84,22 +92,42 @@ const MapPicker = ({ lat, lng, onChange }) => {
 
       // Listen to drag events
       markerRef.current.on('dragend', () => {
+        if (!markerRef.current) return;
         const position = markerRef.current.getLatLng();
-        onChange(position.lat, position.lng);
+        onChangeRef.current?.(position.lat, position.lng);
       });
 
       // Listen to map clicks
       mapRef.current.on('click', (e) => {
-        const { lat, lng } = e.latlng;
-        markerRef.current.setLatLng([lat, lng]);
-        onChange(lat, lng);
+        if (!markerRef.current) return;
+        const { lat: nextLat, lng: nextLng } = e.latlng;
+        markerRef.current.setLatLng([nextLat, nextLng]);
+        onChangeRef.current?.(nextLat, nextLng);
       });
-    } else {
-      // Update marker and map view if props change externally
-      mapRef.current.setView([startLat, startLng]);
-      markerRef.current.setLatLng([startLat, startLng]);
     }
-  }, [lat, lng, onChange]);
+
+    return () => {
+      isMounted = false;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        markerRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const parsedLat = Number(lat);
+    const parsedLng = Number(lng);
+    if (!mapRef.current || !markerRef.current || !Number.isFinite(parsedLat) || !Number.isFinite(parsedLng)) {
+      return;
+    }
+    const current = markerRef.current.getLatLng();
+    if (Math.abs(current.lat - parsedLat) > 0.00001 || Math.abs(current.lng - parsedLng) > 0.00001) {
+      mapRef.current.setView([parsedLat, parsedLng]);
+      markerRef.current.setLatLng([parsedLat, parsedLng]);
+    }
+  }, [lat, lng]);
 
   const handleGPSDetect = async () => {
     try {

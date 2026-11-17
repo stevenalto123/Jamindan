@@ -10,6 +10,7 @@ const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const prevUnreadCount = useRef(0);
+  const audioCtxRef = useRef(null);
   const navigate = useNavigate();
 
   const fetchNotifications = async () => {
@@ -37,12 +38,12 @@ const NotificationBell = () => {
     if (unread > prevUnreadCount.current) {
       const freshNotifs = unreadNotifications.slice(0, unread - prevUnreadCount.current);
       const isEmergencyOrBroadcast = freshNotifs.some(n => 
-        (n.reference_type && (n.reference_type.startsWith('broadcast') || n.reference_type === 'evacuation')) ||
-        (n.title && (n.title.toLowerCase().includes('emergency') || n.title.toLowerCase().includes('broadcast') || n.title.toLowerCase().includes('evacuation') || n.title.toLowerCase().includes('alert'))) || 
+        (n.reference_type && (n.reference_type.startsWith('broadcast') || n.reference_type === 'evacuation' || n.reference_type === 'news')) ||
+        (n.title && (n.title.toLowerCase().includes('emergency') || n.title.toLowerCase().includes('broadcast') || n.title.toLowerCase().includes('evacuation') || n.title.toLowerCase().includes('alert') || n.title.toLowerCase().includes('advisory'))) || 
         (n.message && (n.message.toLowerCase().includes('sos') || n.message.toLowerCase().includes('evacuate') || n.message.toLowerCase().includes('siren')))
       );
 
-      // Do NOT play chime if a mass broadcast siren is active or if this is an emergency alert
+      // Do NOT play chime if a mass broadcast siren is active or if this is an emergency/advisory alert
       if (window.isBroadcastActive || isEmergencyOrBroadcast) {
         prevUnreadCount.current = unread;
         return;
@@ -54,7 +55,15 @@ const NotificationBell = () => {
         try {
           const AudioContextClass = window.AudioContext || window.webkitAudioContext;
           if (AudioContextClass) {
-            const ctx = new AudioContextClass();
+            if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+              audioCtxRef.current = window.globalAudioCtx && window.globalAudioCtx.state !== 'closed'
+                ? window.globalAudioCtx
+                : new AudioContextClass();
+            }
+            const ctx = audioCtxRef.current;
+            if (ctx.state === 'suspended') {
+              ctx.resume().catch(() => {});
+            }
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.connect(gain);

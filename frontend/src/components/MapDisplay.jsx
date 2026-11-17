@@ -12,15 +12,26 @@ const MapDisplay = ({ lat, lng, responderLat, responderLng, onMapClick, onRespon
   const markerRef = useRef(null);
   const responderMarkerRef = useRef(null);
   const routeLayerRef = useRef(null);
-  const hazardLayerRef = useRef(null);
   const [instruction, setInstruction] = useState('');
   const [distance, setDistance] = useState('');
   const [eta, setEta] = useState('');
   const [allSteps, setAllSteps] = useState([]);
   const [showSteps, setShowSteps] = useState(false);
-  const [hazardDetected, setHazardDetected] = useState(false);
 
-  // 1. Initialize Map when coordinates arrive (FIXED: was [] which caused race condition)
+  // Unmount-only map cleanup
+  useEffect(() => {
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        markerRef.current = null;
+        responderMarkerRef.current = null;
+        routeLayerRef.current = null;
+      }
+    };
+  }, []);
+
+  // 1. Initialize Map once coordinates arrive
   useEffect(() => {
     if (!lat || !lng) return;
 
@@ -72,17 +83,7 @@ const MapDisplay = ({ lat, lng, responderLat, responderLng, onMapClick, onRespon
 
       markerRef.current = L.marker([lat, lng], { icon: residentIcon }).addTo(mapRef.current);
     }
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-        markerRef.current = null;
-        responderMarkerRef.current = null;
-        routeLayerRef.current = null;
-      }
-    };
-  }, [lat, lng]); // FIXED: was [] — now re-runs when incident coordinates arrive
+  }, [lat, lng]);
 
   // 2. Handle Marker Updates and Route Drawing when coordinates change
   useEffect(() => {
@@ -156,33 +157,17 @@ const MapDisplay = ({ lat, lng, responderLat, responderLng, onMapClick, onRespon
             createMarker: () => null // Prevent duplicate default markers
           }).addTo(mapRef.current);
 
-          // Advanced Emergency Routing Logic
+          // Emergency Routing Distance & ETA
           routeLayerRef.current.on('routesfound', function(e) {
-            const routes = e.routes;
-            const summary = routes[0].summary;
-            
+            if (!mapRef.current || !e?.routes?.[0]?.summary) return;
+            const summary = e.routes[0].summary;
+
             // Format distance and time
             const distKm = (summary.totalDistance / 1000).toFixed(1);
             const timeMin = Math.round(summary.totalTime / 60);
-            
+
             setDistance(`${distKm} km`);
             setEta(`${timeMin} min`);
-            setHazardDetected(true);
-            
-            // Draw a fake "Hazard Zone" (e.g. Flooded Road) roughly between them
-            if (hazardLayerRef.current) {
-              mapRef.current.removeLayer(hazardLayerRef.current);
-            }
-            const midLat = (lat + responderLat) / 2;
-            const midLng = (lng + responderLng) / 2;
-            hazardLayerRef.current = L.circle([midLat + 0.005, midLng + 0.005], {
-              color: 'var(--danger-color)',
-              fillColor: 'var(--danger-color)',
-              fillOpacity: 0.5,
-              radius: 400
-            }).addTo(mapRef.current);
-            
-            hazardLayerRef.current.bindPopup("<b>⚠️ Flooded Road</b><br>AI Routing Machine rerouted ambulance to avoid this hazard.");
           });
 
         } catch (err) {
@@ -265,4 +250,3 @@ const MapDisplay = ({ lat, lng, responderLat, responderLng, onMapClick, onRespon
 };
 
 export default MapDisplay;
-

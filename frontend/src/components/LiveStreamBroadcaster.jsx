@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { io } from 'socket.io-client';
-import axios from 'axios';
+import { createAuthSocket } from '../utils/socket';
 import { Camera, Mic, MicOff, CameraOff, AlertTriangle } from 'lucide-react';
 
 const LiveStreamBroadcaster = ({ incidentId }) => {
@@ -17,9 +16,13 @@ const LiveStreamBroadcaster = ({ incidentId }) => {
   useEffect(() => {
     if (!incidentId) return;
 
-    // Connect to Socket.IO signaling server
-    const socketUrl = axios.defaults.baseURL || '';
-    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    if (typeof window === 'undefined' || !('RTCPeerConnection' in window) || !navigator.mediaDevices?.getUserMedia) {
+      setError('Live video streaming is not supported on this browser or device.');
+      return;
+    }
+
+    // Connect to authenticated Socket.IO signaling server
+    const socket = createAuthSocket({ transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
     socket.on('connect', () => {
