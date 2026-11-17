@@ -11,12 +11,14 @@ const getInitialBroadcast = () => {
       const params = new URLSearchParams(window.location.search);
       if (params.get('broadcast') === '1') {
         const id = params.get('b_id') || ('push_' + Date.now());
+        const title = decodeURIComponent(params.get('title') || '🚨 EMERGENCY ALERT: EXTREME');
         if (localStorage.getItem('dismissed_broadcast_' + id) === 'true') {
+          window.history.replaceState({}, document.title, window.location.pathname);
           return null;
         }
         const item = {
           id: id,
-          title: decodeURIComponent(params.get('title') || '🚨 EMERGENCY ALERT: EXTREME'),
+          title: title,
           message: decodeURIComponent(params.get('msg') || 'Emergency advisory issued by Jamindan MDRRMO.'),
           severity: params.get('severity') || 'extreme',
           target_area: decodeURIComponent(params.get('area') || 'Municipality of Jamindan (All Barangays)'),
@@ -37,7 +39,7 @@ const EmergencyBroadcastHandler = () => {
   const [activeBroadcast, setActiveBroadcast] = useState(getInitialBroadcast);
   const [isAudioActive, setIsAudioActive] = useState(false);
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const sirenRef = useRef(null);
   const chimeRef = useRef(null);
 
@@ -50,6 +52,8 @@ const EmergencyBroadcastHandler = () => {
     let gainNode = null;
     let compressor = null;
     let oscInterval = null;
+
+    const getMediaEl = (sev) => (sev === 'advisory' ? chimeRef.current : sirenRef.current);
 
     const stopAudio = () => {
       window.unlockBroadcastAudio = null;
@@ -84,11 +88,14 @@ const EmergencyBroadcastHandler = () => {
         audioCtx.close().catch(e => console.warn(e));
         audioCtx = null;
       }
-      const currentSiren = sirenRef.current || document.getElementById('siren-audio');
-      if (currentSiren) {
-        currentSiren.pause();
-        currentSiren.currentTime = 0;
-      }
+      window.globalAudioCtx = null;
+      window.isBroadcastActive = false;
+      [sirenRef.current, chimeRef.current].forEach((el) => {
+        if (el) {
+          el.pause();
+          el.currentTime = 0;
+        }
+      });
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate(0);
       }
@@ -102,12 +109,12 @@ const EmergencyBroadcastHandler = () => {
         if (window.globalAudioCtx && window.globalAudioCtx.state === 'suspended') {
           window.globalAudioCtx.resume().catch(e => console.warn('Global AudioContext resume:', e));
         }
-        const currentSiren = sirenRef.current || document.getElementById('siren-audio');
-        if (currentSiren) {
-          currentSiren.volume = 1.0;
-          currentSiren.currentTime = 0;
-          currentSiren.loop = true;
-          currentSiren.play().then(() => {
+        const mediaEl = getMediaEl(activeBroadcast?.severity);
+        if (mediaEl) {
+          mediaEl.volume = 1.0;
+          mediaEl.currentTime = 0;
+          mediaEl.loop = true;
+          mediaEl.play().then(() => {
             setIsAudioActive(true);
           }).catch(e => console.warn('HTML5 siren play on gesture:', e));
         }
@@ -147,7 +154,9 @@ const EmergencyBroadcastHandler = () => {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
           if (!AudioContext) return;
 
-          audioCtx = window.globalAudioCtx || new AudioContext();
+          audioCtx = (window.globalAudioCtx && window.globalAudioCtx.state !== 'closed')
+            ? window.globalAudioCtx
+            : new AudioContext();
           window.globalAudioCtx = audioCtx;
 
           if (audioCtx.state === 'suspended') {
@@ -191,13 +200,13 @@ const EmergencyBroadcastHandler = () => {
             osc2.start();
           }
 
-          // HTML5 Audio siren in parallel
-          const currentSiren = sirenRef.current || document.getElementById('siren-audio');
-          if (currentSiren) {
-            currentSiren.volume = 1.0;
-            currentSiren.currentTime = 0;
-            currentSiren.loop = true;
-            currentSiren.play().then(() => {
+          // HTML5 Audio siren or advisory chime in parallel
+          const currentMedia = getMediaEl(severity);
+          if (currentMedia) {
+            currentMedia.volume = 1.0;
+            currentMedia.currentTime = 0;
+            currentMedia.loop = true;
+            currentMedia.play().then(() => {
               setIsAudioActive(true);
             }).catch(e => console.warn('HTML5 siren deferred until user gesture:', e));
           }
@@ -217,12 +226,12 @@ const EmergencyBroadcastHandler = () => {
 
         } catch (err) {
           console.warn('NDRRMC audio synthesis error:', err);
-          const currentSiren = sirenRef.current || document.getElementById('siren-audio');
-          if (currentSiren) {
-            currentSiren.volume = 1.0;
-            currentSiren.currentTime = 0;
-            currentSiren.loop = true;
-            currentSiren.play().catch(e => console.warn(e));
+          const currentMedia = getMediaEl(severity);
+          if (currentMedia) {
+            currentMedia.volume = 1.0;
+            currentMedia.currentTime = 0;
+            currentMedia.loop = true;
+            currentMedia.play().catch(e => console.warn(e));
           }
         }
       };
@@ -239,27 +248,53 @@ const EmergencyBroadcastHandler = () => {
     };
   }, [activeBroadcast]);
 
+  // Allow AdminDashboard to preview the Resident broadcast modal on demand
+  useEffect(() => {
+    window.previewEmergencyBroadcastModal = (b) => {
+      if (!b) return;
+      setActiveBroadcast({
+        id: b.id || ('preview_' + Date.now()),
+        title: b.title || 'NDRRMC EMERGENCY ALERT',
+        message: b.message || 'Critical emergency advisory issued by Jamindan MDRRMO.',
+        severity: b.severity || 'extreme',
+        target_area: b.target_area || 'Municipality of Jamindan (All Barangays)',
+        timestamp: b.created_at || new Date().toISOString(),
+        isPreview: true
+      });
+    };
+    return () => {
+      delete window.previewEmergencyBroadcastModal;
+    };
+  }, []);
+
   // Check backend active broadcast or listen to real-time socket events
   useEffect(() => {
-    const checkActiveBroadcast = async () => {
-      // Don't hijack admin view if admin is managing the system
-      if (user?.role === 'Admin' && location.pathname.startsWith('/admin')) {
-        return;
-      }
+    // Wait for auth to resolve so Admin sessions are not hijacked during initial loading redirect
+    if (authLoading) {
+      return;
+    }
 
+    // Never hijack Admin command views automatically (Admins use Command Center Banner & Preview)
+    if (user?.role === 'Admin') {
+      setActiveBroadcast(prev => (prev && !prev.isPreview ? null : prev));
+      return;
+    }
+
+    const checkActiveBroadcast = async () => {
       try {
         const res = await axios.get('/api/notifications/active-broadcast');
         if (res.data?.active && res.data.broadcast) {
-          const dismissed = localStorage.getItem('dismissed_broadcast_' + res.data.broadcast.id);
-          if (dismissed === 'true') return;
+          const b = res.data.broadcast;
+          const dismissedById = localStorage.getItem('dismissed_broadcast_' + b.id);
+          if (dismissedById === 'true') return;
 
           setActiveBroadcast({
-            id: res.data.broadcast.id,
-            title: res.data.broadcast.title,
-            message: res.data.broadcast.message,
-            severity: res.data.broadcast.severity || 'extreme',
-            target_area: res.data.broadcast.target_area || 'Municipality of Jamindan (All Barangays)',
-            timestamp: res.data.broadcast.created_at
+            id: b.id,
+            title: b.title,
+            message: b.message,
+            severity: b.severity || 'extreme',
+            target_area: b.target_area || 'Municipality of Jamindan (All Barangays)',
+            timestamp: b.created_at
           });
         }
       } catch (err) {
@@ -275,10 +310,6 @@ const EmergencyBroadcastHandler = () => {
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
 
     socket.on('new-broadcast', (data) => {
-      // Admin dashboard sends the alert; do not block admin screen
-      if (user?.role === 'Admin' && location.pathname.startsWith('/admin')) {
-        return;
-      }
       const broadcastId = data.id || ('live_' + Date.now());
       if (localStorage.getItem('dismissed_broadcast_' + broadcastId) === 'true') {
         return;
@@ -294,11 +325,20 @@ const EmergencyBroadcastHandler = () => {
       });
     });
 
+    // Listen for broadcast stand-down / cancellation across all clients
+    socket.on('broadcast-cancelled', () => {
+      if (window.stopBroadcastAudio) {
+        window.stopBroadcastAudio();
+      }
+      setIsAudioActive(false);
+      setActiveBroadcast(null);
+    });
+
     return () => {
       window.removeEventListener('focus', checkActiveBroadcast);
       socket.disconnect();
     };
-  }, [location, user]);
+  }, [location.pathname, user?.id, user?.role, authLoading]);
 
   const handleAcknowledgeBroadcast = async (e) => {
     if (e) {
@@ -310,22 +350,23 @@ const EmergencyBroadcastHandler = () => {
     if (window.stopBroadcastAudio) {
       window.stopBroadcastAudio();
     }
-    const currentSiren = sirenRef.current || document.getElementById('siren-audio');
-    if (currentSiren) {
-      currentSiren.pause();
-      currentSiren.currentTime = 0;
-    }
+    [sirenRef.current, chimeRef.current].forEach((el) => {
+      if (el) {
+        el.pause();
+        el.currentTime = 0;
+      }
+    });
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate(0);
     }
     setIsAudioActive(false);
 
-    // 2. Persist dismissal in localStorage
-    if (activeBroadcast?.id) {
+    // 2. Persist dismissal by canonical batch ID (skip persistence if this was an Admin preview)
+    if (activeBroadcast?.id && !activeBroadcast.isPreview) {
       localStorage.setItem('dismissed_broadcast_' + activeBroadcast.id, 'true');
-      if (typeof activeBroadcast.id === 'number' || /^\d+$/.test(activeBroadcast.id)) {
+      if (user) {
         try {
-          await axios.put(`/api/notifications/${activeBroadcast.id}/read`);
+          await axios.put(`/api/notifications/broadcast/${encodeURIComponent(activeBroadcast.id)}/read`);
         } catch (err) {
           console.warn('Failed to mark broadcast as read:', err);
         }
@@ -338,8 +379,8 @@ const EmergencyBroadcastHandler = () => {
 
   return (
     <>
-      <audio id="siren-audio" ref={sirenRef} src="/siren.wav" preload="auto" loop style={{ display: 'none' }}></audio>
-      <audio id="chime-audio" ref={chimeRef} src="/chime.wav" preload="auto" loop style={{ display: 'none' }}></audio>
+      <audio id="broadcast-siren-audio" ref={sirenRef} src="/siren.wav" preload="auto" loop style={{ display: 'none' }}></audio>
+      <audio id="broadcast-chime-audio" ref={chimeRef} src="/chime.wav" preload="auto" loop style={{ display: 'none' }}></audio>
 
       {activeBroadcast && (() => {
         const severity = activeBroadcast.severity || 'extreme';
@@ -529,14 +570,14 @@ const EmergencyBroadcastHandler = () => {
                     animation: 'pulse 1.2s infinite'
                   }}
                 >
-                  <span style={{ fontSize: '18px' }}>🔊</span> TAP TO SOUND EMERGENCY SIREN
+                  <span style={{ fontSize: '18px' }}>🔊</span> {severity === 'advisory' ? 'TAP TO SOUND ADVISORY CHIME' : 'TAP TO SOUND EMERGENCY SIREN'}
                 </div>
               ) : (
                 <div 
                   style={{
                     width: '100%',
                     padding: '8px 12px',
-                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    backgroundColor: severity === 'advisory' ? 'rgba(37, 99, 235, 0.1)' : 'rgba(239, 68, 68, 0.1)',
                     border: `1px solid ${accentColor}`,
                     borderRadius: '10px',
                     color: accentColor,
@@ -548,13 +589,13 @@ const EmergencyBroadcastHandler = () => {
                     gap: '6px'
                   }}
                 >
-                  <span>🚨</span> EMERGENCY SIREN ACTIVE (FULL VOLUME)
+                  <span>{severity === 'advisory' ? '📢' : '🚨'}</span> {severity === 'advisory' ? 'PUBLIC ADVISORY CHIME ACTIVE' : 'EMERGENCY SIREN ACTIVE (FULL VOLUME)'}
                 </div>
               )}
 
               {/* Big Acknowledge / Silence Siren Button + Quick "I Am Safe" Check-In */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginTop: '4px' }}>
-                {user && (
+                {user && !activeBroadcast.isPreview && (
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
