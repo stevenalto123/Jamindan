@@ -721,7 +721,15 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
   }
 
   try {
-    const [incRows] = await db.query('SELECT reporter_id, responder_id, vehicle_id, status, code, agency_notes FROM incidents WHERE id = ?', [id]);
+    const [incRows] = await db.query(
+      `SELECT i.id, i.reporter_id, i.responder_id, i.vehicle_id, i.status, i.code, i.type, i.description,
+              i.location_address, i.location_lat, i.location_lng, i.agency_notes,
+              u.full_name AS reporter_name, u.phone AS reporter_phone, u.barangay AS reporter_barangay
+       FROM incidents i
+       LEFT JOIN users u ON i.reporter_id = u.id
+       WHERE i.id = ?`,
+      [id]
+    );
     const incident = incRows[0];
 
     if (!incident) {
@@ -745,8 +753,9 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
 
     const vehicleLabel = assignedVehicle ? ` with ${assignedVehicle.name} (${assignedVehicle.type})` : '';
     const nextStatus = ['Pending', 'Acknowledged'].includes(incident.status) ? 'Responding' : incident.status;
+    const isBackup = Boolean(incident.responder_id && String(incident.responder_id) !== String(responder_id));
 
-    if (incident.responder_id && String(incident.responder_id) !== String(responder_id)) {
+    if (isBackup) {
       // Additional / Backup Responder Dispatched (e.g. RHU Medical dispatched to support BFP Fire)
       const coNote = `[Backup Dispatched: ${respLabel}${vehicleLabel}]`;
       const updatedNotes = incident.agency_notes
@@ -776,23 +785,22 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
 
     // Send Database and Web Push Notification to the dispatched responder
     if (assignedResponder) {
+      const pushTitle = isBackup ? '🚨 BACKUP DISPATCH ALERT' : '🚨 EMERGENCY DISPATCH ALERT';
+      const pushBody = isBackup
+        ? `You have been dispatched as BACKUP for Incident ${incident.code}${vehicleLabel}. Respond immediately!`
+        : `You have been dispatched to Incident ${incident.code}${vehicleLabel}. Respond immediately!`;
+
       await db.execute(
         'INSERT INTO notifications (user_id, title, message, reference_type, reference_id) VALUES (?, ?, ?, ?, ?)',
-        [
-          responder_id,
-          '🚨 Dispatch Alert',
-          `You have been dispatched to Incident ${incident.code}${vehicleLabel}. Please respond immediately.`,
-          'incident',
-          id
-        ]
+        [responder_id, pushTitle, pushBody, 'incident', id]
       );
 
       if (assignedResponder.push_subscription) {
         try {
           const subscription = JSON.parse(assignedResponder.push_subscription);
           const payload = JSON.stringify({
-            title: '🚨 DISPATCH ALERT',
-            body: `You have been dispatched to Incident ${incident.code}${vehicleLabel}. Please respond immediately!`,
+            title: pushTitle,
+            body: pushBody,
             icon: '/logo.png',
             url: '/incidents/' + id
           });
@@ -803,17 +811,34 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
       }
     }
     
-    // Emit real-time events via Socket.io
+    // Emit real-time events via Socket.io with rich payload for Command Center & Responders
     const io = req.app.get('io');
     if (io) {
-      io.emit('responder-dispatched', { 
+      const dispatchPayload = { 
         id, 
+        incidentId: id,
         status: nextStatus, 
         responderId: responder_id, 
         reporterId: incident.reporter_id,
-        code: incident.code
-      });
+        code: incident.code,
+        type: incident.type,
+        location_address: incident.location_address,
+        location_lat: incident.location_lat,
+        location_lng: incident.location_lng,
+        reporterName: incident.reporter_name,
+        reporterPhone: incident.reporter_phone,
+        barangay: incident.reporter_barangay,
+        description: isBackup
+          ? `You have been dispatched as BACKUP assistance for Incident #${incident.code}${vehicleLabel}. Respond immediately.`
+          : (incident.description || `You have been dispatched to Incident #${incident.code}${vehicleLabel}. Respond immediately.`),
+        isBackup,
+        vehicleName: assignedVehicle ? assignedVehicle.name : null,
+        vehicleType: assignedVehicle ? assignedVehicle.type : null
+      };
+
+      io.emit('responder-dispatched', dispatchPayload);
       io.emit('incident-status-updated', { 
+        id,
         incidentId: id, 
         status: nextStatus, 
         reporterId: incident.reporter_id, 
