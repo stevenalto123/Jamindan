@@ -21,6 +21,7 @@ import {
   Activity,
   AlertTriangle,
   Video,
+  Download,
   Copy,
   CheckCircle2,
   Users,
@@ -149,6 +150,12 @@ const TrackStatus = () => {
       // Refresh the page data if the update belongs to the current incident
       // We check data.incidentId just in case, though the room ensures it
       if (String(data.incidentId) === String(id)) {
+        fetchIncidentDetail();
+      }
+    });
+
+    socket.on('incident-video-updated', (data) => {
+      if (String(data.incidentId) === String(id) || String(data.id) === String(id)) {
         fetchIncidentDetail();
       }
     });
@@ -552,6 +559,33 @@ const TrackStatus = () => {
             alt="Evidence" 
             style={{ width: '100%', maxHeight: isMobile ? '240px' : '280px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }} 
           />
+        </div>
+      )}
+
+      {incident.video_path && (
+        <div style={{ marginTop: '14px' }}>
+          <h4 style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: '6px', letterSpacing: '0.4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Video size={14} color="var(--primary-color)" /> Official Video Evidence
+          </h4>
+          <video 
+            controls 
+            playsInline
+            preload="metadata"
+            src={incident.video_path?.startsWith('http') ? incident.video_path : `https://jamindan.onrender.com${incident.video_path}`} 
+            style={{ width: '100%', maxHeight: isMobile ? '260px' : '320px', backgroundColor: '#000', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'block' }} 
+          />
+          <div style={{ marginTop: '6px', display: 'flex', justifyContent: 'flex-end' }}>
+            <a 
+              href={incident.video_path?.startsWith('http') ? incident.video_path : `https://jamindan.onrender.com${incident.video_path}`}
+              download={`Incident_${incident.code}_Evidence.mp4`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline"
+              style={{ fontSize: '11px', padding: '4px 8px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+            >
+              <Download size={12} /> Download Video Evidence
+            </a>
+          </div>
         </div>
       )}
     </div>
