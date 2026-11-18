@@ -55,8 +55,28 @@ router.post('/', authRequired, requireRole(['Resident', 'Admin', 'Responder']), 
           `, [lat, lng, address, existing.id]);
         }
 
+        const [repRows] = await db.query("SELECT full_name, phone, barangay FROM users WHERE id = ?", [req.user.id]);
+        const resident = repRows[0] || {};
+
         const io = req.app.get('io');
         if (io) {
+          const sosPayload = {
+            incidentId: existing.id,
+            type: 'SOS Panic',
+            code: existing.code,
+            description: description,
+            location_lat: lat !== null ? lat : existing.location_lat,
+            location_lng: lng !== null ? lng : existing.location_lng,
+            location_address: address,
+            reporterId: req.user.id,
+            reporterName: resident.full_name || 'Resident',
+            reporterPhone: resident.phone || '',
+            barangay: resident.barangay || '',
+            deduplicated: true,
+            timestamp: new Date().toISOString()
+          };
+          io.emit('new-incident', sosPayload);
+          io.emit('sos-panic-alert', sosPayload);
           io.emit('incident-status-updated', { incidentId: existing.id, status: 'Pending', type: 'SOS Panic' });
         }
 
@@ -84,6 +104,9 @@ router.post('/', authRequired, requireRole(['Resident', 'Admin', 'Responder']), 
       else finalLeadAgency = 'MDRRMO';
     }
 
+    const [reporterRows] = await db.query("SELECT full_name, phone, barangay FROM users WHERE id = ?", [req.user.id]);
+    const reporter = reporterRows[0] || {};
+
     const incidentId = await db.transaction(async (conn) => {
       // 1. Create Incident
       const [incidentResult] = await conn.execute(`
@@ -99,17 +122,8 @@ router.post('/', authRequired, requireRole(['Resident', 'Admin', 'Responder']), 
         VALUES (?, 'Pending', 'Incident report submitted.', ?)
       `, [insId, req.user.id]);
 
-      // 3. Determine Target Agencies based on Incident Type
-      const targetAgencies = [];
-      if (type === 'Crime') targetAgencies.push('MDRRMO');
-      if (type === 'Fire') targetAgencies.push('Fire');
-      if (type === 'Medical') targetAgencies.push('Medical');
-      if (type === 'Accident') targetAgencies.push('Medical', 'MDRRMO');
-
-      // 4. Fetch Potential Recipients (Only Admins get the initial report broadcast now)
+      // 3. Fetch Potential Recipients (Only Admins get the initial report broadcast now)
       const [recipients] = await conn.query("SELECT id, role, agency_type, push_subscription FROM users WHERE role = 'Admin' AND is_active = 1");
-      const [residentRows] = await conn.query("SELECT full_name FROM users WHERE id = ?", [req.user.id]);
-      const resident = residentRows[0];
 
       for (const recipient of recipients) {
         // App Notification
@@ -118,7 +132,7 @@ router.post('/', authRequired, requireRole(['Resident', 'Admin', 'Responder']), 
           VALUES (?, 'New Emergency Report', ?, 'incident', ?)
         `, [
           recipient.id,
-          `A new ${type} report (${code}) has been reported by ${resident ? resident.full_name : 'a Resident'}.`,
+          `A new ${type} report (${code}) has been reported by ${reporter.full_name || 'a Resident'}.`,
           insId
         ]);
 
@@ -128,7 +142,7 @@ router.post('/', authRequired, requireRole(['Resident', 'Admin', 'Responder']), 
             const subscription = JSON.parse(recipient.push_subscription);
             const payload = JSON.stringify({
               title: `🚨 URGENT: ${type}`,
-              body: `Incident ${code} reported by ${resident ? resident.full_name : 'Resident'} at ${address || 'GPS Location'}!`,
+              body: `Incident ${code} reported by ${reporter.full_name || 'Resident'} at ${address || 'GPS Location'}!`,
               icon: '/logo.png',
               url: '/incidents'
             });
@@ -146,7 +160,25 @@ router.post('/', authRequired, requireRole(['Resident', 'Admin', 'Responder']), 
     
     const io = req.app.get('io');
     if (io) {
-      io.emit('new-incident', { incidentId, type, code });
+      const incidentPayload = {
+        incidentId,
+        type,
+        code,
+        leadAgency: finalLeadAgency,
+        description,
+        location_lat: lat,
+        location_lng: lng,
+        location_address: address,
+        reporterId: req.user.id,
+        reporterName: reporter.full_name || 'Resident',
+        reporterPhone: reporter.phone || '',
+        barangay: reporter.barangay || '',
+        timestamp: new Date().toISOString()
+      };
+      io.emit('new-incident', incidentPayload);
+      if (type === 'SOS Panic') {
+        io.emit('sos-panic-alert', incidentPayload);
+      }
     }
 
     return res.status(201).json({
