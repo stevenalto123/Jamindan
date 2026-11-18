@@ -196,6 +196,15 @@ const AdminDashboard = () => {
     const interval = setInterval(fetchDashboardStats, 3000);
 
     const socket = createAuthSocket({ transports: ['websocket', 'polling'] });
+    socket.on('new-incident', () => {
+      fetchDashboardStats();
+    });
+    socket.on('sos-panic-alert', () => {
+      fetchDashboardStats();
+    });
+    socket.on('incident-status-updated', () => {
+      fetchDashboardStats();
+    });
     socket.on('safety-checkin-updated', () => {
       fetchDashboardStats();
     });
@@ -790,7 +799,7 @@ const AdminDashboard = () => {
                     height: '7px',
                     borderRadius: '50%',
                     backgroundColor: isCheckinActive ? '#16a34a' : '#94a3b8',
-                    boxShadow: isCheckinActive ? '0 0 8px rgba(22, 163, 74, 0.6)' : 'none'
+                    boxShadow: isCheckinActive ? '0 0 8px rgba(220, 38, 38, 0.6)' : 'none'
                   }} />
                   {isCheckinActive ? t('checkinStatusActive') : t('checkinStatusInactive')}
                 </span>
@@ -971,6 +980,7 @@ const AdminDashboard = () => {
                               type="button"
                               disabled={updatingCheckinId === item.id || updatingCheckinId === item.user_id}
                               onClick={() => handleMarkResidentSafe(item)}
+                              title="Mark as Assisted / Safe"
                               style={{
                                 backgroundColor: '#059669',
                                 color: '#fff',
