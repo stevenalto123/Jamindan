@@ -170,6 +170,12 @@ const initializeDatabase = async () => {
         // Column already exists or table doesn't exist yet, which is fine
       }
       try {
+        await pool.query('ALTER TABLE incidents ADD COLUMN video_path VARCHAR(255) NULL AFTER photo_path');
+        console.log('Successfully injected video_path column into existing incidents table.');
+      } catch (e) {
+        // Column already exists or table doesn't exist yet, which is fine
+      }
+      try {
         await pool.query("UPDATE users SET is_on_duty = 1 WHERE role = 'Admin'");
       } catch (e) {
         // Column or table doesn't exist yet, which is fine
@@ -260,6 +266,7 @@ const initializeDatabase = async () => {
         description TEXT NOT NULL,
         details JSON NULL,
         photo_path VARCHAR(255) NULL,
+        video_path VARCHAR(255) NULL,
         location_lat DOUBLE NULL,
         location_lng DOUBLE NULL,
         location_address VARCHAR(255) NULL,

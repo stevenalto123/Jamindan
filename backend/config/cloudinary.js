@@ -40,4 +40,31 @@ const createImageUpload = (maxSizeMB = 5) => multer({
   }
 });
 
-module.exports = { cloudinary, storage, createImageUpload };
+const videoStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'jamindan_videos',
+    resource_type: 'video',
+    allowed_formats: ['webm', 'mp4', 'mov', 'avi', 'mkv', 'ogg']
+  }
+});
+
+/** Shared uploader for incident live feed recordings and video evidence up to 60MB. */
+const createVideoUpload = (maxSizeMB = 60) => multer({
+  storage: videoStorage,
+  limits: { fileSize: maxSizeMB * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedExt = /\.(webm|mp4|mov|avi|mkv|ogg)$/i;
+    const allowedMime = /^(video\/(webm|mp4|quicktime|x-msvideo|ogg)|application\/octet-stream|video\/\*)$/i;
+    const ext = path.extname(file.originalname || '');
+    const hasValidExt = allowedExt.test(ext);
+    const hasValidMime = allowedMime.test(file.mimetype || '');
+
+    if (hasValidExt || hasValidMime || !ext) {
+      return cb(null, true);
+    }
+    cb(new Error(`Only video files (WebM, MP4, MOV) up to ${maxSizeMB}MB are allowed.`));
+  }
+});
+
+module.exports = { cloudinary, storage, createImageUpload, createVideoUpload };
