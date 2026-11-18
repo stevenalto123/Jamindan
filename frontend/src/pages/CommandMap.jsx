@@ -83,8 +83,7 @@ const CommandMap = ({ isWidget = false }) => {
       const resRes = await axios.get('/api/users', {
         params: { role: 'Responder', is_on_duty: 1, limit: 100 }
       });
-      const validResponders = (resRes.data.users || []).filter(r => r.current_lat && r.current_lng);
-      setResponders(validResponders);
+      setResponders(resRes.data.users || []);
       
       setLastRefreshed(new Date());
       setLoading(false);
@@ -251,6 +250,8 @@ const CommandMap = ({ isWidget = false }) => {
     });
 
     filteredResponders.forEach(resp => {
+      if (!resp.current_lat || !resp.current_lng) return;
+
       const isFire = resp.agency_type === 'BFP' || resp.agency_type === 'Fire';
       const isMedical = resp.agency_type === 'RHU' || resp.agency_type === 'Medical';
       
@@ -785,16 +786,19 @@ const CommandMap = ({ isWidget = false }) => {
                       const isFire = resp.agency_type === 'BFP' || resp.agency_type === 'Fire';
                       const isMedical = resp.agency_type === 'RHU' || resp.agency_type === 'Medical';
                       const agencyColor = isFire ? '#f97316' : isMedical ? '#10b981' : '#38bdf8';
+                      const hasGps = Boolean(resp.current_lat && resp.current_lng);
                       
                       return (
                         <div 
                           key={resp.id}
-                          onClick={() => panToIncident(resp.current_lat, resp.current_lng)}
+                          onClick={() => {
+                            if (hasGps) panToIncident(resp.current_lat, resp.current_lng);
+                          }}
                           style={{
                             background: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
                             borderRadius: '12px',
                             padding: isMobile ? '10px 12px' : '12px 14px',
-                            cursor: 'pointer',
+                            cursor: hasGps ? 'pointer' : 'default',
                             border: '1px solid rgba(255,255,255,0.08)',
                             borderLeft: `4px solid ${agencyColor}`,
                             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
@@ -808,7 +812,14 @@ const CommandMap = ({ isWidget = false }) => {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                             <div style={{ minWidth: 0, flex: 1 }}>
                               <div style={{ color: '#fff', fontSize: '13px', fontWeight: '800', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{resp.full_name}</div>
-                              <div style={{ color: '#94a3b8', fontSize: '11px', marginTop: '2px', fontWeight: '500' }}>{resp.phone || 'No phone'}</div>
+                              <div style={{ color: '#94a3b8', fontSize: '11px', marginTop: '2px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span>{resp.phone || 'No phone'}</span>
+                                {hasGps ? (
+                                  <span style={{ color: '#10b981', fontSize: '10px', fontWeight: '700' }}>• 📍 Live GPS</span>
+                                ) : (
+                                  <span style={{ color: '#eab308', fontSize: '10px', fontWeight: '700' }}>• 🏢 Station Standby</span>
+                                )}
+                              </div>
                             </div>
                             <div style={{ color: agencyColor, fontSize: '10px', fontWeight: '800', background: `${agencyColor}20`, border: `1px solid ${agencyColor}40`, padding: '2px 8px', borderRadius: '4px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                               {resp.agency_type || 'Responder'}
