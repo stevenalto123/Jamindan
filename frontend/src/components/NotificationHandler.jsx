@@ -6,6 +6,8 @@ import { BellOff, ShieldAlert, Phone, MapPin, Eye, Volume2, AlertTriangle, X } f
 const NotificationHandler = () => {
   const { user } = useAuth();
   const socketRef = useRef(null);
+  const sirenAudioRef = useRef(null);
+  const chimeAudioRef = useRef(null);
   const [isRinging, setIsRinging] = useState(false);
   const [activeAlert, setActiveAlert] = useState(null);
   const [audioBlocked, setAudioBlocked] = useState(false);
@@ -35,8 +37,8 @@ const NotificationHandler = () => {
     window.isAlarmStopped = true;
     stopWebAudioSiren();
 
-    const siren = document.getElementById('siren-audio');
-    const chime = document.getElementById('chime-audio');
+    const siren = sirenAudioRef.current || document.getElementById('siren-audio');
+    const chime = chimeAudioRef.current || document.getElementById('chime-audio');
     if (siren) {
       siren.pause();
       siren.currentTime = 0;
@@ -129,7 +131,7 @@ const NotificationHandler = () => {
     startWebAudioSiren();
 
     // 2. Play HTML5 Audio element fallback / booster
-    const siren = document.getElementById('siren-audio');
+    const siren = sirenAudioRef.current || document.getElementById('siren-audio');
     if (siren) {
       siren.volume = 1.0;
       siren.muted = false;
@@ -154,8 +156,39 @@ const NotificationHandler = () => {
     }
   }, [startWebAudioSiren]);
 
+  // Global user interaction listener: Any click/touch/keypress while ringing immediately unmutes audio
+  useEffect(() => {
+    if (!isRinging) return;
+
+    const handleUserGestureToUnmute = () => {
+      if (webAudioCtxRef.current && webAudioCtxRef.current.state === 'suspended') {
+        webAudioCtxRef.current.resume().then(() => {
+          setAudioBlocked(false);
+        }).catch(() => {});
+      }
+      const siren = sirenAudioRef.current || document.getElementById('siren-audio');
+      if (siren && siren.paused && !window.isAlarmStopped) {
+        siren.volume = 1.0;
+        siren.muted = false;
+        siren.play().then(() => {
+          setAudioBlocked(false);
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener('click', handleUserGestureToUnmute, { capture: true });
+    window.addEventListener('touchstart', handleUserGestureToUnmute, { capture: true });
+    window.addEventListener('keydown', handleUserGestureToUnmute, { capture: true });
+
+    return () => {
+      window.removeEventListener('click', handleUserGestureToUnmute, { capture: true });
+      window.removeEventListener('touchstart', handleUserGestureToUnmute, { capture: true });
+      window.removeEventListener('keydown', handleUserGestureToUnmute, { capture: true });
+    };
+  }, [isRinging]);
+
   const playChime = useCallback(() => {
-    const chime = document.getElementById('chime-audio');
+    const chime = chimeAudioRef.current || document.getElementById('chime-audio');
     if (chime) {
       chime.loop = false;
       chime.volume = 0.85;
@@ -233,14 +266,28 @@ const NotificationHandler = () => {
     });
 
     socket.on('responder-dispatched', (data) => {
-      if (user.role === 'Responder' && user.is_on_duty !== 0 && String(data.responderId) === String(user.id)) {
+      const isTargetResponder = user.role === 'Responder' && user.is_on_duty !== 0 && String(data.responderId) === String(user.id);
+
+      if (isTargetResponder) {
         playSiren({
-          type: 'Dispatch Alert',
+          type: data.isBackup ? '🚨 BACKUP DISPATCH ALERT' : '🚨 EMERGENCY DISPATCH ALERT',
           code: data.code,
-          incidentId: data.incidentId,
-          description: 'You have been dispatched to this emergency incident. Respond immediately.'
+          incidentId: data.incidentId || data.id,
+          location_address: data.location_address,
+          location_lat: data.location_lat,
+          location_lng: data.location_lng,
+          reporterName: data.reporterName,
+          reporterPhone: data.reporterPhone,
+          barangay: data.barangay,
+          description: data.description || (data.isBackup
+            ? `You have been dispatched as BACKUP assistance for Incident #${data.code}. Respond immediately.`
+            : `You have been dispatched to Incident #${data.code}. Respond immediately.`),
+          isBackup: Boolean(data.isBackup)
         });
-        showNotification('🚨 Dispatch Alert', 'You have been assigned to Incident ' + data.code + '. Please respond immediately.');
+        showNotification(
+          data.isBackup ? '🚨 Backup Unit Dispatched' : '🚨 Emergency Dispatch Alert',
+          `You have been assigned to Incident ${data.code}. Please respond immediately.`
+        );
       }
     });
 
@@ -286,13 +333,15 @@ const NotificationHandler = () => {
     };
   }, [user, playSiren, playChime, showNotification, stopAllAlarms]);
 
-  if (!isRinging && !activeAlert) return null;
-
   const isSos = activeAlert?.type === 'SOS Panic';
 
   return (
     <>
-      {/* High-Visibility Emergency Dispatch Modal for Command Center */}
+      {/* Built-in audio elements to ensure reliable playback across all routes and views */}
+      <audio ref={sirenAudioRef} id="siren-audio" src="/siren.wav" preload="auto" loop style={{ display: 'none' }} />
+      <audio ref={chimeAudioRef} id="chime-audio" src="/chime.wav" preload="auto" style={{ display: 'none' }} />
+
+      {/* High-Visibility Emergency Dispatch Modal for Command Center & Responders */}
       {activeAlert && (
         <div style={{
           position: 'fixed',
@@ -524,10 +573,9 @@ const NotificationHandler = () => {
         </div>
       )}
 
-      {/* Floating Bottom Pill for quick muting if modal is closed */}
-      {isRinging && !activeAlert && (
+      {/* Floating Bottom Controls for unmuting or stopping */}
+      {isRinging && (
         <div
-          onClick={stopAllAlarms}
           style={{
             position: 'fixed',
             bottom: '30px',
@@ -535,22 +583,71 @@ const NotificationHandler = () => {
             transform: 'translateX(-50%)',
             zIndex: 99999,
             display: 'flex',
+            gap: '12px',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '12px 26px',
-            backgroundColor: '#dc2626',
-            color: '#ffffff',
-            borderRadius: '50px',
-            boxShadow: '0 8px 30px rgba(220, 38, 38, 0.6)',
-            cursor: 'pointer',
-            fontWeight: '900',
-            fontSize: '14px',
-            gap: '10px',
-            animation: 'panic-pill-bounce 1s infinite'
+            flexWrap: 'wrap',
+            maxWidth: '92vw'
           }}
         >
-          <BellOff size={20} />
-          STOP EMERGENCY ALARM
+          {audioBlocked && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                startWebAudioSiren();
+                const siren = sirenAudioRef.current || document.getElementById('siren-audio');
+                if (siren) {
+                  siren.volume = 1.0;
+                  siren.muted = false;
+                  siren.play().catch(() => {});
+                }
+                setAudioBlocked(false);
+              }}
+              style={{
+                backgroundColor: '#f59e0b',
+                color: '#000000',
+                border: '2px solid #ffffff',
+                borderRadius: '50px',
+                padding: '12px 22px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                fontWeight: '900',
+                fontSize: '13px',
+                boxShadow: '0 8px 30px rgba(245, 158, 11, 0.7)',
+                animation: 'panic-pill-bounce 1s infinite'
+              }}
+            >
+              <Volume2 size={18} />
+              <span>🔊 TAP TO SOUND SIREN</span>
+            </button>
+          )}
+
+          {(!activeAlert || audioBlocked) && (
+            <button
+              type="button"
+              onClick={stopAllAlarms}
+              style={{
+                backgroundColor: '#dc2626',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '50px',
+                padding: '12px 24px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                fontWeight: '900',
+                fontSize: '13px',
+                boxShadow: '0 8px 30px rgba(220, 38, 38, 0.6)'
+              }}
+            >
+              <BellOff size={18} />
+              <span>STOP EMERGENCY ALARM</span>
+            </button>
+          )}
         </div>
       )}
 
