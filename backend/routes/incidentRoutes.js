@@ -5,9 +5,10 @@ const fs = require('fs');
 const db = require('../config/db');
 const { authRequired, requireRole } = require('../middleware/auth');
 const { webpush } = require('../config/push');
-const { createImageUpload } = require('../config/cloudinary');
+const { createImageUpload, createVideoUpload } = require('../config/cloudinary');
 
 const upload = createImageUpload(5);
+const uploadVideo = createVideoUpload(60);
 
 // Helper: Generate Unique Incident Code
 const generateIncidentCode = async () => {
@@ -816,7 +817,7 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
     if (io) {
       const dispatchPayload = { 
         id, 
-        incidentId: id,
+        incidentId: id, 
         status: nextStatus, 
         responderId: responder_id, 
         reporterId: incident.reporter_id,
@@ -850,6 +851,61 @@ router.put('/:id/assign', authRequired, requireRole(['Admin']), async (req, res)
   } catch (error) {
     console.error('Assign responder error:', error);
     return res.status(500).json({ message: 'Server error while assigning responder' });
+  }
+});
+
+// Upload & Attach Video Evidence (Live stream recording or file upload)
+router.post('/:id/video', authRequired, requireRole(['Admin', 'Responder', 'Resident']), uploadVideo.single('video'), async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [incRows] = await db.query('SELECT * FROM incidents WHERE id = ?', [id]);
+    const incident = incRows[0];
+    if (!incident) {
+      return res.status(404).json({ message: 'Incident not found' });
+    }
+
+    // Role check: Resident can only upload video to their own incident report
+    if (req.user.role === 'Resident' && incident.reporter_id !== req.user.id) {
+      return res.status(403).json({ message: 'You are not authorized to attach video evidence to this incident' });
+    }
+
+    const video_path = req.file ? req.file.path : (req.body.video_url || null);
+    if (!video_path) {
+      return res.status(400).json({ message: 'No video file provided' });
+    }
+
+    await db.query('UPDATE incidents SET video_path = ? WHERE id = ?', [video_path, id]);
+
+    // Insert history entry
+    await db.query(
+      'INSERT INTO incident_status_history (incident_id, status, comment, updated_by) VALUES (?, ?, ?, ?)',
+      [id, incident.status || 'In Progress', 'Official live feed video evidence attached to incident report.', req.user.id]
+    );
+
+    // Audit log
+    await db.logAudit(`Video evidence attached to ${incident.code}`, req.user.username, req.ip);
+
+    // Notify connected clients via Socket.io
+    const io = req.app.get('io');
+    if (io) {
+      const updateData = {
+        id,
+        incidentId: id,
+        video_path,
+        updatedBy: req.user.full_name || req.user.username
+      };
+      io.emit('incident-video-updated', updateData);
+      io.to(`incident-${id}`).emit('incident-video-updated', updateData);
+    }
+
+    return res.json({
+      message: 'Video evidence attached to incident successfully',
+      video_path
+    });
+  } catch (error) {
+    console.error('Attach video evidence error:', error);
+    return res.status(500).json({ message: error.message || 'Server error while attaching video evidence' });
   }
 });
 
