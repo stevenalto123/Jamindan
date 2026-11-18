@@ -169,6 +169,11 @@ const initializeDatabase = async () => {
       } catch (e) {
         // Column already exists or table doesn't exist yet, which is fine
       }
+      try {
+        await pool.query("UPDATE users SET is_on_duty = 1 WHERE role = 'Admin'");
+      } catch (e) {
+        // Column or table doesn't exist yet, which is fine
+      }
     }
 
     // 3. Create Tables
@@ -408,8 +413,8 @@ const initializeDatabase = async () => {
       const residentHash = bcrypt.hashSync('ResidentPass123!', salt);
 
       const [adminResult] = await pool.query(`
-        INSERT INTO users (username, email, password_hash, role, agency_type, full_name, phone, barangay, is_verified)
-        VALUES (?, ?, ?, 'Admin', 'MDRRMO', ?, ?, ?, 1)
+        INSERT INTO users (username, email, password_hash, role, agency_type, full_name, phone, barangay, is_verified, is_on_duty)
+        VALUES (?, ?, ?, 'Admin', 'MDRRMO', ?, ?, ?, 1, 1)
       `, ['admin', 'admin@jamindan.gov.ph', adminHash, 'Platform Administrator', '09171234567', 'Poblacion']);
 
       await pool.query(`
